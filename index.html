@@ -130,7 +130,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.1</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1626,6 +1626,7 @@
         }
 
         function renderSongLyrics(rawLyrics, capoFret) {
+            console.log("renderSongLyrics CALLED. Raw lyrics length:", rawLyrics ? rawLyrics.length : 0);
             elements.sheetContent.innerHTML = '';
             if (!rawLyrics) return;
             const lines = rawLyrics.split('\n');
@@ -1637,9 +1638,11 @@
                 const trimmed = line.trim();
                 
                 if (trimmed.startsWith('[')) {
+                    console.log("Found section tag:", trimmed);
                     sectionContainer = document.createElement('div');
                     sectionContainer.className = 'p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2';
                     const prettyName = formatSectionHeading(trimmed);
+                    console.log("Formatted section heading to:", prettyName);
                     sectionContainer.innerHTML = `<h4 class="section-heading text-amber-400 font-extrabold text-sm tracking-wide mb-2">${prettyName}</h4>`;
                     elements.sheetContent.appendChild(sectionContainer);
                     continue;
@@ -1660,8 +1663,6 @@
                     if (nextLine) i++; // consume lyric line paired with this chord line
 
                     div.className = 'chord-lyric-pair-line';
-                    
-                    // Simple intelligent pairing parser for proportional font layout
                     div.innerHTML = buildChordLyricPairs(chordLine, nextLine, capoFret, capoSteps, capoDisplayMode);
                 } else {
                     div.innerHTML = `<div class="lyric-below">${line}</div>`;
