@@ -821,7 +821,6 @@
             modalSelectBtn: document.getElementById('modal-select-folder-btn'),
             fallbackInput: document.getElementById('fallback-folder-input'),
             newSongBtn: document.getElementById('new-song-btn'),
-            saveActiveSetBtn: document.getElementById('save-active-set-btn'),
             editSongBtn: document.getElementById('edit-song-btn'),
 
             floatingMenu: document.getElementById('floating-menu'),
@@ -1644,37 +1643,6 @@
             elements.songEditorModal.classList.remove('hidden');
         });
 
-
-        elements.saveActiveSetBtn.addEventListener('click', async () => {
-            const setName = prompt("Enter Set Name:", currentSet.title || "My Set");
-            if (!setName) return;
-            const category = prompt("Enter Set Category (e.g. Gareth, MAIN, Worship):", currentSet.category || "MAIN");
-            if (category === null) return;
-
-            const cleanCat = (!category || category.trim() === '' || category.trim().toUpperCase() === 'MAIN') ? '' : category.trim();
-            const formattedFilename = cleanCat ? `${cleanCat}___${setName.trim()}` : setName.trim();
-
-            currentSet.title = setName.trim();
-            currentSet.category = cleanCat || 'MAIN';
-            currentSet.filename = formattedFilename;
-
-            const existingIdx = loadedSets.findIndex(s => s.filename.toLowerCase() === formattedFilename.toLowerCase());
-            if (existingIdx !== -1) {
-                loadedSets[existingIdx] = { ...currentSet };
-            } else {
-                loadedSets.push({ ...currentSet });
-            }
-
-            updateTabCounts();
-            renderSidebarList();
-            const written = await writeSetToDisk({ ...currentSet });
-            if (written) {
-                showToast(`Set saved and written to disk as "${formattedFilename}"`);
-            } else {
-                showToast(`Set saved in memory as "${formattedFilename}"`);
-            }
-        });
-
         elements.editSongBtn.addEventListener('click', () => {
             if (!activeSong) return;
             elements.editSongTitleInput.value = activeSong.title;
@@ -1893,7 +1861,7 @@
                     btn.id = 'dynamic-save-set-btn';
                     btn.className = 'px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition animate-pulse';
                     btn.innerHTML = '<i data-lucide="save" class="w-3.5 h-3.5"></i> Save Changes';
-                    btn.onclick = () => saveActiveSetToFile(activeSet);
+                    btn.onclick = () => ToFile(activeSet);
                     headerActions.prepend(btn);
                     lucide.createIcons();
                 }
