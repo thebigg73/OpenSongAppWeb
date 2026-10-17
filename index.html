@@ -63,7 +63,7 @@
 
         .chord-capo-above {
             font-weight: 700;
-            color: #a855f7; /* Distinct purple/violet for Capo chords */
+            color: #a855f7;
             line-height: 1.1;
             height: 1.25em;
             user-select: none;
@@ -92,7 +92,6 @@
             overflow: auto;
         }
 
-        /* Toast notification animation */
         #toast-notification {
             transition: transform 0.3s ease, opacity 0.3s ease;
         }
@@ -240,7 +239,7 @@
                     <pre id="abc-popup-content" class="font-mono text-[11px] bg-slate-950 p-2 rounded border border-slate-800 overflow-x-auto text-amber-300"></pre>
                 </div>
 
-                <!-- Floating Capo Button Widget (Cycling: native -> capo -> both) -->
+                <!-- Floating Capo Button Widget -->
                 <button id="floating-capo-btn" class="hidden fixed bottom-24 right-6 z-30 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs rounded-2xl shadow-2xl transition hover:scale-105 active:scale-95 flex items-center gap-2 border border-purple-400/40">
                     <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
                     <span id="floating-capo-label">Capo 2 (Native)</span>
@@ -255,9 +254,14 @@
                             </div>
                             <p id="set-count-info" class="text-sm text-slate-400 mt-1">0 Songs in this set</p>
                         </div>
-                        <button id="edit-set-btn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
-                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Set
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button id="share-set-btn" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
+                                <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Share / Export Set
+                            </button>
+                            <button id="edit-set-btn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Set
+                            </button>
+                        </div>
                     </div>
                     <div id="set-songs-container" class="space-y-2"></div>
                 </article>
@@ -287,6 +291,9 @@
                                 <button id="open-abc-popup-btn" class="hidden p-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-lg text-xs font-bold flex items-center gap-1 transition" title="Show ABC Notation">
                                     <i data-lucide="music" class="w-3.5 h-3.5"></i>
                                 </button>
+                                <button id="share-song-btn" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
+                                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Share Song
+                                </button>
                                 <button id="edit-song-btn" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition" title="Edit Song">
                                     <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                 </button>
@@ -295,7 +302,6 @@
                         <p id="sheet-author" class="text-sm text-slate-400 mt-1">--</p>
                     </div>
 
-                    <!-- Song Content Container (Text or PDF embed) -->
                     <div id="sheet-content" class="space-y-6"></div>
 
                     <footer id="sheet-footer" class="border-t border-slate-800/80 pt-4 text-xs text-slate-500 space-y-1">
@@ -440,7 +446,7 @@
             </div>
 
             <input type="file" id="archive-file-input" accept=".osb,.osbs,.zip" multiple class="hidden">
-            <input type="file" id="individual-files-input" accept=".xml,.ost,.pdf,.db,.csv" multiple class="hidden">
+            <input type="file" id="individual-files-input" accept=".xml,.ost,.osts,.pdf,.db,.csv" multiple class="hidden">
         </div>
     </div>
 
@@ -463,7 +469,7 @@
         </div>
     </div>
 
-    <!-- Conflict Resolution Modal (For Overwrite Warning & Selection) -->
+    <!-- Conflict Resolution Modal -->
     <div id="conflict-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
@@ -484,6 +490,24 @@
         </div>
     </div>
 
+    <!-- Share Options Modal -->
+    <div id="share-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-xs">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <h3 class="font-bold text-sm text-amber-400 flex items-center gap-1.5"><i data-lucide="share-2" class="w-4 h-4"></i> Export / Share File</h3>
+                <button id="close-share-modal" class="p-1 text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div class="space-y-2">
+                <button id="share-extless-btn" class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl transition text-left flex justify-between items-center">
+                    <span>Extensionless File</span><span id="share-name-extless" class="font-mono text-amber-400"></span>
+                </button>
+                <button id="share-ext-btn" class="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition text-left flex justify-between items-center">
+                    <span id="share-ext-label">With extension</span><span id="share-name-ext" class="font-mono"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Comprehensive Tabbed Song Editor Modal -->
     <div id="song-editor-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col">
@@ -496,7 +520,6 @@
                 <button data-editors-tab="main" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg bg-amber-500 text-slate-950 transition">Main</button>
                 <button data-editors-tab="lyrics" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Lyrics / PDF</button>
                 <button data-editors-tab="features" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Features</button>
-                <button data-editors-tab="tags" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Tags</button>
             </div>
 
             <div class="flex-1 overflow-y-auto space-y-4 pr-1">
@@ -513,7 +536,7 @@
                             </select>
                             <input type="text" id="edit-song-new-folder-input" placeholder="Enter new folder name..." class="hidden mt-2 w-full bg-slate-950 border border-amber-500/50 rounded-lg p-2 text-amber-300 font-mono">
                         </div>
-                        <div><label class="font-bold text-slate-300 block mb-1">Filename / PDF URL</label><input type="text" id="edit-song-filename-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono"></div>
+                        <div><label class="font-bold text-slate-300 block mb-1">Filename (No Extension)</label><input type="text" id="edit-song-filename-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono"></div>
                     </div>
                     <div><label class="font-bold text-slate-300 block mb-1">Sticky Notes / Popup Notes</label><textarea id="edit-song-notes-input" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></textarea></div>
                 </div>
@@ -522,19 +545,9 @@
                     <div><label class="font-bold text-slate-300 block mb-1">Presentation Order e.g. V1 C V2 C</label><input type="text" id="edit-song-presentation-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono"></div>
                     <div>
                         <div class="flex justify-between items-center mb-1">
-                            <label class="font-bold text-slate-300">Lyrics & Chords (OpenSong Format) OR PDF File Upload</label>
+                            <label class="font-bold text-slate-300">Lyrics & Chords (OpenSong Format)</label>
                         </div>
                         <textarea id="edit-song-lyrics-input" rows="8" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-slate-100" placeholder="[V1]&#10;.C     G&#10;Amazing grace..."></textarea>
-                    </div>
-                    <div>
-                        <label class="font-bold text-slate-300 block mb-1">Or Attach/Upload PDF file for this song</label>
-                        <input type="file" id="edit-song-pdf-file" accept=".pdf" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400 cursor-pointer">
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="font-bold text-slate-300">ABC Notation Score Popup</label>
-                        </div>
-                        <textarea id="edit-song-abc-input" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-amber-300" placeholder="X:1&#10;M:4/4&#10;K:C&#10;..."></textarea>
                     </div>
                 </div>
 
@@ -575,13 +588,12 @@
         let activeSong = null;
         let activeSet = null;
         let activeSetSongIndex = -1;
-        let transposeOffset = 0;
-        let capoDisplayMode = 'native'; // 'native', 'capo', 'both'
+        let capoDisplayMode = 'native';
 
         let rootDirectoryHandle = null;
         let pdfBlobsMap = {};
         let pendingImportItems = [];
-        let appSettings = { wsRole: "client", wsUrl: "", headingScale: 85, chordScale: 100 };
+        let shareTarget = null;
 
         const elements = {
             modal: document.getElementById('folder-modal'),
@@ -608,12 +620,21 @@
             conflictProceedBtn: document.getElementById('conflict-proceed-btn'),
             conflictItemsList: document.getElementById('conflict-items-list'),
 
+            shareModal: document.getElementById('share-modal'),
+            closeShareModal: document.getElementById('close-share-modal'),
+            shareExtlessBtn: document.getElementById('share-extless-btn'),
+            shareExtBtn: document.getElementById('share-ext-btn'),
+            shareNameExtless: document.getElementById('share-name-extless'),
+            shareNameExt: document.getElementById('share-name-ext'),
+            shareExtLabel: document.getElementById('share-ext-label'),
+            shareSongBtn: document.getElementById('share-song-btn'),
+            shareSetBtn: document.getElementById('share-set-btn'),
+
             modalProgressContainer: document.getElementById('modal-progress-container'),
             modalActionsContainer: document.getElementById('modal-actions-container'),
             reconnectFolderContainer: document.getElementById('reconnect-folder-container'),
             modalReconnectBtn: document.getElementById('modal-reconnect-folder-btn'),
             folderStatus: document.getElementById('folder-status-text'),
-            mainScrollContainer: document.getElementById('main-scroll-container'),
             tabSongsBtn: document.getElementById('tab-songs-btn'),
             tabSetsBtn: document.getElementById('tab-sets-btn'),
             tabSongsCount: document.getElementById('tab-songs-count'),
@@ -626,6 +647,9 @@
             rescanBtn: document.getElementById('rescan-btn'),
             emptyState: document.getElementById('empty-state'),
             songSheet: document.getElementById('song-sheet'),
+            setViewSheet: document.getElementById('set-view-sheet'),
+            setTitle: document.getElementById('set-title'),
+            setSongsContainer: document.getElementById('set-songs-container'),
             sheetTitle: document.getElementById('sheet-title'),
             sheetAuthor: document.getElementById('sheet-author'),
             sheetFolderPath: document.getElementById('sheet-folder-path'),
@@ -640,13 +664,7 @@
             currentSongAuthor: document.getElementById('current-song-author'),
             metaKey: document.getElementById('meta-key'),
             metaTempo: document.getElementById('meta-tempo'),
-            metaSig: document.getElementById('meta-sig'),
-            transposeDown: document.getElementById('transpose-down'),
-            transposeUp: document.getElementById('transpose-up'),
-            transposeDisplay: document.getElementById('transpose-offset'),
             changeFolderBtn: document.getElementById('change-folder-btn'),
-            openSettingsBtn: document.getElementById('open-settings-btn'),
-            castDisplayBtn: document.getElementById('cast-display-btn'),
             modalSelectBtn: document.getElementById('modal-select-folder-btn'),
             fallbackInput: document.getElementById('fallback-folder-input'),
             newSongBtn: document.getElementById('new-song-btn'),
@@ -662,6 +680,7 @@
             editSongAuthorInput: document.getElementById('edit-song-author-input'),
             editSongCopyrightInput: document.getElementById('edit-song-copyright-input'),
             editSongFolderSelect: document.getElementById('edit-song-folder-select'),
+            editSongNewFolderInput: document.getElementById('edit-song-new-folder-input'),
             editSongFilenameInput: document.getElementById('edit-song-filename-input'),
             editSongLyricsInput: document.getElementById('edit-song-lyrics-input'),
             editSongKeyInput: document.getElementById('edit-song-key-input'),
@@ -678,7 +697,6 @@
                 const hasStoredFolder = await checkStoredDirectoryHandle();
                 if (hasStoredFolder) {
                     elements.reconnectFolderContainer.classList.remove('hidden');
-                    elements.modal.classList.remove('hidden');
                 } else {
                     elements.modal.classList.remove('hidden');
                 }
@@ -695,6 +713,13 @@
                 elements.toastNotification.classList.remove('translate-y-0', 'opacity-100');
                 elements.toastNotification.classList.add('translate-y-[-150%]', 'opacity-0');
             }, 3000);
+        }
+
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
         }
 
         // IndexedDB handle storage
@@ -765,6 +790,55 @@
         elements.modalImportArchiveBtn.addEventListener('click', () => elements.archiveFileInput.click());
         elements.modalImportFilesBtn.addEventListener('click', () => elements.individualFilesInput.click());
 
+        // Share / Export Modals
+        elements.shareSongBtn.addEventListener('click', () => {
+            if (!activeSong) return;
+            shareTarget = { type: 'song', obj: activeSong };
+            elements.shareNameExtless.textContent = activeSong.title;
+            elements.shareNameExt.textContent = `${activeSong.title}.ost`;
+            elements.shareExtLabel.textContent = "OpenSong Song (.ost)";
+            elements.shareModal.classList.remove('hidden');
+        });
+
+        elements.shareSetBtn.addEventListener('click', () => {
+            if (!activeSet) return;
+            shareTarget = { type: 'set', obj: activeSet };
+            elements.shareNameExtless.textContent = activeSet.title;
+            elements.shareNameExt.textContent = `${activeSet.title}.osts`;
+            elements.shareExtLabel.textContent = "OpenSong Set (.osts)";
+            elements.shareModal.classList.remove('hidden');
+        });
+
+        elements.closeShareModal.addEventListener('click', () => elements.shareModal.classList.add('hidden'));
+
+        elements.shareExtlessBtn.addEventListener('click', () => {
+            if (!shareTarget) return;
+            triggerFileDownload(shareTarget, false);
+            elements.shareModal.classList.add('hidden');
+        });
+
+        elements.shareExtBtn.addEventListener('click', () => {
+            if (!shareTarget) return;
+            triggerFileDownload(shareTarget, true);
+            elements.shareModal.classList.add('hidden');
+        });
+
+        function triggerFileDownload(target, useExtension) {
+            let content = "", filename = "";
+            if (target.type === 'song') {
+                const s = target.obj;
+                filename = useExtension ? `${s.title}.ost` : s.title;
+                content = generateOpenSongXML(s);
+            } else {
+                const st = target.obj;
+                filename = useExtension ? `${st.title}.osts` : st.title;
+                content = generateOpenSongSetXML(st);
+            }
+            const blob = new Blob([content], { type: "text/xml;charset=utf-8" });
+            saveAs(blob, filename);
+            showToast(`Downloaded ${filename}`);
+        }
+
         // EXPORT .osb
         elements.modalExportOsbBtn.addEventListener('click', () => {
             elements.importModal.classList.add('hidden');
@@ -793,7 +867,7 @@
             loadedSongs.forEach(song => {
                 const fPath = song.folderPath || 'MAIN';
                 if (selectedFolders.includes(fPath)) {
-                    const zipPath = `Songs/${fPath}/${song.filename || (song.title + '.xml')}`;
+                    const zipPath = `Songs/${fPath}/${song.filename || song.title}`;
                     const xmlContent = generateOpenSongXML(song);
                     zip.file(zipPath, xmlContent);
                 }
@@ -803,12 +877,12 @@
             saveAs(content, "OpenSong_Songs_Backup.osb");
         });
 
-        // EXPORT .osbs (Sets backup placed at root, without Sets folder)
+        // EXPORT .osbs
         elements.modalExportOsbsBtn.addEventListener('click', async () => {
             elements.importModal.classList.add('hidden');
             const zip = new JSZip();
             loadedSets.forEach(setObj => {
-                const filename = setObj.filename || `${setObj.title}.ost`;
+                const filename = setObj.filename || `${setObj.title}.osts`;
                 const xmlContent = generateOpenSongSetXML(setObj);
                 zip.file(filename, xmlContent);
             });
@@ -829,6 +903,8 @@
     <tempo>${song.tempo || 120}</tempo>
     <time_sig>${escapeXml(song.time_sig || '4/4')}</time_sig>
     <notes>${escapeXml(song.notes || '')}</notes>
+    <uuid>${escapeXml(song.uuid || generateUUID())}</uuid>
+    <modified>${escapeXml(song.modified || new Date().toISOString())}</modified>
     <lyrics>${escapeXml(song.lyrics || '')}</lyrics>
 </song>`;
         }
@@ -853,7 +929,52 @@
             });
         }
 
-        // Transposition and Capo helpers
+        // Disk writing helpers
+        async function writeSongToDisk(songObj) {
+            if (!rootDirectoryHandle) return false;
+            try {
+                const opts = { mode: 'readwrite' };
+                if ((await rootDirectoryHandle.queryPermission(opts)) !== 'granted') {
+                    if ((await rootDirectoryHandle.requestPermission(opts)) !== 'granted') return false;
+                }
+                const songsDir = await rootDirectoryHandle.getDirectoryHandle('Songs', { create: true });
+                let targetDir = songsDir;
+                if (songObj.folderPath && songObj.folderPath !== 'MAIN') {
+                    for (const sf of songObj.folderPath.split('/')) {
+                        targetDir = await targetDir.getDirectoryHandle(sf, { create: true });
+                    }
+                }
+                const fileHandle = await targetDir.getFileHandle(songObj.filename || songObj.title, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(generateOpenSongXML(songObj));
+                await writable.close();
+                return true;
+            } catch (err) {
+                console.error("Error writing song to disk:", err);
+                return false;
+            }
+        }
+
+        async function writeSetToDisk(setObj) {
+            if (!rootDirectoryHandle) return false;
+            try {
+                const opts = { mode: 'readwrite' };
+                if ((await rootDirectoryHandle.queryPermission(opts)) !== 'granted') {
+                    if ((await rootDirectoryHandle.requestPermission(opts)) !== 'granted') return false;
+                }
+                const setsDir = await rootDirectoryHandle.getDirectoryHandle('Sets', { create: true });
+                const fileHandle = await setsDir.getFileHandle(setObj.filename || setObj.title, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(generateOpenSongSetXML(setObj));
+                await writable.close();
+                return true;
+            } catch (err) {
+                console.error("Error writing set to disk:", err);
+                return false;
+            }
+        }
+
+        // Transposition helpers
         const notesList = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
         const flatNotes = {'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'};
 
@@ -869,11 +990,7 @@
             return notesList[newIdx] + chord.slice(root.length);
         }
 
-        function getCapoTransposedChord(chord, capoFret) {
-            return transposeChord(chord, -parseInt(capoFret, 10));
-        }
-
-        // ARCHIVE IMPORT (.osb / .osbs / .zip)
+        // ARCHIVE IMPORT (.osb / .osbs / .ost / .osts / .zip)
         elements.archiveFileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files || []);
             if (files.length === 0) return;
@@ -900,11 +1017,11 @@
                                 type: 'song',
                                 itemObj: {
                                     id: 'song_pdf_' + Math.random().toString(36).substring(2, 8),
-                                    filename: pureName, folderPath: 'PDFs', title: pureName.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: pdfBlobsMap[pureName], key: 'C'
+                                    filename: pureName, folderPath: 'PDFs', title: pureName.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: pdfBlobsMap[pureName], key: 'C', uuid: generateUUID(), modified: new Date().toISOString()
                                 },
                                 labelTitle: pureName, category: 'PDF Song', isConflict: exists, selected: true
                             });
-                        } else if (lowerName.includes('sets/') || lowerName.endsWith('.osbs') || lowerName.endsWith('.ost')) {
+                        } else if (lowerName.includes('sets/') || lowerName.endsWith('.osbs') || lowerName.endsWith('.ost') || lowerName.endsWith('.osts')) {
                             const text = await zipEntry.async("text");
                             const setObj = parseOpenSongSetXML(text, filename.split('/').pop());
                             if (setObj) {
@@ -974,21 +1091,23 @@
             pendingImportItems = [];
         });
 
-        function executeImportBatch(items) {
-            items.forEach(item => {
-                if (!item.selected) return;
+        async function executeImportBatch(items) {
+            for (const item of items) {
+                if (!item.selected) continue;
                 if (item.type === 'song') {
                     addOrUpdateSong(item.itemObj);
+                    await writeSongToDisk(item.itemObj);
                 } else if (item.type === 'set') {
                     const existingSetIdx = loadedSets.findIndex(s => s.title.toLowerCase() === item.itemObj.title.toLowerCase());
                     if (existingSetIdx !== -1) loadedSets[existingSetIdx] = item.itemObj;
                     else loadedSets.push(item.itemObj);
+                    await writeSetToDisk(item.itemObj);
                 }
-            });
+            }
             updateTabCounts();
             updateFolderFilterDropdown();
             renderSidebarList();
-            showToast("Import completed successfully!");
+            showToast("Import completed and saved to disk!");
         }
 
         elements.individualFilesInput.addEventListener('change', async (e) => {
@@ -1004,12 +1123,12 @@
                     pdfBlobsMap[file.name] = blobUrl;
                     const exists = loadedSongs.some(s => s.filename.toLowerCase() === file.name.toLowerCase());
                     pendingImportItems.push({
-                        type: 'song', itemObj: { id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: file.name, folderPath: 'PDFs', title: file.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: 'C' },
+                        type: 'song', itemObj: { id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: file.name, folderPath: 'PDFs', title: file.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: 'C', uuid: generateUUID(), modified: new Date().toISOString() },
                         labelTitle: file.name, category: 'PDF Song', isConflict: exists, selected: true
                     });
                 } else {
                     const text = await file.text();
-                    if (nameLower.endsWith('.ost') || text.includes('<set')) {
+                    if (nameLower.endsWith('.osts') || nameLower.endsWith('.ost') && text.includes('<set') || text.includes('<set')) {
                         const setObj = parseOpenSongSetXML(text, file.name);
                         if (setObj) {
                             const exists = loadedSets.some(s => s.title.toLowerCase() === setObj.title.toLowerCase());
@@ -1040,14 +1159,16 @@
                 const res = db.exec("SELECT * FROM songs");
                 if (res && res.length > 0) {
                     const cols = res[0].columns;
-                    res[0].values.forEach(row => {
+                    res[0].values.forEach(async row => {
                         const rowObj = {};
                         cols.forEach((c, idx) => rowObj[c] = row[idx]);
                         const title = rowObj.title || rowObj.filename || "Untitled PDF";
-                        addOrUpdateSong({
+                        const songObj = {
                             id: 'song_db_' + Math.random().toString(36).substring(2, 8),
-                            filename: rowObj.filename || `${title}.pdf`, folderPath: 'NonOpenSong', title: title, author: rowObj.author || '', key: rowObj.key || 'C', capo: rowObj.capo || '', isPdf: true, pdfUrl: pdfBlobsMap[rowObj.filename] || ''
-                        });
+                            filename: rowObj.filename || title, folderPath: 'NonOpenSong', title: title, author: rowObj.author || '', key: rowObj.key || 'C', capo: rowObj.capo || '', isPdf: true, pdfUrl: pdfBlobsMap[rowObj.filename] || '', uuid: generateUUID(), modified: new Date().toISOString()
+                        };
+                        addOrUpdateSong(songObj);
+                        await writeSongToDisk(songObj);
                     });
                 }
                 updateTabCounts();
@@ -1080,16 +1201,23 @@
                 if (lower.endsWith('.pdf')) {
                     const blobUrl = URL.createObjectURL(file);
                     pdfBlobsMap[file.name] = blobUrl;
-                    addOrUpdateSong({ id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: file.name, folderPath: 'PDFs', title: file.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: 'C' });
-                } else if (lower.includes('sets/')) {
+                    const songObj = { id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: file.name, folderPath: 'PDFs', title: file.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: 'C', uuid: generateUUID(), modified: new Date().toISOString() };
+                    addOrUpdateSong(songObj);
+                } else if (lower.includes('sets/') || lower.endsWith('.osts')) {
                     const s = parseOpenSongSetXML(text, file.name);
-                    if (s) loadedSets.push(s);
+                    if (s) {
+                        loadedSets.push(s);
+                        await writeSetToDisk(s);
+                    }
                 } else {
                     let folder = 'MAIN';
                     const songsIdx = parts.findIndex(p => p.toLowerCase() === 'songs');
                     if (songsIdx !== -1 && parts.length > songsIdx + 2) folder = parts.slice(songsIdx + 1, parts.length - 1).join('/');
                     const song = parseOpenSongXML(text, file.name, folder);
-                    if (song) addOrUpdateSong(song);
+                    if (song) {
+                        addOrUpdateSong(song);
+                        await writeSongToDisk(song);
+                    }
                 }
             }
             elements.folderStatus.textContent = "Root Folder Loaded";
@@ -1137,7 +1265,7 @@
                     if (lowerName.endsWith('.pdf')) {
                         const blobUrl = URL.createObjectURL(f);
                         pdfBlobsMap[f.name] = blobUrl;
-                        addOrUpdateSong({ id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: f.name, folderPath: prefix || 'PDFs', title: f.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: 'C' });
+                        addOrUpdateSong({ id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: f.name, folderPath: prefix || 'PDFs', title: f.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: 'C', uuid: generateUUID(), modified: new Date().toISOString() });
                     } else {
                         const song = parseOpenSongXML(await f.text(), f.name, prefix || 'MAIN');
                         if (song) addOrUpdateSong(song);
@@ -1156,10 +1284,12 @@
                 const song = doc.querySelector("song");
                 if (!song) return null;
                 const gt = (tag) => { const el = song.querySelector(tag); return el ? el.textContent.trim() : ''; };
+                // Strip .ost extension if present
+                const cleanFilename = filename.endsWith('.ost') ? filename.slice(0, -4) : filename;
                 return {
                     id: 'song_' + Math.random().toString(36).substring(2, 8),
-                    filename, folderPath: folderPath || 'MAIN',
-                    title: gt("title") || filename,
+                    filename: cleanFilename, folderPath: folderPath || 'MAIN',
+                    title: gt("title") || cleanFilename,
                     author: gt("author"),
                     copyright: gt("copyright"),
                     presentation: gt("presentation"),
@@ -1167,6 +1297,8 @@
                     capo: gt("capo"),
                     tempo: gt("tempo") || 120,
                     time_sig: gt("time_sig") || '4/4',
+                    uuid: gt("uuid") || generateUUID(),
+                    modified: gt("modified") || new Date().toISOString(),
                     lyrics: gt("lyrics")
                 };
             } catch (e) { return null; }
@@ -1182,41 +1314,35 @@
                     const name = g.getAttribute("name");
                     if (name) songTitles.push(name);
                 });
-                return { id: 'set_' + Math.random().toString(36).substring(2, 8), filename, title: setNode.getAttribute("name") || filename, songTitles };
+                // Strip .osts extension if present
+                const cleanFilename = filename.endsWith('.osts') ? filename.slice(0, -5) : (filename.endsWith('.ost') ? filename.slice(0, -4) : filename);
+                return { id: 'set_' + Math.random().toString(36).substring(2, 8), filename: cleanFilename, title: setNode.getAttribute("name") || cleanFilename, songTitles };
             } catch (e) { return null; }
         }
 
-        // Automatic Disk Writing helper
-        async function writeSongToDisk(songObj) {
-            if (!rootDirectoryHandle) return false;
-            try {
-                const opts = { mode: 'readwrite' };
-                if ((await rootDirectoryHandle.queryPermission(opts)) !== 'granted') {
-                    if ((await rootDirectoryHandle.requestPermission(opts)) !== 'granted') return false;
-                }
-                const songsDir = await rootDirectoryHandle.getDirectoryHandle('Songs', { create: true });
-                let targetDir = songsDir;
-                if (songObj.folderPath && songObj.folderPath !== 'MAIN') {
-                    for (const sf of songObj.folderPath.split('/')) {
-                        targetDir = await targetDir.getDirectoryHandle(sf, { create: true });
-                    }
-                }
-                const fileHandle = await targetDir.getFileHandle(songObj.filename, { create: true });
-                const writable = await fileHandle.createWritable();
-                await writable.write(generateOpenSongXML(songObj));
-                await writable.close();
-                return true;
-            } catch (err) {
-                console.error("Error writing song to disk:", err);
-                return false;
+        elements.editSongFolderSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'NEW_FOLDER') {
+                elements.editSongNewFolderInput.classList.remove('hidden');
+                elements.editSongNewFolderInput.focus();
+            } else {
+                elements.editSongNewFolderInput.classList.add('hidden');
             }
-        }
+        });
+
+        elements.editSongTitleInput.addEventListener('input', (e) => {
+            if (!activeSong || elements.editSongFilenameInput.value === (activeSong.title || '')) {
+                elements.editSongFilenameInput.value = e.target.value;
+            }
+        });
 
         elements.newSongBtn.addEventListener('click', () => {
             elements.editSongTitleInput.value = '';
             elements.editSongAuthorInput.value = '';
             elements.editSongCopyrightInput.value = '';
-            elements.editSongFilenameInput.value = 'NewSong.xml';
+            elements.editSongFilenameInput.value = '';
+            elements.editSongNewFolderInput.value = '';
+            elements.editSongNewFolderInput.classList.add('hidden');
+            updateFolderFilterDropdown();
             elements.editSongLyricsInput.value = '[V1]\n.C     G\nLyrics here...';
             activeSong = null;
             elements.songEditorModal.classList.remove('hidden');
@@ -1227,7 +1353,10 @@
             elements.editSongTitleInput.value = activeSong.title;
             elements.editSongAuthorInput.value = activeSong.author || '';
             elements.editSongCopyrightInput.value = activeSong.copyright || '';
-            elements.editSongFilenameInput.value = activeSong.filename;
+            elements.editSongFilenameInput.value = activeSong.filename || activeSong.title;
+            updateFolderFilterDropdown();
+            elements.editSongFolderSelect.value = activeSong.folderPath || 'MAIN';
+            elements.editSongNewFolderInput.classList.add('hidden');
             elements.editSongLyricsInput.value = activeSong.lyrics || '';
             elements.songEditorModal.classList.remove('hidden');
         });
@@ -1235,16 +1364,27 @@
         elements.closeSongEditor.addEventListener('click', () => elements.songEditorModal.classList.add('hidden'));
 
         elements.saveSongBtn.addEventListener('click', async () => {
+            let folderPath = elements.editSongFolderSelect.value;
+            if (folderPath === 'NEW_FOLDER') {
+                folderPath = elements.editSongNewFolderInput.value.trim() || 'MAIN';
+                elements.editSongNewFolderInput.classList.add('hidden');
+            }
+
+            const title = elements.editSongTitleInput.value.trim() || 'Untitled';
+            const filename = elements.editSongFilenameInput.value.trim() || title;
+
             const newSongData = {
                 id: activeSong ? activeSong.id : 'song_' + Math.random().toString(36).substring(2, 8),
-                filename: elements.editSongFilenameInput.value || 'song.xml',
-                folderPath: elements.editSongFolderSelect.value,
-                title: elements.editSongTitleInput.value || 'Untitled',
+                filename: filename,
+                folderPath: folderPath,
+                title: title,
                 author: elements.editSongAuthorInput.value,
                 copyright: elements.editSongCopyrightInput.value,
                 key: elements.editSongKeyInput.value,
                 capo: elements.editSongCapoInput.value,
                 tempo: elements.editSongTempoInput.value,
+                uuid: activeSong ? (activeSong.uuid || generateUUID()) : generateUUID(),
+                modified: new Date().toISOString(),
                 lyrics: elements.editSongLyricsInput.value
             };
             addOrUpdateSong(newSongData);
@@ -1262,7 +1402,6 @@
             }
         });
 
-        // Floating Capo Button Cycling Logic
         elements.floatingCapoBtn.addEventListener('click', () => {
             if (!activeSong || !activeSong.capo) return;
             if (capoDisplayMode === 'native') {
@@ -1296,7 +1435,8 @@
 
         function renderSongSheet(song, fromSetContext = null, songIndexInSet = -1) {
             activeSong = song;
-            capoDisplayMode = 'native'; // Default on song selection
+            activeSet = null;
+            capoDisplayMode = 'native';
             elements.emptyState.classList.add('hidden');
             document.getElementById('set-view-sheet').classList.add('hidden');
             elements.songSheet.classList.remove('hidden');
@@ -1307,7 +1447,7 @@
                 document.getElementById('banner-set-title').textContent = activeSet.title;
                 document.getElementById('set-song-index-label').textContent = `${activeSetSongIndex + 1} / ${activeSet.songTitles.length}`;
                 document.getElementById('set-navigation-banner').classList.remove('hidden');
-            } else if (!activeSet) {
+            } else {
                 document.getElementById('set-navigation-banner').classList.add('hidden');
             }
 
@@ -1336,6 +1476,28 @@
             } else {
                 renderSongLyrics(song.lyrics, song.capo);
             }
+        }
+
+        function renderSetSheet(setObj) {
+            activeSet = setObj;
+            activeSong = null;
+            elements.emptyState.classList.add('hidden');
+            elements.songSheet.classList.add('hidden');
+            document.getElementById('set-view-sheet').classList.remove('hidden');
+            elements.setTitle.textContent = setObj.title;
+            document.getElementById('set-count-info').textContent = `${setObj.songTitles.length} songs in this set`;
+
+            elements.setSongsContainer.innerHTML = '';
+            setObj.songTitles.forEach((t, idx) => {
+                const foundSong = loadedSongs.find(s => s.title.toLowerCase() === t.toLowerCase());
+                const div = document.createElement('div');
+                div.className = 'p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between hover:border-amber-500/40 cursor-pointer transition';
+                div.innerHTML = `<div class="flex items-center space-x-3"><span class="text-xs font-mono text-slate-500">${idx + 1}</span><span class="font-bold text-slate-200 text-sm">${t}</span></div><span class="text-xs text-amber-400 font-semibold">${foundSong ? (foundSong.key || '') : 'Not Found'}</span>`;
+                if (foundSong) {
+                    div.addEventListener('click', () => renderSongSheet(foundSong, setObj, idx));
+                }
+                elements.setSongsContainer.appendChild(div);
+            });
         }
 
         function renderSongLyrics(rawLyrics, capoFret) {
@@ -1394,8 +1556,9 @@
         }
 
         function updateFolderFilterDropdown() {
-            const foldersSet = new Set();
+            const foldersSet = new Set(['MAIN']);
             loadedSongs.forEach(s => foldersSet.add(s.folderPath || 'MAIN'));
+            
             const currentVal = elements.folderFilterSelect.value;
             elements.folderFilterSelect.innerHTML = '<option value="ALL">ALL FOLDERS</option>';
             Array.from(foldersSet).sort().forEach(f => {
@@ -1405,6 +1568,18 @@
                 elements.folderFilterSelect.appendChild(opt);
             });
             elements.folderFilterSelect.value = foldersSet.has(currentVal) ? currentVal : 'ALL';
+
+            elements.editSongFolderSelect.innerHTML = '';
+            Array.from(foldersSet).sort().forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f;
+                opt.textContent = f;
+                elements.editSongFolderSelect.appendChild(opt);
+            });
+            const newFolderOpt = document.createElement('option');
+            newFolderOpt.value = 'NEW_FOLDER';
+            newFolderOpt.textContent = '+ Create New Folder...';
+            elements.editSongFolderSelect.appendChild(newFolderOpt);
         }
 
         elements.folderFilterSelect.addEventListener('change', (e) => {
@@ -1425,7 +1600,7 @@
                     const isActive = activeSong && activeSong.id === song.id;
                     li.className = `p-3 rounded-xl cursor-pointer transition flex items-center justify-between border ${isActive ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 font-bold' : 'hover:bg-slate-800/60 text-slate-300 border-transparent'}`;
                     li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${song.title} ${song.capo ? '<span class="text-[10px] bg-purple-500/20 text-purple-300 px-1 rounded ml-1">Capo ' + song.capo + '</span>' : ''}</div><div class="text-xs text-slate-500 font-normal">${song.author || 'Unknown'} <span class="text-[10px] text-amber-500/80 font-mono">(${song.folderPath || 'MAIN'})</span></div></div><span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800">${song.key || '?'}</span>`;
-                    li.addEventListener('click', () => { activeSet = null; renderSongSheet(song); });
+                    li.addEventListener('click', () => renderSongSheet(song));
                     elements.songList.appendChild(li);
                 });
             } else {
@@ -1434,6 +1609,7 @@
                     const li = document.createElement('li');
                     li.className = 'p-3 rounded-xl cursor-pointer transition flex items-center justify-between border hover:bg-slate-800/60 text-slate-300 border-transparent';
                     li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${setObj.title}</div><div class="text-xs text-slate-500 font-normal">${setObj.songTitles.length} songs</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>`;
+                    li.addEventListener('click', () => renderSetSheet(setObj));
                     elements.songList.appendChild(li);
                 });
             }
