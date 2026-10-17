@@ -144,7 +144,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.1t</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.1u</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -852,7 +852,8 @@
 
         elements.changeFolderBtn.addEventListener('click', () => {
             elements.reconnectFolderContainer.classList.add('hidden');
-            elements.modal.classList.remove('hidden');
+            // Force a brand new directory selection immediately
+            await triggerFolderSelection();
         });
         elements.closeFolderModal.addEventListener('click', () => elements.modal.classList.add('hidden'));
 
@@ -1341,15 +1342,16 @@
             elements.modalActionsContainer.classList.add('hidden');
             elements.folderStatus.textContent = handle.name;
             
-            // Clear previous lists before fresh scan
             loadedSongs = [];
             loadedSets = [];
 
             try {
+                let foundSongsDir = false;
                 for await (const entry of handle.values()) {
-                    if (entry.kind === 'directory' && entry.name === 'Songs') {
+                    if (entry.kind === 'directory' && entry.name.toLowerCase() === 'songs') {
+                        foundSongsDir = true;
                         await scanSongDir(entry, '');
-                    } else if (entry.kind === 'directory' && entry.name === 'Sets') {
+                    } else if (entry.kind === 'directory' && entry.name.toLowerCase() === 'sets') {
                         for await (const setFile of entry.values()) {
                             if (setFile.kind === 'file') {
                                 const f = await setFile.getFile();
@@ -1359,20 +1361,25 @@
                         }
                     }
                 }
+
+                // Fallback: If no explicit 'Songs' subfolder was found, scan the root handle directly
+                if (!foundSongsDir && loadedSongs.length === 0) {
+                    await scanSongDir(handle, '');
+                }
             } catch (e) {
                 console.error("Directory scan error:", e);
                 showToast("Error scanning directory.");
             } finally {
-                // ALWAYS hide the spinner and modal, even if an error occurs
                 elements.modalProgressContainer.classList.add('hidden');
                 elements.modalActionsContainer.classList.remove('hidden');
                 elements.modal.classList.add('hidden');
-                document.getElementById('reconnect-banner').classList.add('hidden');
+                const banner = document.getElementById('reconnect-banner');
+                if (banner) banner.classList.add('hidden');
                 
                 updateTabCounts();
                 updateFolderFilterDropdown();
                 renderSidebarList();
-                showToast("Root directory loaded!");
+                showToast(`Loaded ${loadedSongs.length} songs & ${loadedSets.length} sets!`);
             }
         }
 
