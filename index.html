@@ -140,7 +140,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4b</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4c</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1197,6 +1197,23 @@
             return notesList[newIdx] + chord.slice(root.length);
         }
 
+        function transposeSongLyricsText(rawLyrics, semitones) {
+            if (!rawLyrics || semitones === 0) return rawLyrics;
+            const lines = rawLyrics.split('\n');
+            const transposedLines = lines.map(line => {
+                if (line.startsWith('.')) {
+                    const chordLine = line.slice(1);
+                    // Match and transpose every chord token in the chord line
+                    const transposedChordLine = chordLine.replace(/([A-G][b#]?[^\s]*)/g, (match) => {
+                        return transposeChord(match, semitones);
+                    });
+                    return '.' + transposedChordLine;
+                }
+                return line;
+            });
+            return transposedLines.join('\n');
+        }
+        
         elements.archiveFileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files || []);
             if (files.length === 0) return;
@@ -2267,18 +2284,21 @@
                 e.stopPropagation();
                 if (!activeSong || !activeSong.transposeOffset) return;
                 
-                // Calculate new permanent key
-                const newKey = transposeChord(activeSong.key || 'C', activeSong.transposeOffset);
+                const semitones = activeSong.transposeOffset;
+                const newKey = transposeChord(activeSong.key || 'C', semitones);
+                
+                // Permanently rewrite the lyrics text so the new chords are baked into the XML
+                activeSong.lyrics = transposeSongLyricsText(activeSong.lyrics, semitones);
                 activeSong.key = newKey;
-                activeSong.transposeOffset = 0; // Reset temporary offset
+                activeSong.transposeOffset = 0; // Clear temporary offset
                 saveKeyBtn.classList.add('hidden');
                 
                 addOrUpdateSong(activeSong);
-                renderSidebarList(elements.songSearch.value.toLowerCase()); // Refresh song menu list
-                renderSongSheet(activeSong, activeSet, activeSetSongIndex); // Refresh sheet view
+                renderSidebarList(elements.songSearch.value.toLowerCase());
+                renderSongSheet(activeSong, activeSet, activeSetSongIndex);
                 
                 const saved = await writeSongToDisk(activeSong);
-                showToast(saved ? `Key updated and saved as ${newKey}` : `Key updated to ${newKey}`);
+                showToast(saved ? `Key & chords updated and saved as ${newKey}` : `Key & chords updated to ${newKey}`);
             });
         }
         
