@@ -144,7 +144,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.1v</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.1w</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1753,6 +1753,12 @@
 
             if (chordsMap.length === 0) return `<div class="lyric-below" style="white-space: pre-wrap;">${lyricLine}</div>`;
 
+            // DEBUG LOGGING: Inspect the alignment mapping
+            console.log("--- Chord-Lyric Mapping ---");
+            console.log("Chord Line:", chordLine);
+            console.log("Lyric Line:", lyricLine);
+            console.log("Detected Chords & Indices:", chordsMap);
+
             let html = '';
             let lastIdx = 0;
 
@@ -1792,7 +1798,7 @@
 
             return html;
         }
-
+        
         function switchSidebarTab(tab) {
             activeTab = tab;
             elements.tabSongsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === 'songs' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800'}`;
