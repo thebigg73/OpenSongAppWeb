@@ -38,7 +38,6 @@
             display: flex;
             flex-wrap: wrap;
             row-gap: 0.5rem;
-            /* column-gap removed so chunks butt up cleanly against each other */
             line-height: 1.4;
             max-width: 100%;
             word-break: break-word;
@@ -106,9 +105,7 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Ensure all child elements inside buttons let mouse events pass through to the button */
         button, button * { pointer-events: none; }
-        /* Re-enable pointer events strictly for the button itself */
         button { pointer-events: auto; }
     </style>
 </head>
@@ -120,7 +117,7 @@
         <span id="toast-message">Notification message</span>
     </div>
 
-    <!-- Reconnect Folder Banner (Subtle Banner on Startup) -->
+    <!-- Reconnect Folder Banner -->
     <div id="reconnect-banner" class="hidden bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-sm text-amber-300 z-30 shrink-0">
         <div class="flex items-center gap-2">
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
@@ -144,7 +141,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.3a</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.3c</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -164,7 +161,7 @@
             </div>
         </div>
 
-        <!-- Top Control Bar Container (Scrollable on narrow screens) -->
+        <!-- Top Control Bar Container -->
         <div class="flex items-center gap-2 overflow-x-auto py-2 shrink-0 no-scrollbar">
             <div class="hidden sm:flex items-center gap-1 bg-slate-800/80 p-1 rounded-lg border border-slate-700">
                 <button id="new-song-btn" class="px-2 py-1 text-xs font-bold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 rounded transition flex items-center gap-1">
@@ -172,6 +169,9 @@
                 </button>
                 <button id="new-set-btn" class="px-2 py-1 text-xs font-bold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 rounded transition flex items-center gap-1">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Set
+                </button>
+                <button id="save-active-set-btn" class="px-2 py-1 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded transition flex items-center gap-1">
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i> Save Set
                 </button>
                 <button id="open-import-modal-btn" class="px-2 py-1 text-xs font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 rounded transition flex items-center gap-1" title="Import / Export Archives">
                     <i data-lucide="repeat" class="w-3.5 h-3.5"></i> Import/Export
@@ -202,7 +202,6 @@
     <div class="flex-1 flex overflow-hidden relative">
 
         <!-- Left Drawer / Songs & Sets Sidebar -->
-        <!-- Mobile Sidebar Backdrop Overlay -->
         <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-10 hidden lg:hidden transition-opacity"></div>
         <aside id="sidebar" class="w-80 bg-slate-900/95 backdrop-blur-md border-r border-slate-800 flex flex-col transition-all duration-300 absolute lg:relative inset-y-0 left-0 z-10 -translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none">
             
@@ -221,9 +220,9 @@
                     <input type="text" id="song-search-input" placeholder="Search by title, author, or key..." class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition">
                     <button id="clear-search" class="hidden absolute right-2.5 top-2.5 text-slate-500 hover:text-slate-300"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
-                <!-- Folder Filter Dropdown -->
+                <!-- Folder / Category Filter Dropdown -->
                 <div class="flex items-center gap-2">
-                    <span class="text-[11px] text-slate-400 font-semibold uppercase">Folder:</span>
+                    <span id="filter-label" class="text-[11px] text-slate-400 font-semibold uppercase">Folder:</span>
                     <select id="folder-filter-select" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg text-xs py-1 px-2 text-amber-400 font-mono focus:outline-none">
                         <option value="ALL">ALL FOLDERS</option>
                     </select>
@@ -416,7 +415,6 @@
             </div>
             
             <div class="p-6 overflow-y-auto space-y-6 text-slate-300">
-                <!-- Group 1: Typography & Scaling -->
                 <div class="space-y-4">
                     <h4 class="text-sm font-semibold text-amber-500 uppercase tracking-wider">Typography & Scaling</h4>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -433,7 +431,6 @@
 
                 <hr class="border-slate-800">
 
-                <!-- Group 2: Autoscroll Defaults -->
                 <div class="space-y-4">
                     <h4 class="text-sm font-semibold text-amber-500 uppercase tracking-wider">Autoscroll Defaults</h4>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -450,7 +447,6 @@
 
                 <hr class="border-slate-800">
 
-                <!-- Group 3: Network & WebSockets -->
                 <div class="space-y-4">
                     <h4 class="text-sm font-semibold text-amber-500 uppercase tracking-wider">WebSockets (Client / Host)</h4>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -471,7 +467,6 @@
 
                 <hr class="border-slate-800">
 
-                <!-- Group 4: MIDI Device Connections -->
                 <div class="space-y-4">
                     <h4 class="text-sm font-semibold text-amber-500 uppercase tracking-wider">MIDI Device Options</h4>
                     <div>
@@ -629,7 +624,6 @@
                 <button id="close-song-editor" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             
-            <!-- Tabs Navigation -->
             <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0 gap-1 overflow-x-auto">
                 <button data-editors-tab="lyrics" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg bg-amber-500 text-slate-950 transition">Lyrics</button>
                 <button data-editors-tab="main" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Main</button>
@@ -638,7 +632,6 @@
             </div>
 
             <div class="flex-1 overflow-y-auto space-y-4 pr-1">
-                <!-- Tab 1: Lyrics -->
                 <div id="editor-pane-lyrics" class="editor-pane space-y-3 text-xs">
                     <div><label class="font-bold text-slate-300 block mb-1">Presentation Order e.g. V1 C V2 C</label><input type="text" id="edit-song-presentation-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono"></div>
                     <div>
@@ -647,7 +640,6 @@
                     </div>
                 </div>
 
-                <!-- Tab 2: Main -->
                 <div id="editor-pane-main" class="editor-pane hidden space-y-3 text-xs">
                     <div><label class="font-bold text-slate-300 block mb-1">Title *</label><input type="text" id="edit-song-title-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -663,7 +655,6 @@
                     </div>
                 </div>
 
-                <!-- Tab 3: Song Features -->
                 <div id="editor-pane-features" class="editor-pane hidden space-y-3 text-xs">
                     <div><label class="font-bold text-slate-300 block mb-1">Author / Artist</label><input type="text" id="edit-song-author-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
                     <div><label class="font-bold text-slate-300 block mb-1">Copyright</label><input type="text" id="edit-song-copyright-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
@@ -689,7 +680,6 @@
                     <div><label class="font-bold text-slate-300 block mb-1">Sticky Notes / Popup Notes</label><textarea id="edit-song-notes-input" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></textarea></div>
                 </div>
 
-                <!-- Tab 4: Tags -->
                 <div id="editor-pane-tags" class="editor-pane hidden space-y-3 text-xs">
                     <div><label class="font-bold text-slate-300 block mb-1">Themes</label><input type="text" id="edit-song-themes-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" placeholder="e.g. Worship, Grace"></div>
                     <div><label class="font-bold text-slate-300 block mb-1">BeatBuddy / Drummer</label><input type="text" id="edit-song-beatbuddy-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" placeholder="e.g. Rock 4/4"></div>
@@ -712,6 +702,15 @@
         let activeSet = null;
         let activeSetSongIndex = -1;
         let capoDisplayMode = 'native';
+        let currentTransposeOffset = 0;
+
+        // Current active set being built/edited
+        let currentSet = {
+            category: 'MAIN',
+            title: 'New Set',
+            filename: 'New Set',
+            songTitles: []
+        };
 
         let rootDirectoryHandle = null;
         let pdfBlobsMap = {};
@@ -792,6 +791,7 @@
             fallbackInput: document.getElementById('fallback-folder-input'),
             newSongBtn: document.getElementById('new-song-btn'),
             newSetBtn: document.getElementById('new-set-btn'),
+            saveActiveSetBtn: document.getElementById('save-active-set-btn'),
             editSongBtn: document.getElementById('edit-song-btn'),
 
             floatingMenu: document.getElementById('floating-menu'),
@@ -816,7 +816,6 @@
             lucide.createIcons();
             setupEventListeners();
 
-            // Check saved folder handle on startup and show subtle banner if present
             const savedHandle = await getStoredDirectoryHandle();
             if (savedHandle) {
                 const banner = document.getElementById('reconnect-banner');
@@ -858,7 +857,6 @@
             });
         }
 
-        // IndexedDB handle storage
         const DB_NAME = 'OpenSongAppWebDB';
         const STORE_NAME = 'handles';
         function openIdb() {
@@ -918,7 +916,6 @@
             }
         });
 
-        // Called when user clicks the subtle reconnect banner button
         async function handleReconnectClick(savedHandle) {
             try {
                 const opts = { mode: 'readwrite' };
@@ -940,7 +937,6 @@
 
         elements.changeFolderBtn.addEventListener('click', async () => {
             elements.reconnectFolderContainer.classList.add('hidden');
-            // Force a brand new directory selection immediately
             await triggerFolderSelection();
         });
         elements.closeFolderModal.addEventListener('click', () => elements.modal.classList.add('hidden'));
@@ -951,7 +947,6 @@
         elements.modalImportArchiveBtn.addEventListener('click', () => elements.archiveFileInput.click());
         elements.modalImportFilesBtn.addEventListener('click', () => elements.individualFilesInput.click());
 
-        // Share / Export Modals
         elements.shareSongBtn.addEventListener('click', () => {
             if (!activeSong) return;
             shareTarget = { type: 'song', obj: activeSong };
@@ -992,7 +987,7 @@
                 content = generateOpenSongXML(s);
             } else {
                 const st = target.obj;
-                filename = useExtension ? `${st.title}.osts` : st.title;
+                filename = useExtension ? `${st.filename || st.title}.osts` : (st.filename || st.title);
                 content = generateOpenSongSetXML(st);
             }
             const blob = new Blob([content], { type: "text/xml;charset=utf-8" });
@@ -1000,7 +995,6 @@
             showToast(`Downloaded ${filename}`);
         }
 
-        // EXPORT .osb
         elements.modalExportOsbBtn.addEventListener('click', () => {
             elements.importModal.classList.add('hidden');
             const foldersSet = new Set();
@@ -1038,12 +1032,11 @@
             saveAs(content, "OpenSong_Songs_Backup.osb");
         });
 
-        // EXPORT .osbs
         elements.modalExportOsbsBtn.addEventListener('click', async () => {
             elements.importModal.classList.add('hidden');
             const zip = new JSZip();
             loadedSets.forEach(setObj => {
-                const filename = setObj.filename || `${setObj.title}.osts`;
+                const filename = (setObj.filename || setObj.title) + '.osts';
                 const xmlContent = generateOpenSongSetXML(setObj);
                 zip.file(filename, xmlContent);
             });
@@ -1116,7 +1109,6 @@
             });
         }
 
-        // Disk writing helpers
         async function writeSongToDisk(songObj) {
             if (!rootDirectoryHandle) return false;
             try {
@@ -1161,7 +1153,6 @@
             }
         }
 
-        // Transposition helpers
         const notesList = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
         const flatNotes = {'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'};
 
@@ -1177,7 +1168,6 @@
             return notesList[newIdx] + chord.slice(root.length);
         }
 
-        // ARCHIVE IMPORT (.osb / .osbs / .ost / .osts / .zip)
         elements.archiveFileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files || []);
             if (files.length === 0) return;
@@ -1321,7 +1311,7 @@
                     });
                 } else {
                     const text = await file.text();
-                    if (nameLower.endsWith('.osts') || nameLower.endsWith('.ost') && text.includes('<set') || text.includes('<set')) {
+                    if (nameLower.endsWith('.osts') || (nameLower.endsWith('.ost') && text.includes('<set')) || text.includes('<set')) {
                         const setObj = parseOpenSongSetXML(text, file.name);
                         if (setObj) {
                             const exists = loadedSets.some(s => s.title.toLowerCase() === setObj.title.toLowerCase());
@@ -1450,7 +1440,6 @@
                     }
                 }
 
-                // Fallback: If no explicit 'Songs' subfolder was found, scan the root handle directly
                 if (!foundSongsDir && loadedSongs.length === 0) {
                     await scanSongDir(handle, '');
                 }
@@ -1508,8 +1497,6 @@
                 };
                 
                 const parsedKey = getVal("key");
-                console.log(`Parsed Song: ${getVal("title") || filename} | Key found:`, parsedKey);
-                
                 const cleanFilename = filename.endsWith('.ost') ? filename.slice(0, -4) : filename;
                 
                 return {
@@ -1561,6 +1548,23 @@
             }
         }
 
+        function parseSetFilename(filename) {
+            let clean = filename.endsWith('.osts') ? filename.slice(0, -5) : (filename.endsWith('.ost') ? filename.slice(0, -4) : filename);
+            if (clean.includes('___')) {
+                const parts = clean.split('___');
+                return {
+                    category: parts[0],
+                    title: parts.slice(1).join('___'),
+                    filename: clean
+                };
+            }
+            return {
+                category: 'MAIN',
+                title: clean,
+                filename: clean
+            };
+        }
+
         function parseOpenSongSetXML(xmlString, filename) {
             try {
                 const doc = new DOMParser().parseFromString(xmlString, "text/xml");
@@ -1571,8 +1575,14 @@
                     const name = g.getAttribute("name");
                     if (name) songTitles.push(name);
                 });
-                const cleanFilename = filename.endsWith('.osts') ? filename.slice(0, -5) : (filename.endsWith('.ost') ? filename.slice(0, -4) : filename);
-                return { id: 'set_' + Math.random().toString(36).substring(2, 8), filename: cleanFilename, title: setNode.getAttribute("name") || cleanFilename, songTitles };
+                const parsed = parseSetFilename(filename);
+                return { 
+                    id: 'set_' + Math.random().toString(36).substring(2, 8), 
+                    filename: parsed.filename, 
+                    title: setNode.getAttribute("name") || parsed.title, 
+                    category: parsed.category,
+                    songTitles 
+                };
             } catch (e) { return null; }
         }
 
@@ -1602,6 +1612,42 @@
             elements.editSongLyricsInput.value = '[V1]\n.C     G\nLyrics here...';
             activeSong = null;
             elements.songEditorModal.classList.remove('hidden');
+        });
+
+        elements.newSetBtn.addEventListener('click', () => {
+            currentSet = { category: 'MAIN', title: 'New Set', filename: 'New Set', songTitles: [] };
+            showToast("New set created. Select checkboxes next to songs to add them.");
+            renderSidebarList();
+        });
+
+        elements.saveActiveSetBtn.addEventListener('click', async () => {
+            const setName = prompt("Enter Set Name:", currentSet.title || "My Set");
+            if (!setName) return;
+            const category = prompt("Enter Set Category (e.g. Gareth, MAIN, Worship):", currentSet.category || "MAIN");
+            if (category === null) return;
+
+            const cleanCat = (!category || category.trim() === '' || category.trim().toUpperCase() === 'MAIN') ? '' : category.trim();
+            const formattedFilename = cleanCat ? `${cleanCat}___${setName.trim()}` : setName.trim();
+
+            currentSet.title = setName.trim();
+            currentSet.category = cleanCat || 'MAIN';
+            currentSet.filename = formattedFilename;
+
+            const existingIdx = loadedSets.findIndex(s => s.filename.toLowerCase() === formattedFilename.toLowerCase());
+            if (existingIdx !== -1) {
+                loadedSets[existingIdx] = { ...currentSet };
+            } else {
+                loadedSets.push({ ...currentSet });
+            }
+
+            updateTabCounts();
+            renderSidebarList();
+            const written = await writeSetToDisk({ ...currentSet });
+            if (written) {
+                showToast(`Set saved and written to disk as "${formattedFilename}"`);
+            } else {
+                showToast(`Set saved in memory as "${formattedFilename}"`);
+            }
         });
 
         elements.editSongBtn.addEventListener('click', () => {
@@ -1732,6 +1778,7 @@
             } else {
                 renderSongLyrics(song.lyrics, song.capo);
             }
+            updateCastWindow(song);
         }
 
         function renderSetSheet(setObj) {
@@ -1798,9 +1845,18 @@
                 
                 if (trimmed.startsWith('[')) {
                     sectionContainer = document.createElement('div');
-                    sectionContainer.className = 'p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2';
+                    sectionContainer.className = 'p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2 cursor-pointer hover:border-amber-500/40 transition';
                     const prettyName = formatSectionHeading(trimmed);
                     sectionContainer.innerHTML = `<h4 class="section-heading text-amber-400 font-extrabold text-sm tracking-wide mb-2">${prettyName}</h4>`;
+                    
+                    // Cast window section click sync listener
+                    sectionContainer.addEventListener('click', () => {
+                        document.querySelectorAll('#sheet-content > div').forEach(el => el.classList.remove('ring-2', 'ring-amber-500'));
+                        sectionContainer.classList.add('ring-2', 'ring-amber-500');
+                        updateCastWindow(activeSong, prettyName);
+                        showToast(`Cast updated: ${prettyName}`);
+                    });
+
                     elements.sheetContent.appendChild(sectionContainer);
                     continue;
                 }
@@ -1817,19 +1873,18 @@
                 if (line.startsWith('.')) {
                     const chordLine = line.slice(1);
                     const nextLine = (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) ? lines[i + 1] : '';
-                    if (nextLine) i++; // consume lyric line paired with this chord line
+                    if (nextLine) i++;
 
                     div.className = 'chord-lyric-pair-line';
-                    div.innerHTML = buildChordLyricPairs(chordLine, nextLine, capoFret, capoSteps, capoDisplayMode);
+                    div.innerHTML = buildChordLyricPairs(chordLine, nextLine, capoFret, capoSteps, capoDisplayMode, currentTransposeOffset);
                 } else {
                     div.innerHTML = `<div class="lyric-below">${line}</div>`;
                 }
-                sectionContainer.appendChild(div)
+                sectionContainer.appendChild(div);
             }
         }
 
-        // Precise Proportional Font Mapping for Chords & Lyrics
-        function buildChordLyricPairs(chordLine, lyricLine, capoFret, capoSteps, mode) {
+        function buildChordLyricPairs(chordLine, lyricLine, capoFret, capoSteps, mode, transposeOffset) {
             if (!lyricLine) {
                 return `<div class="chord-above" style="white-space: pre;">${chordLine}</div>`;
             }
@@ -1857,8 +1912,8 @@
                 let nextChordIndex = (i + 1 < chordsMap.length) ? chordsMap[i + 1].index : lyricLine.length;
                 let chunk = lyricLine.slice(c.index, nextChordIndex);
 
-                let nativeChord = c.text;
-                let capoChord = capoFret ? Chord(nativeChord, capoSteps) : nativeChord;
+                let nativeChord = transposeChord(c.text, transposeOffset);
+                let capoChord = capoFret ? transposeChord(nativeChord, capoSteps) : nativeChord;
 
                 let topHtml = '';
                 if (mode === 'native' || !capoFret) {
@@ -1869,7 +1924,6 @@
                     topHtml = `<div class="chord-above" style="white-space: pre; font-weight:700; color:#f59e0b;">${nativeChord}</div><div class="chord-capo-above" style="white-space: pre; font-weight:700; color:#a855f7;">${capoChord}</div>`;
                 }
 
-                // Added a micro-adjustment transform (translateX(8px)) to correct the leftward proportional font offset
                 html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span style="width: 0; overflow: visible; white-space: nowrap; display: flex; flex-direction: column; transform: translateX(8px);">${topHtml}</span><span class="lyric-below" style="white-space: pre;">${chunk}</span></span>`;
             });
 
@@ -1881,6 +1935,9 @@
             elements.tabSongsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === 'songs' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800'}`;
             elements.tabSetsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === 'sets' ? 'bg-indigo-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800'}`;
             elements.activeTabLabel.textContent = tab === 'songs' ? "Showing All Songs" : "Showing All Sets";
+            
+            document.getElementById('filter-label').textContent = tab === 'songs' ? "Folder:" : "Category:";
+            updateFolderFilterDropdown();
             renderSidebarList(elements.songSearch.value.toLowerCase());
         }
 
@@ -1890,30 +1947,42 @@
         }
 
         function updateFolderFilterDropdown() {
-            const foldersSet = new Set(['MAIN']);
-            loadedSongs.forEach(s => foldersSet.add(s.folderPath || 'MAIN'));
-            
-            const currentVal = elements.folderFilterSelect.value;
-            elements.folderFilterSelect.innerHTML = '<option value="ALL">ALL FOLDERS</option>';
-            Array.from(foldersSet).sort().forEach(f => {
-                const opt = document.createElement('option');
-                opt.value = f;
-                opt.textContent = f;
-                elements.folderFilterSelect.appendChild(opt);
-            });
-            elements.folderFilterSelect.value = foldersSet.has(currentVal) ? currentVal : 'ALL';
+            const filterSelect = elements.folderFilterSelect;
+            const currentVal = filterSelect.value;
+            filterSelect.innerHTML = '<option value="ALL">ALL ' + (activeTab === 'songs' ? 'FOLDERS' : 'CATEGORIES') + '</option>';
 
-            elements.editSongFolderSelect.innerHTML = '';
-            Array.from(foldersSet).sort().forEach(f => {
-                const opt = document.createElement('option');
-                opt.value = f;
-                opt.textContent = f;
-                elements.editSongFolderSelect.appendChild(opt);
-            });
-            const newFolderOpt = document.createElement('option');
-            newFolderOpt.value = 'NEW_FOLDER';
-            newFolderOpt.textContent = '+ Create New Folder...';
-            elements.editSongFolderSelect.appendChild(newFolderOpt);
+            if (activeTab === 'songs') {
+                const foldersSet = new Set(['MAIN']);
+                loadedSongs.forEach(s => foldersSet.add(s.folderPath || 'MAIN'));
+                Array.from(foldersSet).sort().forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f;
+                    opt.textContent = f;
+                    filterSelect.appendChild(opt);
+                });
+
+                elements.editSongFolderSelect.innerHTML = '';
+                Array.from(foldersSet).sort().forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f;
+                    opt.textContent = f;
+                    elements.editSongFolderSelect.appendChild(opt);
+                });
+                const newFolderOpt = document.createElement('option');
+                newFolderOpt.value = 'NEW_FOLDER';
+                newFolderOpt.textContent = '+ Create New Folder...';
+                elements.editSongFolderSelect.appendChild(newFolderOpt);
+            } else {
+                const catsSet = new Set(['MAIN']);
+                loadedSets.forEach(s => catsSet.add(s.category || 'MAIN'));
+                Array.from(catsSet).sort().forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    filterSelect.appendChild(opt);
+                });
+            }
+            filterSelect.value = currentVal;
         }
 
         elements.folderFilterSelect.addEventListener('change', (e) => {
@@ -1931,18 +2000,10 @@
                 backdrop.classList.toggle('hidden');
             });
 
-            // Clicking backdrop closes sidebar on mobile
             backdrop.addEventListener('click', () => {
                 sidebar.classList.add('-translate-x-full');
                 backdrop.classList.add('hidden');
             });
-        }
-
-        // Also auto-close sidebar on mobile when a song or set is clicked
-        // (Inside your renderSongSheet and renderSetSheet functions, add:)
-        if (window.innerWidth < 1024) {
-            sidebar.classList.add('-translate-x-full');
-            backdrop.classList.add('hidden');
         }
         
         function renderSidebarList(query = '') {
@@ -1956,18 +2017,59 @@
                 }).forEach(song => {
                     const li = document.createElement('li');
                     const isActive = activeSong && activeSong.id === song.id;
-                    li.className = `p-3 rounded-xl cursor-pointer transition flex items-center justify-between border ${isActive ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 font-bold' : 'hover:bg-slate-800/60 text-slate-300 border-transparent'}`;
-                    li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${song.title} ${song.capo ? '<span class="text-[10px] bg-purple-500/20 text-purple-300 px-1 rounded ml-1">Capo ' + song.capo + '</span>' : ''}</div><div class="text-xs text-slate-500 font-normal">${song.author || 'Unknown'} <span class="text-[10px] text-amber-500/80 font-mono">(${song.folderPath || 'MAIN'})</span></div></div><span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800">${song.key || '?'}</span>`;
-                    li.addEventListener('click', () => renderSongSheet(song));
+                    const isInSet = currentSet.songTitles.includes(song.title);
+                    li.className = `p-3 rounded-xl transition flex items-center justify-between border ${isActive ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 font-bold' : 'hover:bg-slate-800/60 text-slate-300 border-transparent'}`;
+                    li.innerHTML = `
+                        <div class="truncate pr-2 flex-1 song-click-target cursor-pointer">
+                            <div class="text-sm truncate">${song.title} ${song.capo ? '<span class="text-[10px] bg-purple-500/20 text-purple-300 px-1 rounded ml-1">Capo ' + song.capo + '</span>' : ''}</div>
+                            <div class="text-xs text-slate-500 font-normal">${song.author || 'Unknown'} <span class="text-[10px] text-amber-500/80 font-mono">(${song.folderPath || 'MAIN'})</span></div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800">${song.key || '?'}</span>
+                            <input type="checkbox" class="set-membership-chk w-4 h-4 accent-amber-500 rounded cursor-pointer" ${isInSet ? 'checked' : ''} title="Add to current set">
+                        </div>`;
+                    
+                    li.querySelector('.song-click-target').addEventListener('click', () => {
+                        renderSongSheet(song);
+                        if (window.innerWidth < 1024) {
+                            sidebar.classList.add('-translate-x-full');
+                            backdrop.classList.add('hidden');
+                        }
+                    });
+
+                    li.querySelector('.set-membership-chk').addEventListener('change', (e) => {
+                        e.stopPropagation();
+                        if (e.target.checked) {
+                            if (!currentSet.songTitles.includes(song.title)) {
+                                currentSet.songTitles.push(song.title);
+                                showToast(`Added "${song.title}" to set`);
+                            }
+                        } else {
+                            currentSet.songTitles = currentSet.songTitles.filter(t => t !== song.title);
+                            showToast(`Removed "${song.title}" from set`);
+                        }
+                    });
+
                     elements.songList.appendChild(li);
                 });
             } else {
                 loadedSets.sort((a, b) => a.title.localeCompare(b.title));
-                loadedSets.filter(s => s.title.toLowerCase().includes(query)).forEach(setObj => {
+                loadedSets.filter(s => {
+                    const matchesQuery = s.title.toLowerCase().includes(query);
+                    const matchesCat = selectedFolderFilter === 'ALL' || (s.category || 'MAIN') === selectedFolderFilter;
+                    return matchesQuery && matchesCat;
+                }).forEach(setObj => {
                     const li = document.createElement('li');
                     li.className = 'p-3 rounded-xl cursor-pointer transition flex items-center justify-between border hover:bg-slate-800/60 text-slate-300 border-transparent';
-                    li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${setObj.title}</div><div class="text-xs text-slate-500 font-normal">${setObj.songTitles.length} songs</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>`;
-                    li.addEventListener('click', () => renderSetSheet(setObj));
+                    li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${setObj.title} <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-1 rounded ml-1">${setObj.category || 'MAIN'}</span></div><div class="text-xs text-slate-500 font-normal">${setObj.songTitles.length} songs</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>`;
+                    li.addEventListener('click', () => {
+                        renderSetSheet(setObj);
+                        currentSet = { ...setObj };
+                        if (window.innerWidth < 1024) {
+                            sidebar.classList.add('-translate-x-full');
+                            backdrop.classList.add('hidden');
+                        }
+                    });
                     elements.songList.appendChild(li);
                 });
             }
@@ -1996,7 +2098,6 @@
             elements.floatingMainBtn.addEventListener('click', () => elements.floatingMenu.classList.toggle('hidden'));
             elements.closeFloatingMenu.addEventListener('click', () => elements.floatingMenu.classList.add('hidden'));
 
-            // Editor Tab Switching Logic
             document.querySelectorAll('.editor-tab-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const targetTab = e.currentTarget.getAttribute('data-editors-tab');
@@ -2014,8 +2115,6 @@
             });
         }
 
-        // Transpose Buttons
-        let currentTransposeOffset = 0;
         const transposeUpBtn = document.getElementById('transpose-up');
         const transposeDownBtn = document.getElementById('transpose-down');
         
@@ -2037,69 +2136,72 @@
             });
         }
 
-        // Settings Modal Open/Close wiring
         const settingsBtn = document.getElementById('open-settings-btn');
         const settingsModal = document.getElementById('settings-modal');
         const closeSettingsBtn = document.getElementById('close-settings-btn');
         const saveSettingsBtn = document.getElementById('save-settings-btn');
 
         if (settingsBtn && settingsModal) {
-            settingsBtn.addEventListener('click', () => {
-                settingsModal.classList.remove('hidden');
-            });
+            settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
         }
         if (closeSettingsBtn && settingsModal) {
-            closeSettingsBtn.addEventListener('click', () => {
-                settingsModal.classList.add('hidden');
-            });
+            closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
         }
         if (saveSettingsBtn && settingsModal) {
             saveSettingsBtn.addEventListener('click', () => {
-                // Apply scaling preferences to CSS variables
                 const chordScale = document.getElementById('setting-chord-scale').value;
                 const headingScale = document.getElementById('setting-heading-scale').value;
                 document.documentElement.style.setProperty('--chord-font-scale', chordScale + 'rem');
                 document.documentElement.style.setProperty('--heading-font-scale', headingScale + 'rem');
-                
                 settingsModal.classList.add('hidden');
                 showToast("Settings saved successfully!");
             });
         }
 
-        // Secondary Cast Window Sync Broadcast
         let castWindow = null;
-        function updateCastWindow(song, currentSectionIndex) {
+        function updateCastWindow(song, activeSectionName = '') {
             if (castWindow && !castWindow.closed) {
                 castWindow.postMessage({
                     type: 'OPENSONG_CAST_UPDATE',
                     song: song,
-                    sectionIndex: currentSectionIndex
+                    sectionName: activeSectionName
                 }, '*');
             }
         }
-        // Cast / Secondary Display Button
+
         const castBtn = document.getElementById('cast-display-btn');
         if (castBtn) {
             castBtn.addEventListener('click', () => {
                 showToast("Opening stage presentation window...");
-                const win = window.open('', '_blank', 'width=1024,height=768');
-                if (win) {
-                    win.document.write(`
+                castWindow = window.open('', '_blank', 'width=1024,height=768');
+                if (castWindow) {
+                    castWindow.document.write(`
                         <html>
                         <head><title>OpenSongApp Stage Cast</title>
                         <script src="https://cdn.tailwindcss.com"><\/script></head>
                         <body class="bg-slate-950 text-white flex flex-col items-center justify-center h-screen p-8 text-center">
-                            <h1 class="text-4xl font-extrabold text-amber-400 mb-4" id="cast-title">Stage Presentation View</h1>
-                            <div class="text-2xl text-slate-300 max-w-3xl whitespace-pre-wrap leading-relaxed" id="cast-content">${activeSong ? activeSong.title : 'Waiting for active song...'}</div>
+                            <h1 class="text-4xl font-extrabold text-amber-400 mb-2" id="cast-title">${activeSong ? activeSong.title : 'Stage Presentation View'}</h1>
+                            <h2 class="text-xl text-indigo-300 font-semibold mb-6" id="cast-section"></h2>
+                            <div class="text-2xl text-slate-300 max-w-4xl whitespace-pre-wrap leading-relaxed overflow-y-auto max-h-[70vh]" id="cast-content">${activeSong ? activeSong.lyrics : 'Waiting for active song...'}</div>
+                            <script>
+                                window.addEventListener('message', (event) => {
+                                    if (event.data && event.data.type === 'OPENSONG_CAST_UPDATE') {
+                                        document.getElementById('cast-title').textContent = event.data.song.title;
+                                        if (event.data.sectionName) {
+                                            document.getElementById('cast-section').textContent = event.data.sectionName;
+                                        }
+                                        document.getElementById('cast-content').textContent = event.data.song.lyrics;
+                                    }
+                                });
+                            <\/script>
                         </body>
                         </html>
                     `);
-                    win.document.close();
+                    castWindow.document.close();
+                    if (activeSong) updateCastWindow(activeSong);
                 }
             });
         }
-
-    
     </script>
 </body>
 </html>
