@@ -37,9 +37,9 @@
         .chord-lyric-pair-line {
             display: flex;
             flex-wrap: wrap;
-            row-gap: 0.75rem;
+            row-gap: 0.5rem;
             column-gap: 0.35rem;
-            line-height: 1.0;
+            line-height: 1.4;
             max-width: 100%;
             word-break: break-word;
         }
@@ -51,9 +51,6 @@
             position: relative;
         }
 
-        .chord-above:empty, .chord-capo-above:empty {
-            display: none;
-        }
         .chord-above {
             font-weight: 700;
             color: #f59e0b;
@@ -62,6 +59,7 @@
             white-space: pre;
             font-size: var(--chord-font-scale, 1rem);
         }
+
         .chord-capo-above {
             font-weight: 700;
             color: #a855f7;
@@ -77,6 +75,10 @@
             word-break: break-word;
         }
 
+        .chord-above:empty, .chord-capo-above:empty {
+            display: none;
+        }
+        
         .section-heading {
             font-size: var(--heading-font-scale, 0.85rem);
             font-weight: 800;
@@ -128,7 +130,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0h</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0i</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1623,21 +1625,24 @@
             if (!rawLyrics) return;
             const lines = rawLyrics.split('\n');
             let sectionContainer = null;
+            const capoSteps = capoFret ? -parseInt(capoFret, 10) : 0;
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 const trimmed = line.trim();
+                
                 if (trimmed.startsWith('[')) {
                     sectionContainer = document.createElement('div');
-                    sectionContainer.className = 'p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1';
+                    sectionContainer.className = 'p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2';
                     const prettyName = formatSectionHeading(trimmed);
-                    sectionContainer.innerHTML = `<h4 class="section-heading text-amber-400">${prettyName}</h4>`;
+                    sectionContainer.innerHTML = `<h4 class="section-heading text-amber-400 font-extrabold text-sm tracking-wide mb-2">${prettyName}</h4>`;
                     elements.sheetContent.appendChild(sectionContainer);
                     continue;
                 }
+                
                 if (!sectionContainer) {
                     sectionContainer = document.createElement('div');
-                    sectionContainer.className = 'p-3 rounded-xl bg-slate-900/40 border border-slate-800 space-y-1';
+                    sectionContainer.className = 'p-4 rounded-xl bg-slate-900/40 border border-slate-800 space-y-2';
                     elements.sheetContent.appendChild(sectionContainer);
                 }
 
@@ -1646,19 +1651,65 @@
 
                 if (line.startsWith('.')) {
                     const chordLine = line.slice(1);
-                    div.innerHTML = `<div class="chord-above">${chordLine}</div>`;
-                    if (capoFret && capoDisplayMode === 'both') {
-                        const transposedChordLine = chordLine.split(' ').map(c => c ? transposeChord(c, -parseInt(capoFret, 10)) : '').join(' ');
-                        div.innerHTML += `<div class="chord-capo-above">Capo: ${transposedChordLine}</div>`;
-                    }
-                } else if (capoFret && capoDisplayMode === 'capo' && line.match(/^[A-G]/)) {
-                    const transposedChordLine = line.split(' ').map(c => c ? transposeChord(c, -parseInt(capoFret, 10)) : '').join(' ');
-                    div.innerHTML = `<div class="chord-capo-above">${transposedChordLine}</div>`;
+                    const nextLine = (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) ? lines[i + 1] : '';
+                    if (nextLine) i++; // consume lyric line paired with this chord line
+
+                    div.className = 'chord-lyric-pair-line';
+                    
+                    // Simple intelligent pairing parser for proportional font layout
+                    div.innerHTML = buildChordLyricPairs(chordLine, nextLine, capoFret, capoSteps, capoDisplayMode);
                 } else {
-                    div.innerHTML = `<div class="lyric-below whitespace-pre-wrap">${line}</div>`;
+                    div.innerHTML = `<div class="lyric-below">${line}</div>`;
                 }
                 sectionContainer.appendChild(div);
             }
+        }
+
+        function buildChordLyricPairs(chordLine, lyricLine, capoFret, capoSteps, mode) {
+            // If no lyrics, just output the chord line directly
+            if (!lyricLine) {
+                return `<div class="chord-above">${chordLine}</div>`;
+            }
+
+            // Extract chords with their index positions
+            const chordRegex = /([A-G][b#]?[^\s]*)/g;
+            let match;
+            let chordsMap = [];
+            while ((match = chordRegex.exec(chordLine)) !== null) {
+                chordsMap.push({ text: match[1], index: match.index });
+            }
+
+            if (chordsMap.length === 0) return `<div class="lyric-below">${lyricLine}</div>`;
+
+            let html = '';
+            let lastIdx = 0;
+
+            chordsMap.forEach((c, idx) => {
+                // Text chunk before this chord
+                let chunk = lyricLine.slice(lastIdx, c.index);
+                let nativeChord = c.text;
+                let capoChord = capoFret ? transposeChord(nativeChord, capoSteps) : nativeChord;
+
+                let topHtml = '';
+                if (mode === 'native' || !capoFret) {
+                    topHtml = `<span class="chord-above">${nativeChord}</span>`;
+                } else if (mode === 'capo') {
+                    topHtml = `<span class="chord-capo-above">${capoChord}</span>`;
+                } else if (mode === 'both') {
+                    topHtml = `<span class="chord-above">${nativeChord}</span><span class="chord-capo-above">${capoChord}</span>`;
+                }
+
+                html += `<span class="chord-lyric-pair"><span class="flex">${topHtml}</span><span class="lyric-below">${chunk}</span></span>`;
+                lastIdx = c.index;
+            });
+
+            // Remaining lyric text after the last chord
+            let trailing = lyricLine.slice(lastIdx);
+            if (trailing) {
+                html += `<span class="chord-lyric-pair"><span class="chord-above"></span><span class="lyric-below">${trailing}</span></span>`;
+            }
+
+            return html;
         }
 
         function switchSidebarTab(tab) {
