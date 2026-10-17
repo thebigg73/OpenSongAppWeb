@@ -144,7 +144,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.1w</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.1y</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -202,6 +202,8 @@
     <div class="flex-1 flex overflow-hidden relative">
 
         <!-- Left Drawer / Songs & Sets Sidebar -->
+        <!-- Mobile Sidebar Backdrop Overlay -->
+        <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-10 hidden lg:hidden transition-opacity"></div>
         <aside id="sidebar" class="w-80 bg-slate-900/95 backdrop-blur-md border-r border-slate-800 flex flex-col transition-all duration-300 absolute lg:relative inset-y-0 left-0 z-10 -translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none">
             
             <div class="p-2 bg-slate-950 border-b border-slate-800 flex rounded-lg m-2 gap-1">
@@ -1744,7 +1746,7 @@
                 return `<div class="chord-above" style="white-space: pre;">${chordLine}</div>`;
             }
 
-            // Normalize non-breaking spaces in chord line to standard spaces so regex indices match properly
+            // Normalize non-breaking spaces to standard spaces for accurate index matching
             const normalizedChordLine = chordLine.replace(/\xA0/g, ' ');
             const chordRegex = /([A-G][b#]?[^\s]*)/g;
             let match;
@@ -1753,19 +1755,22 @@
                 chordsMap.push({ text: match[1], index: match.index });
             }
 
-            if (chordsMap.length === 0) return `<div class="lyric-below" style="white-space: pre-wrap;">${lyricLine}</div>`;
+            if (chordsMap.length === 0) {
+                return `<div class="lyric-below" style="white-space: pre-wrap;">${lyricLine}</div>`;
+            }
 
             let html = '';
-            let lastIdx = 0;
 
-            chordsMap.forEach((c) => {
-                let chunkStart = lastIdx;
-                let chunkEnd = c.index;
-                let chunk = lyricLine.slice(chunkStart, chunkEnd);
-                
-                if (chunkEnd > lyricLine.length) {
-                    chunk = '';
-                }
+            // 1. Handle any leading text before the very first chord starts
+            if (chordsMap[0].index > 0) {
+                let leadingText = lyricLine.slice(0, chordsMap[0].index);
+                html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span class="chord-above" style="visibility: hidden;">&nbsp;</span><span class="lyric-below" style="white-space: pre-wrap;">${leadingText}</span></span>`;
+            }
+
+            // 2. Loop through each chord and slice the lyric chunk up to the next chord index
+            chordsMap.forEach((c, i) => {
+                let nextChordIndex = (i + 1 < chordsMap.length) ? chordsMap[i + 1].index : lyricLine.length;
+                let chunk = lyricLine.slice(c.index, nextChordIndex);
 
                 let nativeChord = c.text;
                 let capoChord = capoFret ? transposeChord(nativeChord, capoSteps) : nativeChord;
@@ -1779,19 +1784,9 @@
                     topHtml = `<div class="chord-above" style="white-space: pre; font-weight:700; color:#f59e0b;">${nativeChord}</div><div class="chord-capo-above" style="white-space: pre; font-weight:700; color:#a855f7;">${capoChord}</div>`;
                 }
 
-                // Preserve exact spacing cell width using inline-block and pre-wrap formatting
+                // Render each chord-lyric chunk as a tight inline column pair
                 html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span class="flex flex-col">${topHtml}</span><span class="lyric-below" style="white-space: pre-wrap;">${chunk}</span></span>`;
-                lastIdx = c.index;
             });
-
-            let trailing = lyricLine.slice(lastIdx);
-            if (trailing) {
-                let spacerHtml = `<div class="chord-above" style="white-space: pre;">&nbsp;</div>`;
-                if (mode === 'both' && capoFret) {
-                    spacerHtml += `<div class="chord-capo-above" style="white-space: pre;">&nbsp;</div>`;
-                }
-                html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span class="flex flex-col">${spacerHtml}</span><span class="lyric-below" style="white-space: pre-wrap;">${trailing}</span></span>`;
-            }
 
             return html;
         }
@@ -1841,6 +1836,30 @@
             renderSidebarList(elements.songSearch.value.toLowerCase());
         });
 
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
+
+        if (toggleSidebarBtn && sidebar && backdrop) {
+            toggleSidebarBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('-translate-x-full');
+                backdrop.classList.toggle('hidden');
+            });
+
+            // Clicking backdrop closes sidebar on mobile
+            backdrop.addEventListener('click', () => {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+            });
+        }
+
+        // Also auto-close sidebar on mobile when a song or set is clicked
+        // (Inside your renderSongSheet and renderSetSheet functions, add:)
+        if (window.innerWidth < 1024) {
+            sidebar.classList.add('-translate-x-full');
+            backdrop.classList.add('hidden');
+        }
+        
         function renderSidebarList(query = '') {
             elements.songList.innerHTML = '';
             if (activeTab === 'songs') {
