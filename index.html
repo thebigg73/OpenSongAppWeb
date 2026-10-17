@@ -678,6 +678,7 @@
                 const hasStoredFolder = await checkStoredDirectoryHandle();
                 if (hasStoredFolder) {
                     elements.reconnectFolderContainer.classList.remove('hidden');
+                    elements.modal.classList.remove('hidden');
                 } else {
                     elements.modal.classList.remove('hidden');
                 }
@@ -737,7 +738,7 @@
             elements.modalProgressContainer.classList.remove('hidden');
             elements.modalActionsContainer.classList.add('hidden');
             try {
-                const opts = { mode: 'read' };
+                const opts = { mode: 'readwrite' };
                 if ((await rootDirectoryHandle.queryPermission(opts)) !== 'granted') {
                     if ((await rootDirectoryHandle.requestPermission(opts)) !== 'granted') {
                         throw new Error("Permission denied");
@@ -869,9 +870,6 @@
         }
 
         function getCapoTransposedChord(chord, capoFret) {
-            // Capo transposition: if capo is on fret 2, playing shape chords means subtracting 2 semitones to get actual sound, OR vice versa.
-            // In OpenSong convention, capo chords are the chord shapes played relative to capo. If native is C with Capo 2, shape is Bb or similar.
-            // Let's implement standard capo shape calculation (-capoFret).
             return transposeChord(chord, -parseInt(capoFret, 10));
         }
 
@@ -1061,7 +1059,7 @@
         elements.modalSelectBtn.addEventListener('click', async () => {
             if ('showDirectoryPicker' in window) {
                 try {
-                    const handle = await window.showDirectoryPicker();
+                    const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
                     rootDirectoryHandle = handle;
                     await saveDirectoryHandle(handle);
                     await processRootDirectory(handle);
@@ -1188,6 +1186,32 @@
             } catch (e) { return null; }
         }
 
+        // Automatic Disk Writing helper
+        async function writeSongToDisk(songObj) {
+            if (!rootDirectoryHandle) return false;
+            try {
+                const opts = { mode: 'readwrite' };
+                if ((await rootDirectoryHandle.queryPermission(opts)) !== 'granted') {
+                    if ((await rootDirectoryHandle.requestPermission(opts)) !== 'granted') return false;
+                }
+                const songsDir = await rootDirectoryHandle.getDirectoryHandle('Songs', { create: true });
+                let targetDir = songsDir;
+                if (songObj.folderPath && songObj.folderPath !== 'MAIN') {
+                    for (const sf of songObj.folderPath.split('/')) {
+                        targetDir = await targetDir.getDirectoryHandle(sf, { create: true });
+                    }
+                }
+                const fileHandle = await targetDir.getFileHandle(songObj.filename, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(generateOpenSongXML(songObj));
+                await writable.close();
+                return true;
+            } catch (err) {
+                console.error("Error writing song to disk:", err);
+                return false;
+            }
+        }
+
         elements.newSongBtn.addEventListener('click', () => {
             elements.editSongTitleInput.value = '';
             elements.editSongAuthorInput.value = '';
@@ -1210,13 +1234,14 @@
 
         elements.closeSongEditor.addEventListener('click', () => elements.songEditorModal.classList.add('hidden'));
 
-        elements.saveSongBtn.addEventListener('click', () => {
+        elements.saveSongBtn.addEventListener('click', async () => {
             const newSongData = {
                 id: activeSong ? activeSong.id : 'song_' + Math.random().toString(36).substring(2, 8),
                 filename: elements.editSongFilenameInput.value || 'song.xml',
                 folderPath: elements.editSongFolderSelect.value,
                 title: elements.editSongTitleInput.value || 'Untitled',
                 author: elements.editSongAuthorInput.value,
+                copyright: elements.editSongCopyrightInput.value,
                 key: elements.editSongKeyInput.value,
                 capo: elements.editSongCapoInput.value,
                 tempo: elements.editSongTempoInput.value,
@@ -1228,7 +1253,13 @@
             updateFolderFilterDropdown();
             renderSidebarList();
             renderSongSheet(newSongData);
-            showToast("Song saved successfully!");
+
+            const written = await writeSongToDisk(newSongData);
+            if (written) {
+                showToast("Song saved and written to disk!");
+            } else {
+                showToast("Song saved in memory (Disk write skipped/denied).");
+            }
         });
 
         // Floating Capo Button Cycling Logic
@@ -1332,18 +1363,14 @@
                 const div = document.createElement('div');
                 div.className = 'py-0.5 space-y-1';
 
-                // Check if line contains chords (OpenSong convention starts with '.' or has chord formatting)
                 if (line.startsWith('.') || capoDisplayMode === 'both' && capoFret) {
-                    // We can parse chords and lyrics
                     const chordLine = line.startsWith('.') ? line.slice(1) : line;
                     div.innerHTML = `<div class="chord-above">${chordLine}</div>`;
                     if (capoFret && capoDisplayMode === 'both') {
-                        // Transpose chords for capo line
                         const transposedChordLine = chordLine.split(' ').map(c => c ? transposeChord(c, -parseInt(capoFret, 10)) : '').join(' ');
                         div.innerHTML += `<div class="chord-capo-above">Capo: ${transposedChordLine}</div>`;
                     }
                 } else if (capoFret && capoDisplayMode === 'capo' && line.match(/^[A-G]/)) {
-                    // Display capo transposed chords
                     const transposedChordLine = line.split(' ').map(c => c ? transposeChord(c, -parseInt(capoFret, 10)) : '').join(' ');
                     div.innerHTML = `<div class="chord-capo-above">${transposedChordLine}</div>`;
                 } else {
