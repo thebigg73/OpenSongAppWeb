@@ -140,7 +140,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.3g</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.3h</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -161,40 +161,39 @@
         </div>
 
         <!-- Top Control Bar Container -->
-        <div class="flex items-center gap-2 overflow-x-auto py-2 shrink-0 no-scrollbar">
-            <div class="hidden sm:flex items-center gap-1 bg-slate-800/80 p-1 rounded-lg border border-slate-700">
-                <button id="new-song-btn" class="px-2 py-1 text-xs font-bold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 rounded transition flex items-center gap-1">
-                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Song
-                </button>
-                <button id="new-set-btn" class="px-2 py-1 text-xs font-bold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 rounded transition flex items-center gap-1">
-                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Set
-                </button>
-                <button id="save-active-set-btn" class="px-2 py-1 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded transition flex items-center gap-1">
-                    <i data-lucide="save" class="w-3.5 h-3.5"></i> Save Set
-                </button>
-                <button id="open-import-modal-btn" class="px-2 py-1 text-xs font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 rounded transition flex items-center gap-1" title="Import / Export Archives">
-                    <i data-lucide="repeat" class="w-3.5 h-3.5"></i> Import/Export
-                </button>
-            </div>
-
-            <div class="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700">
-                <button id="transpose-down" class="px-2 py-1 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700 rounded transition">-1</button>
-                <span id="transpose-offset" class="px-2 text-xs font-mono font-bold text-amber-400">0</span>
-                <button id="transpose-up" class="px-2 py-1 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700 rounded transition">+1</button>
-            </div>
-
-            <button id="cast-display-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Open Stage Secondary Display Window">
-                <i data-lucide="monitor-play" class="w-5 h-5"></i>
+        <!-- Updated Top Control Bar (New/Save Set moved to sidebar) -->
+    <div class="flex items-center gap-2 overflow-x-auto py-2 shrink-0 no-scrollbar">
+        <div class="hidden sm:flex items-center gap-1 bg-slate-800/80 p-1 rounded-lg border border-slate-700">
+            <button id="new-song-btn" class="px-2 py-1 text-xs font-bold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 rounded transition flex items-center gap-1">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Song
             </button>
-
-            <button id="open-settings-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Application Settings">
-                <i data-lucide="settings" class="w-5 h-5"></i>
-            </button>
-
-            <button id="change-folder-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Change Storage Directory">
-                <i data-lucide="folder-open" class="w-5 h-5"></i>
+            <button id="open-import-modal-btn" class="px-2 py-1 text-xs font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 rounded transition flex items-center gap-1" title="Import / Export Archives">
+                <i data-lucide="repeat" class="w-3.5 h-3.5"></i> Import/Export
             </button>
         </div>
+
+        <div class="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700">
+            <button id="transpose-down" class="px-2 py-1 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700 rounded transition">-1</button>
+            <button id="transpose-up" class="px-2 py-1 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700 rounded transition">+1</button>
+        </div>
+
+        <!-- Save Key Icon (Appears when transposed) -->
+        <button id="save-key-btn" class="hidden p-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg transition border border-amber-500/40" title="Save Transposed Key to Song">
+            <i data-lucide="key" class="w-5 h-5"></i>
+        </button>
+
+        <button id="cast-display-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Open Stage Secondary Display Window">
+            <i data-lucide="monitor-play" class="w-5 h-5"></i>
+        </button>
+
+        <button id="open-settings-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Application Settings">
+            <i data-lucide="settings" class="w-5 h-5"></i>
+        </button>
+
+        <button id="change-folder-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Change Storage Directory">
+            <i data-lucide="folder-open" class="w-5 h-5"></i>
+        </button>
+    </div>
     </header>
 
     <!-- Main Workspace Layout -->
@@ -204,12 +203,21 @@
         <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-10 hidden lg:hidden transition-opacity"></div>
         <aside id="sidebar" class="w-80 bg-slate-900/95 backdrop-blur-md border-r border-slate-800 flex flex-col transition-all duration-300 absolute lg:relative inset-y-0 left-0 z-10 -translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none">
             
-            <div class="p-2 bg-slate-950 border-b border-slate-800 flex rounded-lg m-2 gap-1">
+            <div id="sidebar-header-action" class="p-2 bg-slate-950 border-b border-slate-800 flex rounded-lg m-2 gap-1">
                 <button id="tab-songs-btn" class="flex-1 py-1.5 text-xs font-bold rounded-md bg-amber-500 text-slate-950 flex items-center justify-center gap-1.5 transition">
                     <i data-lucide="music-2" class="w-3.5 h-3.5"></i> Songs <span id="tab-songs-count" class="opacity-75 font-normal">(0)</span>
                 </button>
                 <button id="tab-sets-btn" class="flex-1 py-1.5 text-xs font-bold rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 flex items-center justify-center gap-1.5 transition">
                     <i data-lucide="layers" class="w-3.5 h-3.5"></i> Sets <span id="tab-sets-count" class="opacity-75 font-normal">(0)</span>
+                </button>
+            </div>
+            <!-- Dynamic Sidebar Action Sub-bar (e.g. New Set / Save Set buttons when Sets tab is active) -->
+            <div id="sidebar-sets-toolbar" class="hidden px-3 pb-2 border-b border-slate-800 flex gap-2">
+                <button id="sidebar-new-set-btn" class="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1 transition">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Set
+                </button>
+                <button id="sidebar-save-set-btn" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1 transition">
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i> Save Set
                 </button>
             </div>
 
@@ -1798,28 +1806,100 @@
             updateCastWindow(song);
         }
 
+        // Drag and Drop & Swipe-to-Remove for Set Songs
         function renderSetSheet(setObj) {
             activeSet = setObj;
             activeSong = null;
+            currentSet = JSON.parse(JSON.stringify(setObj)); // Clone for tracking changes
             elements.emptyState.classList.add('hidden');
             elements.songSheet.classList.add('hidden');
             document.getElementById('set-view-sheet').classList.remove('hidden');
             elements.setTitle.textContent = setObj.title;
             document.getElementById('set-count-info').textContent = `${setObj.songTitles.length} songs in this set`;
 
-            elements.setSongsContainer.innerHTML = '';
+            const container = elements.setSongsContainer;
+            container.innerHTML = '';
+
             setObj.songTitles.forEach((t, idx) => {
                 const foundSong = loadedSongs.find(s => s.title.toLowerCase() === t.toLowerCase());
-                const div = document.createElement('div');
-                div.className = 'p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between hover:border-amber-500/40 cursor-pointer transition';
-                div.innerHTML = `<div class="flex items-center space-x-3"><span class="text-xs font-mono text-slate-500">${idx + 1}</span><span class="font-bold text-slate-200 text-sm">${t}</span></div><span class="text-xs text-amber-400 font-semibold">${foundSong ? (foundSong.key || '') : 'Not Found'}</span>`;
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between cursor-grab hover:border-indigo-500/40 transition select-none';
+                itemDiv.draggable = true;
+                itemDiv.dataset.index = idx;
+
+                itemDiv.innerHTML = `
+                    <div class="flex items-center space-x-3 flex-1 truncate">
+                        <i data-lucide="grip-vertical" class="w-4 h-4 text-slate-600"></i>
+                        <span class="text-xs font-mono text-slate-500">${idx + 1}</span>
+                        <span class="font-bold text-slate-200 text-sm truncate">${t}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs text-amber-400 font-semibold">${foundSong ? (foundSong.key || '') : 'Not Found'}</span>
+                        <button class="text-slate-500 hover:text-red-400 transition remove-set-song"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                `;
+
+                // Click title to open song
                 if (foundSong) {
-                    div.addEventListener('click', () => renderSongSheet(foundSong, setObj, idx));
+                    itemDiv.addEventListener('click', (e) => {
+                        if (e.target.closest('button') || e.target.closest('svg')) return;
+                        renderSongSheet(foundSong, setObj, idx);
+                    });
                 }
-                elements.setSongsContainer.appendChild(div);
+
+                // Swipe / Remove song
+                itemDiv.querySelector('.remove-set-song').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    activeSet.songTitles.splice(idx, 1);
+                    checkSetDirtyState();
+                    renderSetSheet(activeSet);
+                    showToast(`Removed "${t}" from set`);
+                });
+
+                // Drag and Drop Reordering Handlers
+                itemDiv.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', idx);
+                    itemDiv.classList.add('opacity-50', 'border-indigo-500');
+                });
+                itemDiv.addEventListener('dragend', () => {
+                    itemDiv.classList.remove('opacity-50', 'border-indigo-500');
+                });
+                itemDiv.addEventListener('dragover', (e) => e.preventDefault());
+                itemDiv.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                    const toIdx = idx;
+                    if (fromIdx !== toIdx) {
+                        const moved = activeSet.songTitles.splice(fromIdx, 1)[0];
+                        activeSet.songTitles.splice(toIdx, 0, moved);
+                        checkSetDirtyState();
+                        renderSetSheet(activeSet);
+                    }
+                });
+
+                container.appendChild(itemDiv);
             });
+            lucide.createIcons();
         }
 
+        function checkSetDirtyState() {
+            const isChanged = JSON.stringify(activeSet.songTitles) !== JSON.stringify(currentSet.songTitles);
+            const saveBtn = document.getElementById('edit-set-save-indicator');
+            if (isChanged && !saveBtn) {
+                // Show dynamic save icon in set header if modified
+                const headerActions = document.querySelector('#set-view-sheet .flex.items-center.gap-2');
+                if (headerActions && !document.getElementById('dynamic-save-set-btn')) {
+                    const btn = document.createElement('button');
+                    btn.id = 'dynamic-save-set-btn';
+                    btn.className = 'px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition animate-pulse';
+                    btn.innerHTML = '<i data-lucide="save" class="w-3.5 h-3.5"></i> Save Changes';
+                    btn.onclick = () => saveActiveSetToFile(activeSet);
+                    headerActions.prepend(btn);
+                    lucide.createIcons();
+                }
+            }
+        }
+        
         function formatSectionHeading(tag) {
             if (!tag) return '';
             const clean = tag.replace(/[\[\]]/g, '').trim().toUpperCase();
@@ -1953,12 +2033,19 @@
             return html;
         }
         
+        // Sidebar Tab Switching & Sets Toolbar Toggle
         function switchSidebarTab(tab) {
             activeTab = tab;
             elements.tabSongsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === 'songs' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800'}`;
             elements.tabSetsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === 'sets' ? 'bg-indigo-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800'}`;
             elements.activeTabLabel.textContent = tab === 'songs' ? "Showing All Songs" : "Showing All Sets";
             
+            const setsToolbar = document.getElementById('sidebar-sets-toolbar');
+            if (setsToolbar) {
+                if (tab === 'sets') setsToolbar.classList.remove('hidden');
+                else setsToolbar.classList.add('hidden');
+            }
+
             document.getElementById('filter-label').textContent = tab === 'songs' ? "Folder:" : "Category:";
             updateFolderFilterDropdown();
             renderSidebarList(elements.songSearch.value.toLowerCase());
@@ -2145,17 +2232,18 @@
         };
 
         // Transpose Handlers
+        // Transposition & Key Saving
         const transposeUpBtn = document.getElementById('transpose-up');
         const transposeDownBtn = document.getElementById('transpose-down');
-        const saveKeyBtn = document.getElementById('save-key-btn'); // Add this button next to transpose controls if desired
+        const saveKeyBtn = document.getElementById('save-key-btn');
 
         if (transposeUpBtn) {
             transposeUpBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (!activeSong) return;
                 activeSong.transposeOffset = ((activeSong.transposeOffset || 0) + 1) % 12;
-                updateTransposeUI();
-                renderSongSheet(activeSong);
+                if (saveKeyBtn) saveKeyBtn.classList.remove('hidden');
+                renderSongSheet(activeSong, activeSet, activeSetSongIndex, true);
             });
         }
 
@@ -2164,8 +2252,8 @@
                 e.stopPropagation();
                 if (!activeSong) return;
                 activeSong.transposeOffset = ((activeSong.transposeOffset || 0) - 1 + 12) % 12;
-                updateTransposeUI();
-                renderSongSheet(activeSong);
+                if (saveKeyBtn) saveKeyBtn.classList.remove('hidden');
+                renderSongSheet(activeSong, activeSet, activeSetSongIndex, true);
             });
         }
 
@@ -2177,6 +2265,22 @@
             }
         }
 
+        if (saveKeyBtn) {
+            saveKeyBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (!activeSong || !activeSong.transposeOffset) return;
+                const newKey = transposeChord(activeSong.key || 'C', activeSong.transposeOffset);
+                activeSong.key = newKey;
+                activeSong.transposeOffset = 0;
+                saveKeyBtn.classList.add('hidden');
+                
+                addOrUpdateSong(activeSong);
+                renderSongSheet(activeSong);
+                const saved = await writeSongToDisk(activeSong);
+                showToast(saved ? `Key updated and saved as ${newKey}` : `Key updated to ${newKey}`);
+            });
+        }
+        
         // Permanently commit transposed key to song file
         async function commitTransposedKey() {
             if (!activeSong || !activeSong.transposeOffset) return;
@@ -2254,7 +2358,8 @@
             };
         }
 
-        function updateCastWindow(song, sectionIndex = 0) {
+        // Conditional Toast for casting
+        function updateCastWindow(song, sectionIndex = 0, isManualClick = false) {
             if (castWindow && !castWindow.closed && song) {
                 const extracted = extractSectionContent(song.lyrics, sectionIndex);
                 castWindow.postMessage({
@@ -2264,6 +2369,9 @@
                     lyrics: extracted.content,
                     settings: castSettings
                 }, '*');
+                if (isManualClick) {
+                    showToast(`Casting: ${extracted.heading}`);
+                }
             }
         }
 
