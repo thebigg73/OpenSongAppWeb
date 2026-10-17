@@ -140,7 +140,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.3i</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4b</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1746,10 +1746,14 @@
                 document.getElementById('set-navigation-banner').classList.add('hidden');
             }
 
+            // Calculate current transposed key in real-time
+            const currentOffset = song.transposeOffset || 0;
+            const displayedKey = currentOffset !== 0 ? transposeChord(song.key || 'C', currentOffset) : (song.key || 'C');
+
             elements.sheetTitle.textContent = song.title;
             elements.sheetAuthor.textContent = song.author || '';
             elements.sheetFolderPath.textContent = song.folderPath || 'MAIN';
-            elements.sheetKeyBadge.textContent = `Key: ${song.key || 'C'}`;
+            elements.sheetKeyBadge.textContent = `Key: ${displayedKey}`;
             
             if (song.capo) {
                 elements.sheetCapoBadge.textContent = `Capo: ${song.capo}`;
@@ -1760,7 +1764,7 @@
 
             elements.currentSongTitle.textContent = song.title;
             elements.currentSongAuthor.textContent = song.author || '';
-            elements.metaKey.textContent = song.key || 'C';
+            elements.metaKey.textContent = displayedKey;
             elements.metaTempo.textContent = song.tempo || '--';
 
             updateFloatingCapoButtonState();
@@ -1769,7 +1773,7 @@
                 elements.sheetContent.innerHTML = `<div class="w-full h-[75vh] bg-slate-900 border border-slate-800 rounded-xl overflow-hidden"><embed src="${song.pdfUrl}" type="application/pdf" width="100%" height="100%"/></div>`;
                 elements.floatingCapoBtn.classList.add('hidden');
             } else {
-                renderSongLyrics(song.lyrics, song.capo);
+                renderSongLyrics(song.lyrics, song.capo, currentOffset);
             }
             updateCastWindow(song);
         }
@@ -1897,7 +1901,7 @@
             return tag.replace(/[\[\]]/g, '').trim();
         }
 
-        function renderSongLyrics(rawLyrics, capoFret) {
+        function renderSongLyrics(rawLyrics, capoFret, transposeOffset = 0) {
             elements.sheetContent.innerHTML = '';
             if (!rawLyrics) return;
             const lines = rawLyrics.split('\n');
@@ -1918,12 +1922,10 @@
                     const prettyName = formatSectionHeading(trimmed);
                     sectionContainer.innerHTML = `<h4 class="section-heading text-amber-400 font-extrabold text-sm tracking-wide mb-2">${prettyName}</h4>`;
                     
-                    // Cast window exact section content sync
                     sectionContainer.addEventListener('click', () => {
                         document.querySelectorAll('#sheet-content > div').forEach(el => el.classList.remove('ring-2', 'ring-amber-500'));
                         sectionContainer.classList.add('ring-2', 'ring-amber-500');
                         updateCastWindow(activeSong, thisSectionIdx);
-                        showToast(`Casting: ${prettyName}`);
                     });
 
                     elements.sheetContent.appendChild(sectionContainer);
@@ -1947,7 +1949,7 @@
                     if (nextLine) i++;
 
                     div.className = 'chord-lyric-pair-line';
-                    div.innerHTML = buildChordLyricPairs(chordLine, nextLine, capoFret, capoSteps, capoDisplayMode, currentTransposeOffset);
+                    div.innerHTML = buildChordLyricPairs(chordLine, nextLine, capoFret, capoSteps, capoDisplayMode, transposeOffset);
                 } else {
                     div.innerHTML = `<div class="lyric-below">${line}</div>`;
                 }
@@ -2264,13 +2266,17 @@
             saveKeyBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (!activeSong || !activeSong.transposeOffset) return;
+                
+                // Calculate new permanent key
                 const newKey = transposeChord(activeSong.key || 'C', activeSong.transposeOffset);
                 activeSong.key = newKey;
-                activeSong.transposeOffset = 0;
+                activeSong.transposeOffset = 0; // Reset temporary offset
                 saveKeyBtn.classList.add('hidden');
                 
                 addOrUpdateSong(activeSong);
-                renderSongSheet(activeSong);
+                renderSidebarList(elements.songSearch.value.toLowerCase()); // Refresh song menu list
+                renderSongSheet(activeSong, activeSet, activeSetSongIndex); // Refresh sheet view
+                
                 const saved = await writeSongToDisk(activeSong);
                 showToast(saved ? `Key updated and saved as ${newKey}` : `Key updated to ${newKey}`);
             });
