@@ -821,7 +821,6 @@
             modalSelectBtn: document.getElementById('modal-select-folder-btn'),
             fallbackInput: document.getElementById('fallback-folder-input'),
             newSongBtn: document.getElementById('new-song-btn'),
-            newSetBtn: document.getElementById('new-set-btn'),
             saveActiveSetBtn: document.getElementById('save-active-set-btn'),
             editSongBtn: document.getElementById('edit-song-btn'),
 
@@ -1645,11 +1644,6 @@
             elements.songEditorModal.classList.remove('hidden');
         });
 
-        elements.newSetBtn.addEventListener('click', () => {
-            currentSet = { category: 'MAIN', title: 'New Set', filename: 'New Set', songTitles: [] };
-            showToast("New set created. Select checkboxes next to songs to add them.");
-            renderSidebarList();
-        });
 
         elements.saveActiveSetBtn.addEventListener('click', async () => {
             const setName = prompt("Enter Set Name:", currentSet.title || "My Set");
