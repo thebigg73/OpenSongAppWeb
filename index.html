@@ -722,7 +722,7 @@
             settingHeadingScaleSlider: document.getElementById('setting-heading-scale-slider'),
             settingHeadingScaleLabel: document.getElementById('setting-heading-scale-label'),
             settingChordScaleSlider: document.getElementById('setting-chord-scale-slider'),
-            settingChordScaleLabel: document.getElementById('setting-chord-scale-label'),
+            settingChordScaleLabel: document.getElementById('setting-chord-scale-slider'),
             saveSettingsBtn: document.getElementById('save-settings-btn')
         };
 
@@ -731,7 +731,6 @@
             setupEventListeners();
             setupDraggablePopups();
 
-            // Check if directory handle stored in IndexedDB / check File System Access API support
             if ('showDirectoryPicker' in window) {
                 const hasStoredFolder = await checkStoredDirectoryHandle();
                 if (hasStoredFolder) {
@@ -744,7 +743,6 @@
             }
         });
 
-        // Simple IndexedDB wrapper for storing FileSystemDirectoryHandle
         const DB_NAME = 'OpenSongAppWebDB';
         const STORE_NAME = 'handles';
         function openIdb() {
@@ -1530,7 +1528,7 @@
             secondaryWindow.document.write(`
                 <!DOCTYPE html>
                 <html class="h-full bg-slate-950 text-slate-100">
-                <head><title>OpenSongApp Web - Stage Display</title><script src="https://cdn.tailwindcss.com"></script></head>
+                <head><title>OpenSongApp Web - Stage Display</title><script src="https://cdn.tailwindcss.com"><\/script></head>
                 <body class="h-full flex items-center justify-center p-8 bg-slate-950 font-sans">
                     <div id="cast-content" class="text-3xl font-bold text-amber-400 text-center max-w-4xl space-y-4">Click any song to project.</div>
                 </body>
