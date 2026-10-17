@@ -103,6 +103,9 @@
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
         /* Ensure all child elements inside buttons let mouse events pass through to the button */
         button, button * { pointer-events: none; }
         /* Re-enable pointer events strictly for the button itself */
@@ -130,11 +133,22 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0b</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
             </div>
+        </div>
+        
+        <!-- Reconnect Folder Banner -->
+        <div id="reconnect-banner" class="hidden bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-sm text-amber-300">
+            <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                <span>Previously connected folder found. Click to restore access:</span>
+            </div>
+            <button id="reconnect-btn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1 rounded-lg text-xs transition-colors">
+                Reconnect Folder
+            </button>
         </div>
 
         <div id="header-song-info" class="hidden md:flex items-center space-x-4 bg-slate-950/60 px-4 py-1.5 rounded-xl border border-slate-800">
@@ -150,7 +164,8 @@
             </div>
         </div>
 
-        <div class="flex items-center space-x-2">
+        <!-- Top Control Bar Container -->
+        <div class="flex items-center gap-2 overflow-x-auto py-2 shrink-0 no-scrollbar">
             <div class="hidden sm:flex items-center gap-1 bg-slate-800/80 p-1 rounded-lg border border-slate-700">
                 <button id="new-song-btn" class="px-2 py-1 text-xs font-bold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 rounded transition flex items-center gap-1">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Song
@@ -713,6 +728,8 @@
             lucide.createIcons();
             setupEventListeners();
 
+            checkSavedFolder();
+            
             if ('showDirectoryPicker' in window) {
                 const hasStoredFolder = await checkStoredDirectoryHandle();
                 if (hasStoredFolder) {
@@ -1675,7 +1692,7 @@
 
         function buildChordLyricPairs(chordLine, lyricLine, capoFret, capoSteps, mode) {
             if (!lyricLine) {
-                return `<div class="chord-above">${chordLine}</div>`;
+                return `<div class="chord-above" style="white-space: pre;">${chordLine}</div>`;
             }
 
             const chordRegex = /([A-G][b#]?[^\s]*)/g;
@@ -1685,37 +1702,44 @@
                 chordsMap.push({ text: match[1], index: match.index });
             }
 
-            if (chordsMap.length === 0) return `<div class="lyric-below">${lyricLine}</div>`;
+            if (chordsMap.length === 0) return `<div class="lyric-below" style="white-space: pre-wrap;">${lyricLine}</div>`;
 
             let html = '';
             let lastIdx = 0;
 
             chordsMap.forEach((c) => {
-                let chunk = lyricLine.slice(lastIdx, c.index);
+                let chunkStart = lastIdx;
+                let chunkEnd = c.index;
+                let chunk = lyricLine.slice(chunkStart, chunkEnd);
+                
+                // If chord index is further than lyric length, pad with spaces
+                if (chunkEnd > lyricLine.length) {
+                    chunk = '';
+                }
+
                 let nativeChord = c.text;
                 let capoChord = capoFret ? transposeChord(nativeChord, capoSteps) : nativeChord;
 
                 let topHtml = '';
                 if (mode === 'native' || !capoFret) {
-                    topHtml = `<div class="chord-above">${nativeChord}</div>`;
+                    topHtml = `<div class="chord-above" style="white-space: pre; font-weight:700; color:#f59e0b;">${nativeChord}</div>`;
                 } else if (mode === 'capo') {
-                    topHtml = `<div class="chord-capo-above">${capoChord}</div>`;
+                    topHtml = `<div class="chord-capo-above" style="white-space: pre; font-weight:700; color:#a855f7;">${capoChord}</div>`;
                 } else if (mode === 'both') {
-                    topHtml = `<div class="chord-above">${nativeChord}</div><div class="chord-capo-above">${capoChord}</div>`;
+                    topHtml = `<div class="chord-above" style="white-space: pre; font-weight:700; color:#f59e0b;">${nativeChord}</div><div class="chord-capo-above" style="white-space: pre; font-weight:700; color:#a855f7;">${capoChord}</div>`;
                 }
 
-                html += `<span class="chord-lyric-pair"><span class="flex flex-col">${topHtml}</span><span class="lyric-below">${chunk}</span></span>`;
+                html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span class="flex flex-col">${topHtml}</span><span class="lyric-below" style="white-space: pre;">${chunk}</span></span>`;
                 lastIdx = c.index;
             });
 
-            // Trailing text with matching empty spacer rows so line height stays perfectly level
             let trailing = lyricLine.slice(lastIdx);
             if (trailing) {
-                let spacerHtml = `<div class="chord-above">&nbsp;</div>`;
+                let spacerHtml = `<div class="chord-above" style="white-space: pre;">&nbsp;</div>`;
                 if (mode === 'both' && capoFret) {
-                    spacerHtml += `<div class="chord-capo-above">&nbsp;</div>`;
+                    spacerHtml += `<div class="chord-capo-above" style="white-space: pre;">&nbsp;</div>`;
                 }
-                html += `<span class="chord-lyric-pair"><span class="flex flex-col">${spacerHtml}</span><span class="lyric-below">${trailing}</span></span>`;
+                html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span class="flex flex-col">${spacerHtml}</span><span class="lyric-below" style="white-space: pre-wrap;">${trailing}</span></span>`;
             }
 
             return html;
@@ -1885,6 +1909,61 @@
             settingsBtn.addEventListener('click', () => {
                 showToast("Settings: Local storage directory is connected.");
             });
+        }
+
+        // Simple IndexedDB wrapper for storing FileSystemDirectoryHandle
+        const dbPromise = new Promise((resolve, reject) => {
+            const request = indexedDB.OpenDB("OpenSongAppDB", 1);
+            request.onupgradeneeded = (e) => {
+                e.target.result.createObjectStore("handles");
+            };
+            request.onsuccess = (e) => resolve(e.target.result);
+            request.onerror = (e) => reject(e.target.error);
+        });
+
+        async function saveDirHandle(handle) {
+            const db = await dbPromise;
+            const tx = db.transaction("handles", "readwrite");
+            tx.objectStore("handles").put(handle, "rootFolder");
+            return tx.complete;
+        }
+
+        async function getSavedDirHandle() {
+            const db = await dbPromise;
+            return new Promise((resolve) => {
+                const tx = db.transaction("handles", "readonly");
+                const req = tx.objectStore("handles").get("rootFolder");
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => resolve(null);
+            });
+        }
+
+        // Check for saved handle on app startup
+        async function checkSavedFolder() {
+            const handle = await getSavedDirHandle();
+            if (handle) {
+                const banner = document.getElementById('reconnect-banner');
+                if (banner) banner.classList.remove('hidden');
+
+                document.getElementById('reconnect-btn').onclick = async () => {
+                    try {
+                        const opts = { mode: 'readwrite' };
+                        if ((await handle.queryPermission(opts)) !== 'granted') {
+                            if ((await handle.requestPermission(opts)) !== 'granted') {
+                                showToast("Permission denied.");
+                                return;
+                            }
+                        }
+                        showToast("Folder reconnected successfully!");
+                        banner.classList.add('hidden');
+                        // Load your songs using the restored handle here
+                        loadSongsFromDirectory(handle);
+                    } catch (err) {
+                        console.error("Reconnect failed:", err);
+                        showToast("Could not reconnect folder. Please reselect.");
+                    }
+                };
+            }
         }
     </script>
 </body>
