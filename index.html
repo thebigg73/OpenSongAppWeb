@@ -53,12 +53,20 @@
             height: 1.25em;
             user-select: none;
             white-space: pre;
+            font-size: var(--chord-font-scale, 1rem);
         }
 
         .lyric-below {
             color: #f1f5f9;
             white-space: pre-wrap;
             word-break: break-word;
+        }
+
+        .section-heading {
+            font-size: var(--heading-font-scale, 0.85rem);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .comment-line {
@@ -69,6 +77,14 @@
             border-radius: 0.375rem;
             font-size: 0.85rem;
             white-space: pre-wrap;
+        }
+
+        .draggable-popup {
+            position: absolute;
+            z-index: 50;
+            cursor: move;
+            resize: both;
+            overflow: auto;
         }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -178,7 +194,7 @@
 
         <!-- Main Viewport Container -->
         <main id="main-scroll-container" class="flex-1 bg-slate-950 overflow-y-auto p-4 md:p-8 flex justify-center relative scroll-smooth">
-            <div id="song-display-area" class="w-full max-w-4xl min-h-full flex flex-col">
+            <div id="song-display-area" class="w-full max-w-4xl min-h-full flex flex-col relative">
                 
                 <div id="empty-state" class="my-auto flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-slate-800 rounded-2xl bg-slate-900/30">
                     <div class="p-4 bg-slate-900 text-slate-500 rounded-full mb-4">
@@ -186,6 +202,23 @@
                     </div>
                     <h3 class="text-lg font-bold text-slate-300 mb-1">No Item Selected</h3>
                     <p class="text-sm text-slate-500 max-w-sm mb-4">Select a song or set from the sidebar, or click the folder icon above to load your OpenSong folder or backup zip.</p>
+                </div>
+
+                <!-- Floating Draggable Popups for Notes & ABC -->
+                <div id="sticky-note-popup" class="hidden draggable-popup bg-amber-500/10 border border-amber-500/40 backdrop-blur-md rounded-xl p-4 shadow-2xl max-w-xs text-xs text-amber-200">
+                    <div class="flex justify-between items-center font-bold mb-1 border-b border-amber-500/30 pb-1 cursor-grab" id="sticky-drag-handle">
+                        <span><i data-lucide="sticky-note" class="w-3.5 h-3.5 inline mr-1"></i> Sticky Note</span>
+                        <button onclick="document.getElementById('sticky-note-popup').classList.add('hidden')" class="hover:text-white"><i data-lucide="x" class="w-3 h-3"></i></button>
+                    </div>
+                    <p id="sticky-note-text" class="whitespace-pre-wrap mt-2"></p>
+                </div>
+
+                <div id="abc-popup" class="hidden draggable-popup bg-slate-900/95 border border-indigo-500/40 backdrop-blur-md rounded-xl p-4 shadow-2xl max-w-md text-xs text-slate-100">
+                    <div class="flex justify-between items-center font-bold mb-2 border-b border-slate-800 pb-1 cursor-grab" id="abc-drag-handle">
+                        <span class="text-indigo-400"><i data-lucide="music" class="w-3.5 h-3.5 inline mr-1"></i> ABC Notation Score</span>
+                        <button onclick="document.getElementById('abc-popup').classList.add('hidden')" class="hover:text-white"><i data-lucide="x" class="w-3 h-3"></i></button>
+                    </div>
+                    <pre id="abc-popup-content" class="font-mono text-[11px] bg-slate-950 p-2 rounded border border-slate-800 overflow-x-auto text-amber-300"></pre>
                 </div>
 
                 <article id="set-view-sheet" class="hidden space-y-6 pb-20">
@@ -222,6 +255,12 @@
                             <div class="flex items-center gap-2">
                                 <span id="sheet-folder-path" class="px-2 py-0.5 text-xs rounded bg-slate-800 text-slate-400 truncate max-w-[200px]">MAIN</span>
                                 <span id="sheet-key-badge" class="px-2.5 py-1 text-xs font-bold rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">Key: C</span>
+                                <button id="open-notes-popup-btn" class="hidden p-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition" title="Show Sticky Notes">
+                                    <i data-lucide="sticky-note" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button id="open-abc-popup-btn" class="hidden p-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-lg text-xs font-bold flex items-center gap-1 transition" title="Show ABC Notation">
+                                    <i data-lucide="music" class="w-3.5 h-3.5"></i>
+                                </button>
                                 <button id="edit-song-btn" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition" title="Edit Song">
                                     <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                 </button>
@@ -250,7 +289,6 @@
                         <button id="close-floating-menu" class="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
 
-                    <!-- Metronome -->
                     <div class="space-y-2 border-b border-slate-800 pb-3">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
@@ -265,7 +303,6 @@
                         </div>
                     </div>
 
-                    <!-- Auto-Scroll -->
                     <div class="space-y-2 border-b border-slate-800 pb-3">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
@@ -283,7 +320,6 @@
                         </div>
                     </div>
 
-                    <!-- Pad Player -->
                     <div class="space-y-2">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
@@ -293,15 +329,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <select id="pad-key-select" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg text-xs py-1.5 px-2 text-slate-200">
-                                <option value="C">C Major</option>
-                                <option value="Cm">C Minor</option>
-                                <option value="D">D Major</option>
-                                <option value="Dm">D Minor</option>
-                                <option value="E">E Major</option>
-                                <option value="F">F Major</option>
-                                <option value="G">G Major</option>
-                                <option value="Gm">G Minor</option>
-                                <option value="B">B Major</option>
+                                <option value="C">C Major</option><option value="Cm">C Minor</option><option value="D">D Major</option><option value="Dm">D Minor</option><option value="E">E Major</option><option value="F">F Major</option><option value="G">G Major</option><option value="Gm">G Minor</option><option value="B">B Major</option>
                             </select>
                             <button id="pad-toggle-btn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-indigo-400 transition shrink-0"><i data-lucide="power" class="w-4 h-4"></i></button>
                         </div>
@@ -353,7 +381,6 @@
                 <button id="close-song-editor" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             
-            <!-- Editor Tabs -->
             <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0 gap-1 overflow-x-auto">
                 <button data-editors-tab="main" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg bg-amber-500 text-slate-950 transition">Main</button>
                 <button data-editors-tab="lyrics" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Lyrics</button>
@@ -361,7 +388,6 @@
                 <button data-editors-tab="tags" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Tags</button>
             </div>
 
-            <!-- Editor Panes Container -->
             <div class="flex-1 overflow-y-auto space-y-4 pr-1">
                 
                 <!-- 1. MAIN TAB -->
@@ -393,6 +419,12 @@
                         </div>
                         <textarea id="edit-song-lyrics-input" rows="10" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-slate-100" placeholder="[V1]&#10;.C     G&#10;Amazing grace..."></textarea>
                     </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="font-bold text-slate-300">ABC Notation Score Popup (or paste online ABC link above)</label>
+                        </div>
+                        <textarea id="edit-song-abc-input" rows="4" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-amber-300" placeholder="X:1&#10;M:4/4&#10;K:C&#10;..."></textarea>
+                    </div>
                 </div>
 
                 <!-- 3. SONG FEATURES TAB -->
@@ -400,14 +432,16 @@
                     <div class="grid grid-cols-3 gap-2">
                         <div>
                             <label class="font-bold text-slate-300 block mb-1">Key</label>
-                            <select id="edit-song-key-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100">
-                                <option value="C">C</option><option value="Cm">Cm</option><option value="C#">C#</option><option value="D">D</option><option value="Dm">Dm</option><option value="Eb">Eb</option><option value="E">E</option><option value="Em">Em</option><option value="F">F</option><option value="F#">F#</option><option value="G">G</option><option value="Gm">Gm</option><option value="Ab">Ab</option><option value="A">A</option><option value="Am">Am</option><option value="Bb">Bb</option><option value="B">B</option>
+                            <select id="edit-song-key-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono">
+                                <option value="C">C</option><option value="C#">C#</option><option value="Db">Db</option><option value="D">D</option><option value="D#">D#</option><option value="Eb">Eb</option><option value="E">E</option><option value="F">F</option><option value="F#">F#</option><option value="Gb">Gb</option><option value="G">G</option><option value="G#">G#</option><option value="Ab">Ab</option><option value="A">A</option><option value="A#">A#</option><option value="Bb">Bb</option><option value="B">B</option>
+                                <option value="Cm">Cm</option><option value="C#m">C#m</option><option value="Dbm">Dbm</option><option value="Dm">Dm</option><option value="D#m">D#m</option><option value="Ebm">Ebm</option><option value="Em">Em</option><option value="Fm">Fm</option><option value="F#m">F#m</option><option value="Gm">Gm</option><option value="G#m">G#m</option><option value="Abm">Abm</option><option value="Am">Am</option><option value="A#m">A#m</option><option value="Bbm">Bbm</option><option value="Bm">Bm</option>
                             </select>
                         </div>
                         <div>
                             <label class="font-bold text-slate-300 block mb-1">Original Key</label>
-                            <select id="edit-song-origkey-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100">
-                                <option value="C">C</option><option value="Cm">Cm</option><option value="C#">C#</option><option value="D">D</option><option value="Dm">Dm</option><option value="Eb">Eb</option><option value="E">E</option><option value="Em">Em</option><option value="F">F</option><option value="F#">F#</option><option value="G">G</option><option value="Gm">Gm</option><option value="Ab">Ab</option><option value="A">A</option><option value="Am">Am</option><option value="Bb">Bb</option><option value="B">B</option>
+                            <select id="edit-song-origkey-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono">
+                                <option value="C">C</option><option value="C#">C#</option><option value="Db">Db</option><option value="D">D</option><option value="D#">D#</option><option value="Eb">Eb</option><option value="E">E</option><option value="F">F</option><option value="F#">F#</option><option value="Gb">Gb</option><option value="G">G</option><option value="G#">G#</option><option value="Ab">Ab</option><option value="A">A</option><option value="A#">A#</option><option value="Bb">Bb</option><option value="B">B</option>
+                                <option value="Cm">Cm</option><option value="C#m">C#m</option><option value="Dbm">Dbm</option><option value="Dm">Dm</option><option value="D#m">D#m</option><option value="Ebm">Ebm</option><option value="Em">Em</option><option value="Fm">Fm</option><option value="F#m">F#m</option><option value="Gm">Gm</option><option value="G#m">G#m</option><option value="Abm">Abm</option><option value="Am">Am</option><option value="A#m">A#m</option><option value="Bbm">Bbm</option><option value="Bm">Bm</option>
                             </select>
                         </div>
                         <div>
@@ -426,9 +460,9 @@
                             </select>
                         </div>
                         <div>
-                            <label class="font-bold text-slate-300 block mb-1">Preferred Instrument</label>
+                            <label class="font-bold text-slate-300 block mb-1">Instrument</label>
                             <select id="edit-song-prefinst-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100">
-                                <option value="g">Guitar</option><option value="u">Ukulele</option><option value="p">Piano</option><option value="m">Mandolin</option><option value="b">Banjo (4-string)</option><option value="B">Banjo (5-string)</option>
+                                <option value="g">Guitar</option><option value="u">Ukulele</option><option value="p">Piano</option><option value="m">Mandolin</option><option value="b">Banjo (4)</option><option value="B">Banjo (5)</option>
                             </select>
                         </div>
                     </div>
@@ -438,7 +472,22 @@
                         <div>
                             <label class="font-bold text-slate-300 block mb-1">Preview Override</label>
                             <select id="edit-song-previewoverride-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100">
-                                <option value="">Default (Global)</option><option value="force_on">Force On</option><option value="force_off">Force Off</option>
+                                <option value="">Default</option><option value="force_on">Force On</option><option value="force_off">Force Off</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- BeatBuddy & Drummer Pickers -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="font-bold text-slate-300 block mb-1">BeatBuddy Song</label>
+                            <select id="edit-song-bb-song" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-amber-400 font-mono text-xs">
+                                <option value="">-- None --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="font-bold text-slate-300 block mb-1">BeatBuddy Drum Kit</label>
+                            <select id="edit-song-bb-kit" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 text-xs">
+                                <option value="Acoustic">Acoustic</option><option value="Percussion">Percussion</option>
                             </select>
                         </div>
                     </div>
@@ -457,7 +506,6 @@
                             </select>
                         </div>
                     </div>
-                    <div><label class="font-bold text-slate-300 block mb-1">MIDI Send Messages</label><textarea id="edit-song-midi-input" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-slate-100"></textarea></div>
                 </div>
 
                 <!-- 4. TAGS TAB -->
@@ -467,11 +515,6 @@
                     <div class="grid grid-cols-2 gap-2">
                         <div><label class="font-bold text-slate-300 block mb-1">CCLI Number</label><input type="text" id="edit-song-ccli-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
                         <div><label class="font-bold text-slate-300 block mb-1">Hymn Number</label><input type="text" id="edit-song-hymnnum-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div><label class="font-bold text-slate-300 block mb-1">User 1</label><input type="text" id="edit-song-user1-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
-                        <div><label class="font-bold text-slate-300 block mb-1">User 2</label><input type="text" id="edit-song-user2-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
-                        <div><label class="font-bold text-slate-300 block mb-1">User 3</label><input type="text" id="edit-song-user3-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
                     </div>
                 </div>
 
@@ -501,7 +544,7 @@
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div class="flex items-center space-x-2 text-amber-400">
                     <i data-lucide="settings" class="w-5 h-5"></i>
-                    <h3 class="font-bold text-lg text-slate-100">Preferences & Network Settings</h3>
+                    <h3 class="font-bold text-lg text-slate-100">Preferences & Scaling Settings</h3>
                 </div>
                 <button id="close-settings-modal" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
@@ -516,8 +559,25 @@
                 </div>
 
                 <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                    <label class="font-bold text-slate-200 block">WebSocket Server URL (Ktor / Host)</label>
+                    <label class="font-bold text-slate-200 block">WebSocket Server URL</label>
                     <input type="text" id="setting-ws-url" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 font-mono text-xs" placeholder="ws://192.168.1.50:8080/ws">
+                </div>
+
+                <!-- Scaling Sliders -->
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="font-bold text-slate-200">Heading Scale Size</label>
+                        <span id="setting-heading-scale-label" class="font-mono text-amber-400 font-bold">85%</span>
+                    </div>
+                    <input type="range" id="setting-heading-scale-slider" min="60" max="150" step="5" value="85" class="w-full accent-amber-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                </div>
+
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="font-bold text-slate-200">Chord Scale Size</label>
+                        <span id="setting-chord-scale-label" class="font-mono text-amber-400 font-bold">100%</span>
+                    </div>
+                    <input type="range" id="setting-chord-scale-slider" min="80" max="180" step="5" value="100" class="w-full accent-amber-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
                 </div>
             </div>
 
@@ -531,6 +591,7 @@
     <script>
         let loadedSongs = [];
         let loadedSets = [];
+        let beatBuddySongs = [];
         let activeTab = 'songs';
         let selectedFolderFilter = 'ALL';
         let activeSong = null;
@@ -553,7 +614,7 @@
 
         let secondaryWindow = null;
         let wsClient = null;
-        let appSettings = { wsRole: "client", wsUrl: "" };
+        let appSettings = { wsRole: "client", wsUrl: "", headingScale: 85, chordScale: 100 };
 
         const elements = {
             modal: document.getElementById('folder-modal'),
@@ -576,6 +637,12 @@
             sheetFolderPath: document.getElementById('sheet-folder-path'),
             sheetKeyBadge: document.getElementById('sheet-key-badge'),
             sheetContent: document.getElementById('sheet-content'),
+            openNotesPopupBtn: document.getElementById('open-notes-popup-btn'),
+            openAbcPopupBtn: document.getElementById('open-abc-popup-btn'),
+            stickyNotePopup: document.getElementById('sticky-note-popup'),
+            stickyNoteText: document.getElementById('sticky-note-text'),
+            abcPopup: document.getElementById('abc-popup'),
+            abcPopupContent: document.getElementById('abc-popup-content'),
             setViewSheet: document.getElementById('set-view-sheet'),
             setTitle: document.getElementById('set-title'),
             setCountInfo: document.getElementById('set-count-info'),
@@ -603,7 +670,7 @@
             editSongBtn: document.getElementById('edit-song-btn'),
             editSetBtn: document.getElementById('edit-set-btn'),
 
-            // Editor Elements
+            // Editor
             songEditorModal: document.getElementById('song-editor-modal'),
             closeSongEditor: document.getElementById('close-song-editor'),
             editSongTitleInput: document.getElementById('edit-song-title-input'),
@@ -615,6 +682,7 @@
             editSongNotesInput: document.getElementById('edit-song-notes-input'),
             editSongPresentationInput: document.getElementById('edit-song-presentation-input'),
             editSongLyricsInput: document.getElementById('edit-song-lyrics-input'),
+            editSongAbcInput: document.getElementById('edit-song-abc-input'),
             editSongKeyInput: document.getElementById('edit-song-key-input'),
             editSongOrigkeyInput: document.getElementById('edit-song-origkey-input'),
             editSongCapoInput: document.getElementById('edit-song-capo-input'),
@@ -624,55 +692,81 @@
             editSongDurationInput: document.getElementById('edit-song-duration-input'),
             editSongPredelayInput: document.getElementById('edit-song-predelay-input'),
             editSongPreviewoverrideInput: document.getElementById('edit-song-previewoverride-input'),
+            editSongBbSong: document.getElementById('edit-song-bb-song'),
+            editSongBbKit: document.getElementById('edit-song-bb-kit'),
             editSongDrummerInput: document.getElementById('edit-song-drummer-input'),
             editSongDrummerkitInput: document.getElementById('edit-song-drummerkit-input'),
-            editSongMidiInput: document.getElementById('edit-song-midi-input'),
             editSongThemeInput: document.getElementById('edit-song-theme-input'),
             editSongAkaInput: document.getElementById('edit-song-aka-input'),
             editSongCcliInput: document.getElementById('edit-song-ccli-input'),
             editSongHymnnumInput: document.getElementById('edit-song-hymnnum-input'),
-            editSongUser1Input: document.getElementById('edit-song-user1-input'),
-            editSongUser2Input: document.getElementById('edit-song-user2-input'),
-            editSongUser3Input: document.getElementById('edit-song-user3-input'),
             saveSongBtn: document.getElementById('save-song-btn'),
-
-            // Set Editor
-            setEditorModal: document.getElementById('set-editor-modal'),
-            closeSetEditor: document.getElementById('close-set-editor'),
-            editSetTitleInput: document.getElementById('edit-set-title-input'),
-            editSetSongsInput: document.getElementById('edit-set-songs-input'),
-            saveSetBtn: document.getElementById('save-set-btn'),
 
             // Settings
             settingsModal: document.getElementById('settings-modal'),
             closeSettingsModal: document.getElementById('close-settings-modal'),
             settingWsRole: document.getElementById('setting-ws-role'),
             settingWsUrl: document.getElementById('setting-ws-url'),
-            saveSettingsBtn: document.getElementById('save-settings-btn'),
-
-            // Floating Tools
-            floatingMainBtn: document.getElementById('floating-main-btn'),
-            floatingMenu: document.getElementById('floating-menu'),
-            closeFloatingMenu: document.getElementById('close-floating-menu'),
-            metronomeSlider: document.getElementById('metronome-slider'),
-            metronomeBpmVal: document.getElementById('metronome-bpm-val'),
-            metronomeToggleBtn: document.getElementById('metronome-toggle-btn'),
-            metronomeFlash: document.getElementById('metronome-flash'),
-            autoscrollSlider: document.getElementById('autoscroll-slider'),
-            autoscrollStatusVal: document.getElementById('autoscroll-status-val'),
-            songDurationLabel: document.getElementById('song-duration-label'),
-            songPredelayLabel: document.getElementById('song-predelay-label'),
-            autoscrollToggleBtn: document.getElementById('autoscroll-toggle-btn'),
-            padKeySelect: document.getElementById('pad-key-select'),
-            padKeyVal: document.getElementById('pad-key-val'),
-            padToggleBtn: document.getElementById('pad-toggle-btn')
+            settingHeadingScaleSlider: document.getElementById('setting-heading-scale-slider'),
+            settingHeadingScaleLabel: document.getElementById('setting-heading-scale-label'),
+            settingChordScaleSlider: document.getElementById('setting-chord-scale-slider'),
+            settingChordScaleLabel: document.getElementById('setting-chord-scale-slider'),
+            saveSettingsBtn: document.getElementById('save-settings-btn')
         };
 
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             setupEventListeners();
+            setupDraggablePopups();
             elements.modal.classList.remove('hidden');
         });
+
+        // ABC Notation auto-detection on paste / input in lyrics
+        elements.editSongLyricsInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            // Detect raw ABC block like X:1 or M:4/4 or K:C at start of pasted text
+            if ((val.includes('X:') || val.includes('M:4/4') || val.includes('K:')) && !val.includes(';#:')) {
+                const lines = val.split('\n');
+                let isAbcBlock = lines.some(l => l.startsWith('X:') || l.startsWith('M:') || l.startsWith('K:'));
+                if (isAbcBlock) {
+                    const formattedAbc = lines.map(l => l.trim()).filter(l => l).join('\\n');
+                    // Check if user pasted it into lyrics, automatically format into abc box or comment
+                    elements.editSongAbcInput.value = val;
+                    e.target.value = val.split('\n').filter(l => !l.startsWith('X:') && !l.startsWith('M:') && !l.startsWith('K:') && !l.startsWith('L:')).join('\n');
+                }
+            }
+        });
+
+        // Draggable popup utility
+        function setupDraggablePopups() {
+            makeDraggable(elements.stickyNotePopup, document.getElementById('sticky-drag-handle'));
+            makeDraggable(elements.abcPopup, document.getElementById('abc-drag-handle'));
+        }
+
+        function makeDraggable(elmnt, handle) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            handle.onmousedown = dragMouseDown;
+            function dragMouseDown(e) {
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+            }
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
 
         elements.folderFilterSelect.addEventListener('change', (e) => {
             selectedFolderFilter = e.target.value;
@@ -731,7 +825,7 @@
 
         elements.changeFolderBtn.addEventListener('click', () => elements.modal.classList.remove('hidden'));
 
-        // Import Backup / Zip
+        // Import Backup / Zip / CSV
         elements.modalImportBackupBtn.addEventListener('click', () => elements.backupFileInput.click());
         elements.backupFileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files || []);
@@ -740,13 +834,19 @@
 
             for (const file of files) {
                 try {
+                    if (file.name.endsWith('.csv') || file.name.toLowerCase().includes('beatbuddy')) {
+                        parseBeatBuddyCSV(await file.text());
+                        continue;
+                    }
                     const zip = new JSZip();
                     const zipContent = await zip.loadAsync(file);
                     for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
                         if (zipEntry.dir) continue;
                         const text = await zipEntry.async("text");
                         const lowerName = filename.toLowerCase();
-                        if (lowerName.includes('sets/') || lowerName.endsWith('.osbs') || text.includes('<set')) {
+                        if (lowerName.includes('mybeatbuddyproject.csv') || lowerName.endsWith('.csv')) {
+                            parseBeatBuddyCSV(text);
+                        } else if (lowerName.includes('sets/') || lowerName.endsWith('.osbs') || text.includes('<set')) {
                             const setObj = parseOpenSongSetXML(text, filename.split('/').pop());
                             if (setObj) loadedSets.push(setObj);
                         } else if (lowerName.includes('songs/') || lowerName.endsWith('.osb') || lowerName.endsWith('.xml') || lowerName.endsWith('.ost') || text.includes('<song')) {
@@ -766,6 +866,7 @@
             elements.modal.classList.add('hidden');
             updateTabCounts();
             updateFolderFilterDropdown();
+            populateBeatBuddyDropdown();
             renderSidebarList();
             if (loadedSongs.length > 0) renderSongSheet(loadedSongs[0]);
         });
@@ -786,7 +887,9 @@
                 const path = file.webkitRelativePath || file.name;
                 const lower = path.toLowerCase();
                 const parts = path.split('/');
-                if (lower.includes('sets/')) {
+                if (lower.includes('mybeatbuddyproject.csv') || file.name.endsWith('.csv')) {
+                    parseBeatBuddyCSV(text);
+                } else if (lower.includes('sets/')) {
                     const s = parseOpenSongSetXML(text, file.name);
                     if (s) loadedSets.push(s);
                 } else if (lower.includes('songs/') || file.name.endsWith('.xml') || file.name.endsWith('.ost') || text.includes('<song')) {
@@ -803,6 +906,7 @@
             elements.modal.classList.add('hidden');
             updateTabCounts();
             updateFolderFilterDropdown();
+            populateBeatBuddyDropdown();
             renderSidebarList();
             if (loadedSongs.length > 0) renderSongSheet(loadedSongs[0]);
         });
@@ -822,11 +926,19 @@
                             if (setObj) loadedSets.push(setObj);
                         }
                     }
+                } else if (entry.kind === 'directory' && entry.name === 'Settings') {
+                    for await (const setFile of entry.values()) {
+                        if (setFile.kind === 'file' && setFile.name.toLowerCase().includes('beatbuddy')) {
+                            const f = await setFile.getFile();
+                            parseBeatBuddyCSV(await f.text());
+                        }
+                    }
                 }
             }
             elements.modal.classList.add('hidden');
             updateTabCounts();
             updateFolderFilterDropdown();
+            populateBeatBuddyDropdown();
             renderSidebarList();
             if (loadedSongs.length > 0) renderSongSheet(loadedSongs[0]);
         }
@@ -835,13 +947,45 @@
             for await (const entry of dirHandle.values()) {
                 if (entry.kind === 'file') {
                     const f = await entry.getFile();
-                    const song = parseOpenSongXML(await f.text(), f.name, prefix || 'MAIN');
-                    if (song) loadedSongs.push(song);
+                    if (f.name.toLowerCase().includes('beatbuddy')) {
+                        parseBeatBuddyCSV(await f.text());
+                    } else {
+                        const song = parseOpenSongXML(await f.text(), f.name, prefix || 'MAIN');
+                        if (song) loadedSongs.push(song);
+                    }
                 } else if (entry.kind === 'directory') {
                     const subFolderName = prefix ? `${prefix}/${entry.name}` : entry.name;
                     await scanSongDir(entry, subFolderName);
                 }
             }
+        }
+
+        function parseBeatBuddyCSV(csvText) {
+            const lines = csvText.split('\n');
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (cols.length >= 3) {
+                    const songName = cols[2].replace(/^"|"$/g, '').trim();
+                    if (songName && !beatBuddySongs.includes(songName)) {
+                        beatBuddySongs.push(songName);
+                    }
+                }
+            }
+            beatBuddySongs.sort();
+            populateBeatBuddyDropdown();
+        }
+
+        function populateBeatBuddyDropdown() {
+            const sel = elements.editSongBbSong;
+            sel.innerHTML = '<option value="">-- None --</option>';
+            beatBuddySongs.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                sel.appendChild(opt);
+            });
         }
 
         function parseOpenSongXML(xmlString, filename, folderPath) {
@@ -875,9 +1019,12 @@
                     keyoriginal: gt("keyoriginal") || gt("originalkey"),
                     preferedinstrument: gt("preferedinstrument") || 'g',
                     previewoverride: gt("previewoverride"),
+                    beatbuddysong: gt("beatbuddysong"),
+                    beatbuddykit: gt("beatbuddykit") || 'Acoustic',
                     aka: gt("aka"),
                     midi: gt("midi"),
                     notes: gt("notes"),
+                    abc_notation: gt("abc_notation"),
                     lyrics: gt("lyrics")
                 };
             } catch (e) { return null; }
@@ -915,17 +1062,16 @@
             elements.editSongDurationInput.value = '180';
             elements.editSongPredelayInput.value = '10';
             elements.editSongPreviewoverrideInput.value = '';
+            elements.editSongBbSong.value = '';
+            elements.editSongBbKit.value = 'Acoustic';
             elements.editSongDrummerInput.value = '';
             elements.editSongDrummerkitInput.value = 'Acoustic';
-            elements.editSongMidiInput.value = '';
             elements.editSongThemeInput.value = '';
             elements.editSongAkaInput.value = '';
             elements.editSongCcliInput.value = '';
             elements.editSongHymnnumInput.value = '';
-            elements.editSongUser1Input.value = '';
-            elements.editSongUser2Input.value = '';
-            elements.editSongUser3Input.value = '';
             elements.editSongNotesInput.value = '';
+            elements.editSongAbcInput.value = '';
             elements.editSongLyricsInput.value = '[V1]\n.C     G\nLyrics here...';
             activeSong = null;
             elements.songEditorModal.classList.remove('hidden');
@@ -949,17 +1095,16 @@
             elements.editSongDurationInput.value = activeSong.duration || 180;
             elements.editSongPredelayInput.value = activeSong.predelay || 10;
             elements.editSongPreviewoverrideInput.value = activeSong.previewoverride || '';
+            elements.editSongBbSong.value = activeSong.beatbuddysong || '';
+            elements.editSongBbKit.value = activeSong.beatbuddykit || 'Acoustic';
             elements.editSongDrummerInput.value = activeSong.drummer || '';
             elements.editSongDrummerkitInput.value = activeSong.drummerkit || 'Acoustic';
-            elements.editSongMidiInput.value = activeSong.midi || '';
             elements.editSongThemeInput.value = activeSong.theme || '';
             elements.editSongAkaInput.value = activeSong.aka || '';
             elements.editSongCcliInput.value = activeSong.ccli || '';
             elements.editSongHymnnumInput.value = activeSong.hymn_number || '';
-            elements.editSongUser1Input.value = activeSong.user1 || '';
-            elements.editSongUser2Input.value = activeSong.user2 || '';
-            elements.editSongUser3Input.value = activeSong.user3 || '';
             elements.editSongNotesInput.value = activeSong.notes || '';
+            elements.editSongAbcInput.value = activeSong.abc_notation || '';
             elements.editSongLyricsInput.value = activeSong.lyrics || '';
             elements.songEditorModal.classList.remove('hidden');
         });
@@ -976,7 +1121,7 @@
                 filename: elements.editSongFilenameInput.value || 'song.xml',
                 folderPath: folder,
                 uuid: activeSong ? activeSong.uuid : ('uuid_' + Math.random().toString(36).substring(2, 10)),
-                last_modified: new Date().toISOString(), //[cite: 2]
+                last_modified: new Date().toISOString(),
                 title: elements.editSongTitleInput.value || 'Untitled',
                 author: elements.editSongAuthorInput.value,
                 copyright: elements.editSongCopyrightInput.value,
@@ -990,17 +1135,16 @@
                 duration: parseInt(elements.editSongDurationInput.value, 10) || 180,
                 predelay: parseInt(elements.editSongPredelayInput.value, 10) || 10,
                 previewoverride: elements.editSongPreviewoverrideInput.value,
+                beatbuddysong: elements.editSongBbSong.value,
+                beatbuddykit: elements.editSongBbKit.value,
                 drummer: elements.editSongDrummerInput.value,
                 drummerkit: elements.editSongDrummerkitInput.value,
-                midi: elements.editSongMidiInput.value,
                 theme: elements.editSongThemeInput.value,
                 aka: elements.editSongAkaInput.value,
                 ccli: elements.editSongCcliInput.value,
                 hymn_number: elements.editSongHymnnumInput.value,
-                user1: elements.editSongUser1Input.value,
-                user2: elements.editSongUser2Input.value,
-                user3: elements.editSongUser3Input.value,
                 notes: elements.editSongNotesInput.value,
+                abc_notation: elements.editSongAbcInput.value,
                 lyrics: elements.editSongLyricsInput.value
             };
 
@@ -1026,6 +1170,22 @@
                 action: actionType
             };
             wsClient.send(JSON.stringify(payload));
+        }
+
+        // Section header mapping
+        function formatSectionHeader(code) {
+            const clean = code.trim().toUpperCase();
+            if (clean === 'V' || clean === 'VERSE') return 'Verse';
+            if (clean.startsWith('V')) return `Verse ${clean.substring(1)}`;
+            if (clean === 'C' || clean === 'CHORUS') return 'Chorus';
+            if (clean.startsWith('C')) return `Chorus ${clean.substring(1)}`;
+            if (clean === 'B' || clean === 'BRIDGE') return 'Bridge';
+            if (clean.startsWith('B')) return `Bridge ${clean.substring(1)}`;
+            if (clean === 'T' || clean === 'TAG') return 'Tag';
+            if (clean === 'P' || clean === 'PRECHORUS') return 'Pre-Chorus';
+            if (clean === 'I' || clean === 'INTRO') return 'Intro';
+            if (clean === 'O' || clean === 'OUTRO') return 'Outro';
+            return code;
         }
 
         function renderSongSheet(song, fromSetContext = null, songIndexInSet = -1) {
@@ -1056,9 +1216,34 @@
             elements.songDurationLabel.textContent = `${Math.floor((song.duration || 180) / 60)}m ${(song.duration || 180) % 60}s`;
             elements.songPredelayLabel.textContent = `${song.predelay || 10}s`;
 
+            // Sticky note popup button & content
+            if (song.notes && song.notes.trim()) {
+                elements.openNotesPopupBtn.classList.remove('hidden');
+                elements.stickyNoteText.textContent = song.notes;
+            } else {
+                elements.openNotesPopupBtn.classList.add('hidden');
+                elements.stickyNotePopup.classList.add('hidden');
+            }
+
+            // ABC score popup button & content
+            if (song.abc_notation && song.abc_notation.trim()) {
+                elements.openAbcPopupBtn.classList.remove('hidden');
+                elements.abcPopupContent.textContent = song.abc_notation;
+            } else {
+                elements.openAbcPopupBtn.classList.add('hidden');
+                elements.abcPopup.classList.add('hidden');
+            }
+
             renderSongLyrics(song.lyrics);
             sendSongIdentifierMessage("cue", song);
         }
+
+        elements.openNotesPopupBtn.addEventListener('click', () => {
+            elements.stickyNotePopup.classList.toggle('hidden');
+        });
+        elements.openAbcPopupBtn.addEventListener('click', () => {
+            elements.abcPopup.classList.toggle('hidden');
+        });
 
         function renderSongLyrics(rawLyrics) {
             elements.sheetContent.innerHTML = '';
@@ -1082,11 +1267,12 @@
                     continue;
                 }
                 if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-                    const code = trimmed.slice(1, -1);
+                    const rawCode = trimmed.slice(1, -1);
+                    const formattedHeading = formatSectionHeader(rawCode);
                     sectionContainer = document.createElement('div');
-                    const isChorus = code.toLowerCase().startsWith('c');
+                    const isChorus = rawCode.toLowerCase().startsWith('c');
                     sectionContainer.className = `p-4 rounded-xl border ${isChorus ? 'bg-slate-900/85 border-amber-500/30 text-amber-400' : 'bg-slate-900/40 border-slate-800 text-slate-400'} space-y-3`;
-                    sectionContainer.innerHTML = `<h4 class="text-xs font-bold uppercase tracking-wider flex items-center gap-2"><span class="w-2 h-2 rounded-full ${isChorus ? 'bg-amber-400' : 'bg-slate-600'}"></span>${code}</h4>`;
+                    sectionContainer.innerHTML = `<h4 class="section-heading flex items-center gap-2"><span class="w-2 h-2 rounded-full ${isChorus ? 'bg-amber-400' : 'bg-slate-600'}"></span>${formattedHeading}</h4>`;
                     elements.sheetContent.appendChild(sectionContainer);
                     continue;
                 }
@@ -1096,10 +1282,18 @@
                     elements.sheetContent.appendChild(sectionContainer);
                 }
                 if (line.startsWith('.')) {
+                    const chordLine = line.substring(1);
+                    const lyricLine = (i + 1 < lines.length && !lines[i+1].startsWith('.') && !lines[i+1].startsWith('[')) ? lines[i+1] : '';
+                    if (lyricLine) i++;
+
                     const pairLine = document.createElement('div');
                     pairLine.className = 'chord-lyric-pair-line';
-                    pairLine.innerHTML = `<span class="chord-above">${line.substring(1)}</span><span class="lyric-below">${lines[i+1] || ''}</span>`;
-                    if (lines[i+1] && !lines[i+1].startsWith('.') && !lines[i+1].startsWith('[')) i++;
+                    parseChordLyricTokens(chordLine, lyricLine).forEach(tok => {
+                        const box = document.createElement('div');
+                        box.className = 'chord-lyric-pair';
+                        box.innerHTML = `<span class="chord-above">${tok.chord || ''}</span><span class="lyric-below">${tok.lyric || '\u00A0'}</span>`;
+                        pairLine.appendChild(box);
+                    });
                     sectionContainer.appendChild(pairLine);
                 } else if (trimmed.length > 0) {
                     const div = document.createElement('div');
@@ -1108,6 +1302,29 @@
                     sectionContainer.appendChild(div);
                 }
             }
+        }
+
+        function parseChordLyricTokens(chordLine, lyricLine) {
+            const chords = [];
+            let m;
+            const regex = /\S+/g;
+            while ((m = regex.exec(chordLine)) !== null) chords.push({ name: m[0], index: m.index });
+            if (chords.length === 0) return [{ chord: '', lyric: lyricLine }];
+
+            const tokens = [];
+            let lastIdx = 0;
+            chords.forEach((c, idx) => {
+                if (idx === 0 && c.index > 0) {
+                    tokens.push({ chord: '', lyric: lyricLine.substring(0, c.index) });
+                    lastIdx = c.index;
+                }
+                const nextC = chords[idx + 1];
+                const endIdx = nextC ? nextC.index : Math.max(lyricLine.length, c.index + c.name.length);
+                tokens.push({ chord: c.name, lyric: lyricLine.substring(lastIdx, endIdx) });
+                lastIdx = endIdx;
+            });
+            if (lastIdx < lyricLine.length) tokens.push({ chord: '', lyric: lyricLine.substring(lastIdx) });
+            return tokens;
         }
 
         function renderSetSheet(setObj) {
@@ -1187,10 +1404,6 @@
             lucide.createIcons();
         });
 
-        function setupManualScrollInterception() {
-            elements.mainScrollContainer.addEventListener('wheel', () => { isUserManuallyScrolling = true; }, { passive: true });
-        }
-
         // Synth Pad Player
         elements.padToggleBtn.addEventListener('click', () => {
             if (isPadRunning) {
@@ -1230,7 +1443,7 @@
             secondaryWindow.document.write(`
                 <!DOCTYPE html>
                 <html class="h-full bg-slate-950 text-slate-100">
-                <head><title>OpenSongApp Web - Stage Display</title><script src="https://cdn.tailwindcss.com"><\/script></head>
+                <head><title>OpenSongApp Web - Stage Display</title><script src="https://cdn.tailwindcss.com"><script></head>
                 <body class="h-full flex items-center justify-center p-8 bg-slate-950 font-sans">
                     <div id="cast-content" class="text-3xl font-bold text-amber-400 text-center max-w-4xl space-y-4">Click any song to project.</div>
                 </body>
@@ -1305,20 +1518,35 @@
             elements.tabSongsBtn.addEventListener('click', () => switchSidebarTab('songs'));
             elements.tabSetsBtn.addEventListener('click', () => switchSidebarTab('sets'));
             elements.songSearch.addEventListener('input', (e) => renderSidebarList(e.target.value.toLowerCase()));
-            elements.floatingMainBtn.addEventListener('click', () => elements.floatingMenu.classList.toggle('hidden'));
-            elements.closeFloatingMenu.addEventListener('click', () => elements.floatingMenu.classList.add('hidden'));
 
             elements.openSettingsBtn.addEventListener('click', () => {
                 elements.settingWsRole.value = appSettings.wsRole;
                 elements.settingWsUrl.value = appSettings.wsUrl;
+                elements.settingHeadingScaleSlider.value = appSettings.headingScale;
+                elements.settingHeadingScaleLabel.textContent = `${appSettings.headingScale}%`;
+                elements.settingChordScaleSlider.value = appSettings.chordScale;
+                elements.settingChordScaleLabel.textContent = `${appSettings.chordScale}%`;
                 elements.settingsModal.classList.remove('hidden');
             });
             elements.closeSettingsModal.addEventListener('click', () => elements.settingsModal.classList.add('hidden'));
+
+            elements.settingHeadingScaleSlider.addEventListener('input', (e) => {
+                elements.settingHeadingScaleLabel.textContent = `${e.target.value}%`;
+            });
+            elements.settingChordScaleSlider.addEventListener('input', (e) => {
+                elements.settingChordScaleLabel.textContent = `${e.target.value}%`;
+            });
 
             elements.saveSettingsBtn.addEventListener('click', () => {
                 elements.settingsModal.classList.add('hidden');
                 appSettings.wsRole = elements.settingWsRole.value;
                 appSettings.wsUrl = elements.settingWsUrl.value;
+                appSettings.headingScale = parseInt(elements.settingHeadingScaleSlider.value, 10);
+                appSettings.chordScale = parseInt(elements.settingChordScaleSlider.value, 10);
+
+                document.documentElement.style.setProperty('--heading-font-scale', `${appSettings.headingScale}%`);
+                document.documentElement.style.setProperty('--chord-font-scale', `${appSettings.chordScale}%`);
+
                 initWebSocket(appSettings.wsUrl, appSettings.wsRole);
             });
         }
