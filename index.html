@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenSongApp Web Studio</title>
+    <title>OpenSongApp Web</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- JSZip for .osb and .osbs backup extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -59,6 +61,16 @@
             word-break: break-word;
         }
 
+        .comment-line {
+            font-family: monospace;
+            color: #94a3b8;
+            background: rgba(30, 41, 59, 0.5);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+        }
+
         @keyframes pulse-ring {
             0% { transform: scale(0.95); opacity: 0.8; }
             50% { transform: scale(1.05); opacity: 1; }
@@ -87,7 +99,7 @@
                     <i data-lucide="music" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Studio</span></h1>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span></h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
             </div>
@@ -107,27 +119,34 @@
         </div>
 
         <div class="flex items-center space-x-2">
+            <!-- New Item Action Buttons -->
+            <div class="hidden sm:flex items-center gap-1 bg-slate-800/80 p-1 rounded-lg border border-slate-700">
+                <button id="new-song-btn" class="px-2 py-1 text-xs font-bold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 rounded transition flex items-center gap-1">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Song
+                </button>
+                <button id="new-set-btn" class="px-2 py-1 text-xs font-bold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 rounded transition flex items-center gap-1">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Set
+                </button>
+            </div>
+
+            <!-- Transpose Controls -->
             <div class="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700">
                 <button id="transpose-down" class="px-2 py-1 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700 rounded transition">-1</button>
                 <span id="transpose-offset" class="px-2 text-xs font-mono font-bold text-amber-400">0</span>
                 <button id="transpose-up" class="px-2 py-1 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700 rounded transition">+1</button>
             </div>
 
-            <div class="hidden sm:flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700">
-                <button id="font-decrease" class="p-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded transition"><i data-lucide="minus" class="w-4 h-4"></i></button>
-                <span id="font-size-label" class="px-2 text-xs font-mono text-slate-400">100%</span>
-                <button id="font-increase" class="p-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded transition"><i data-lucide="plus" class="w-4 h-4"></i></button>
-            </div>
+            <!-- Secondary Display / Cast Button -->
+            <button id="cast-display-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Open Stage Secondary Display Window">
+                <i data-lucide="monitor-play" class="w-5 h-5"></i>
+            </button>
 
+            <!-- Settings Button -->
             <button id="open-settings-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Application Settings">
                 <i data-lucide="settings" class="w-5 h-5"></i>
             </button>
 
-            <button id="error-console-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-red-400 rounded-lg transition border border-slate-700 relative" title="View Diagnostics">
-                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-                <span id="error-badge" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></span>
-            </button>
-
+            <!-- Change Folder Button -->
             <button id="change-folder-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Change Storage Directory">
                 <i data-lucide="folder-open" class="w-5 h-5"></i>
             </button>
@@ -153,15 +172,11 @@
                 <div class="relative">
                     <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-500"></i>
                     <input type="text" id="song-search-input" placeholder="Search by title, author, or key..." class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition">
-                    <button id="clear-search" class="hidden absolute right-2.5 top-2.5 text-slate-500 hover:text-slate-300">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
+                    <button id="clear-search" class="hidden absolute right-2.5 top-2.5 text-slate-500 hover:text-slate-300"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
                 <div class="flex justify-between items-center px-1 text-xs text-slate-400">
                     <span id="active-tab-label">Showing All Songs</span>
-                    <button id="rescan-btn" class="text-amber-400 hover:underline flex items-center gap-1">
-                        <i data-lucide="refresh-cw" class="w-3 h-3"></i> Refresh
-                    </button>
+                    <button id="rescan-btn" class="text-amber-400 hover:underline flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Refresh</button>
                 </div>
             </div>
 
@@ -177,7 +192,7 @@
                         <i data-lucide="music-4" class="w-12 h-12"></i>
                     </div>
                     <h3 class="text-lg font-bold text-slate-300 mb-1">No Item Selected</h3>
-                    <p class="text-sm text-slate-500 max-w-sm mb-4">Select a song or set from the sidebar on the left or select your OpenSong root directory to get started.</p>
+                    <p class="text-sm text-slate-500 max-w-sm mb-4">Select a song or set from the sidebar, or import backup archives (.osb / .osbs) to get started.</p>
                 </div>
 
                 <article id="set-view-sheet" class="hidden space-y-6 pb-20">
@@ -189,6 +204,9 @@
                             </div>
                             <p id="set-count-info" class="text-sm text-slate-400 mt-1">0 Songs in this set</p>
                         </div>
+                        <button id="edit-set-btn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Set
+                        </button>
                     </div>
                     <div id="set-songs-container" class="space-y-2"></div>
                 </article>
@@ -199,13 +217,9 @@
                             <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Set: <span id="banner-set-title" class="underline">--</span>
                         </button>
                         <div class="flex items-center gap-1">
-                            <button id="prev-set-song-btn" class="p-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300" title="Previous Song in Set">
-                                <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                            </button>
+                            <button id="prev-set-song-btn" class="p-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
                             <span id="set-song-index-label" class="text-xs font-mono text-slate-400 px-2">1 / 5</span>
-                            <button id="next-set-song-btn" class="p-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300" title="Next Song in Set">
-                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                            </button>
+                            <button id="next-set-song-btn" class="p-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                         </div>
                     </div>
 
@@ -215,6 +229,9 @@
                             <div class="flex items-center gap-2">
                                 <span id="sheet-folder-path" class="px-2 py-0.5 text-xs rounded bg-slate-800 text-slate-400 truncate max-w-[200px]">/Songs</span>
                                 <span id="sheet-key-badge" class="px-2.5 py-1 text-xs font-bold rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">Key: C</span>
+                                <button id="edit-song-btn" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition" title="Edit Song">
+                                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                </button>
                             </div>
                         </div>
                         <p id="sheet-author" class="text-sm text-slate-400 mt-1">--</p>
@@ -238,9 +255,7 @@
                         <span class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                             <i data-lucide="sliders" class="w-4 h-4"></i> Stage Performance Tools
                         </span>
-                        <button id="close-floating-menu" class="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">
-                            <i data-lucide="x" class="w-4 h-4"></i>
-                        </button>
+                        <button id="close-floating-menu" class="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
 
                     <div class="space-y-2 border-b border-slate-800 pb-3">
@@ -253,9 +268,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <input type="range" id="metronome-slider" min="40" max="240" value="120" class="w-full accent-amber-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer">
-                            <button id="metronome-toggle-btn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-amber-400 transition shrink-0">
-                                <i data-lucide="play" class="w-4 h-4"></i>
-                            </button>
+                            <button id="metronome-toggle-btn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-amber-400 transition shrink-0"><i data-lucide="play" class="w-4 h-4"></i></button>
                         </div>
                     </div>
 
@@ -272,37 +285,39 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <input type="range" id="autoscroll-slider" min="0.5" max="5" step="0.25" value="1" class="w-full accent-sky-400 h-1.5 bg-slate-950 rounded-lg cursor-pointer">
-                            <button id="autoscroll-toggle-btn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-sky-400 transition shrink-0">
-                                <i data-lucide="play" class="w-4 h-4"></i>
-                            </button>
+                            <button id="autoscroll-toggle-btn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-sky-400 transition shrink-0"><i data-lucide="play" class="w-4 h-4"></i></button>
                         </div>
                     </div>
 
+                    <!-- MIDI / Synth Pads Player -->
                     <div class="space-y-2">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                                <i data-lucide="waves" class="w-3.5 h-3.5 text-indigo-400"></i> Key Pad Synth
+                                <i data-lucide="waves" class="w-3.5 h-3.5 text-indigo-400"></i> Pad Player (.mid / Synth)
                             </span>
                             <span id="pad-key-val" class="text-xs font-mono text-indigo-400">Key: C</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <select id="pad-key-select" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg text-xs py-1.5 px-2 text-slate-200">
-                                <option value="C">C Pad</option>
-                                <option value="C#">C# / Db</option>
-                                <option value="D">D Pad</option>
-                                <option value="Eb">Eb / D#</option>
-                                <option value="E">E Pad</option>
-                                <option value="F">F Pad</option>
-                                <option value="F#">F# / Gb</option>
-                                <option value="G">G Pad</option>
-                                <option value="Ab">Ab / G#</option>
-                                <option value="A">A Pad</option>
-                                <option value="Bb">Bb / A#</option>
-                                <option value="B">B Pad</option>
+                                <option value="C">C Major</option>
+                                <option value="Cm">C Minor</option>
+                                <option value="Csharp">C# Major</option>
+                                <option value="Csharpm">C# Minor</option>
+                                <option value="D">D Major</option>
+                                <option value="Dm">D Minor</option>
+                                <option value="Eb">Eb Major</option>
+                                <option value="E">E Major</option>
+                                <option value="Em">E Minor</option>
+                                <option value="F">F Major</option>
+                                <option value="Fsharp">F# Major</option>
+                                <option value="G">G Major</option>
+                                <option value="Gm">G Minor</option>
+                                <option value="A">A Major</option>
+                                <option value="Am">A Minor</option>
+                                <option value="Bb">Bb Major</option>
+                                <option value="B">B Major</option>
                             </select>
-                            <button id="pad-toggle-btn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-indigo-400 transition shrink-0">
-                                <i data-lucide="power" class="w-4 h-4"></i>
-                            </button>
+                            <button id="pad-toggle-btn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-indigo-400 transition shrink-0"><i data-lucide="power" class="w-4 h-4"></i></button>
                         </div>
                     </div>
                 </div>
@@ -314,7 +329,7 @@
         </main>
     </div>
 
-    <!-- Storage Selector / Permission Modal Overlay -->
+    <!-- Storage Selector / Backup Importer Modal -->
     <div id="folder-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6">
             
@@ -322,9 +337,9 @@
                 <div class="inline-flex p-3 bg-amber-500/10 text-amber-400 rounded-full mb-2">
                     <i data-lucide="folder-tree" class="w-8 h-8"></i>
                 </div>
-                <h3 id="modal-title" class="text-xl font-bold text-white">Select OpenSong Root Directory</h3>
+                <h3 id="modal-title" class="text-xl font-bold text-white">Select OpenSong Storage or Backup (.osb / .osbs)</h3>
                 <p id="modal-description" class="text-sm text-slate-400 leading-relaxed">
-                    Choose your main OpenSong folder containing the <strong>Songs/</strong> and <strong>Sets/</strong> directories.
+                    Choose your local OpenSong folder or import OpenSongApp zip backup archives directly.
                 </p>
             </div>
 
@@ -334,8 +349,8 @@
                     <i data-lucide="music" class="w-5 h-5 text-amber-400 absolute"></i>
                 </div>
                 <div class="space-y-1">
-                    <h4 id="progress-status-title" class="text-base font-bold text-slate-100">Scanning OpenSong Directory...</h4>
-                    <p id="progress-status-detail" class="text-xs text-slate-400 font-mono">Reading files into memory...</p>
+                    <h4 id="progress-status-title" class="text-base font-bold text-slate-100">Processing Archive...</h4>
+                    <p id="progress-status-detail" class="text-xs text-slate-400 font-mono">Extracting files...</p>
                 </div>
                 <div class="flex justify-center gap-3 pt-2">
                     <span id="progress-song-count" class="px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono rounded-lg">0 Songs</span>
@@ -343,170 +358,134 @@
                 </div>
             </div>
 
-            <div id="missing-folders-box" class="hidden bg-amber-950/40 border border-amber-500/40 rounded-xl p-4 space-y-3">
-                <div class="flex items-start gap-2">
-                    <i data-lucide="alert-circle" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5"></i>
-                    <div class="text-xs space-y-1">
-                        <p class="font-bold text-amber-200">Missing Subdirectories Detected</p>
-                        <p id="missing-folders-text" class="text-amber-300/80">The selected folder is missing required subdirectories.</p>
-                    </div>
-                </div>
-                <button id="create-missing-folders-btn" class="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg transition flex items-center justify-center gap-1.5">
-                    <i data-lucide="folder-plus" class="w-4 h-4"></i> Create Missing Songs/, Sets/, & Settings/ Folders
-                </button>
-            </div>
-
-            <div id="iframe-notice-box" class="hidden bg-slate-950/80 border border-slate-800/80 rounded-xl p-3.5 text-xs text-slate-300 space-y-2">
-                <div class="flex items-center font-semibold text-amber-400 gap-1.5">
-                    <i data-lucide="info" class="w-4 h-4"></i>
-                    <span>Preview Environment Mode</span>
-                </div>
-                <p class="text-slate-400 leading-relaxed">
-                    When running in a preview window, browsers enforce security restrictions on direct folder access. Clicking below opens the browser's folder selector to load your OpenSong directory directly into memory.
-                </p>
-            </div>
-
-            <div id="privacy-notice-box" class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3.5 text-xs text-slate-400 space-y-2">
-                <div class="flex items-center font-semibold text-emerald-400 gap-1.5">
-                    <i data-lucide="hard-drive" class="w-4 h-4"></i>
-                    <span>Where do your files go? (No Cloud Uploads!)</span>
-                </div>
-                <p class="text-slate-300 leading-relaxed">
-                    Browsers use the word <em>"Upload"</em> in folder pickers for security reasons, but <strong>zero files leave your machine</strong>. Your files are read entirely inside your device's browser memory.
-                </p>
-            </div>
-
-            <div id="modal-actions-box" class="space-y-2">
-                <button id="modal-select-folder-btn" class="w-full py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/10">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button id="modal-select-folder-btn" class="py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/10">
                     <i data-lucide="folder-open" class="w-5 h-5"></i>
-                    <span id="modal-btn-text">Select Root OpenSong Directory</span>
+                    <span>Select Root Folder</span>
                 </button>
-                <input type="file" id="fallback-folder-input" webkitdirectory directory multiple class="hidden">
-                <button id="modal-close-btn" class="hidden w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl transition">Dismiss</button>
+                <button id="modal-import-backup-btn" class="py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/10">
+                    <i data-lucide="file-archive" class="w-5 h-5"></i>
+                    <span>Import .osb / .osbs</span>
+                </button>
+            </div>
+
+            <!-- Hidden file inputs -->
+            <input type="file" id="fallback-folder-input" webkitdirectory directory multiple class="hidden">
+            <input type="file" id="backup-file-input" accept=".osb,.osbs,.zip" multiple class="hidden">
+
+            <button id="modal-close-btn" class="hidden w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl transition">Dismiss</button>
+        </div>
+    </div>
+
+    <!-- Song Editor Modal -->
+    <div id="song-editor-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 id="song-editor-title" class="font-bold text-lg text-amber-400">Create / Edit Song</h3>
+                <button id="close-song-editor" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                    <label class="font-bold text-slate-300 block mb-1">Title</label>
+                    <input type="text" id="edit-song-title-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100">
+                </div>
+                <div>
+                    <label class="font-bold text-slate-300 block mb-1">Author</label>
+                    <input type="text" id="edit-song-author-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100">
+                </div>
+                <div>
+                    <label class="font-bold text-slate-300 block mb-1">Key</label>
+                    <input type="text" id="edit-song-key-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" value="C">
+                </div>
+                <div>
+                    <label class="font-bold text-slate-300 block mb-1">Tempo (BPM)</label>
+                    <input type="number" id="edit-song-tempo-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" value="120">
+                </div>
+                <div>
+                    <label class="font-bold text-slate-300 block mb-1">Duration (Seconds)</label>
+                    <input type="number" id="edit-song-duration-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" value="180">
+                </div>
+                <div>
+                    <label class="font-bold text-slate-300 block mb-1">Pre-delay (Seconds)</label>
+                    <input type="number" id="edit-song-predelay-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" value="10">
+                </div>
+            </div>
+            <div>
+                <label class="font-bold text-slate-300 block mb-1 text-xs">Lyrics & Chords (OpenSong XML format)</label>
+                <textarea id="edit-song-lyrics-input" rows="10" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-slate-100 focus:outline-none focus:border-amber-500" placeholder="[V1]&#10;.C     G&#10;Amazing grace..."></textarea>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button id="save-song-btn" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition">Save Song</button>
             </div>
         </div>
     </div>
 
-    <!-- App Settings Drawer / Modal -->
+    <!-- Set Editor Modal -->
+    <div id="set-editor-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-lg text-indigo-400">Create / Edit Set</h3>
+                <button id="close-set-editor" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="text-xs space-y-3">
+                <div>
+                    <label class="font-bold text-slate-300 block mb-1">Set Title</label>
+                    <input type="text" id="edit-set-title-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100">
+                </div>
+                <div>
+                    <label class="font-bold text-slate-300 block mb-1">Song Titles (One per line)</label>
+                    <textarea id="edit-set-songs-input" rows="6" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-slate-100" placeholder="Amazing Grace&#10;How Great Thou Art"></textarea>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button id="save-set-btn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition">Save Set</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal (including WebSocket endpoint) -->
     <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div class="flex items-center space-x-2 text-amber-400">
                     <i data-lucide="settings" class="w-5 h-5"></i>
-                    <h3 class="font-bold text-lg text-slate-100">Preferences & View Settings</h3>
+                    <h3 class="font-bold text-lg text-slate-100">OpenSongApp Web Preferences</h3>
                 </div>
                 <button id="close-settings-modal" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
 
             <div class="space-y-4 text-xs">
                 <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                    <label class="font-bold text-slate-200 block">WebSocket Remote Cue URL</label>
+                    <input type="text" id="setting-ws-url" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 font-mono text-xs" placeholder="ws://localhost:8080">
+                    <p class="text-slate-400">Connects to OpenSongApp remote control listener for automatic song cueing.</p>
+                </div>
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex items-center justify-between">
                         <label class="font-bold text-slate-200">Default Song Duration (Fallback)</label>
-                        <span id="setting-default-duration-label" class="font-mono text-amber-400 font-bold">180s (3 minutes)</span>
+                        <span id="setting-default-duration-label" class="font-mono text-amber-400 font-bold">180s</span>
                     </div>
                     <input type="range" id="setting-default-duration-slider" min="30" max="600" step="15" value="180" class="w-full accent-amber-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
                 </div>
-
-                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="font-bold text-slate-200">Default Auto-Scroll Pre-delay</label>
-                        <span id="setting-default-predelay-label" class="font-mono text-amber-400 font-bold">10s</span>
-                    </div>
-                    <input type="range" id="setting-default-predelay-slider" min="0" max="60" step="1" value="10" class="w-full accent-amber-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
-                </div>
-
-                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="font-bold text-slate-200">Auto-Scale Text to Screen Width</label>
-                        <input type="checkbox" id="setting-autoscale-toggle" class="accent-amber-500 w-4 h-4 rounded cursor-pointer">
-                    </div>
-                </div>
-
-                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="font-bold text-slate-200">Max Allowed Font Size</label>
-                        <span id="setting-max-font-label" class="font-mono text-amber-400 font-bold">150%</span>
-                    </div>
-                    <input type="range" id="setting-max-font-slider" min="100" max="250" step="10" value="150" class="w-full accent-amber-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
-                </div>
-
-                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="font-bold text-slate-200">Wrap Long Lyric Lines</label>
-                        <input type="checkbox" id="setting-wrap-toggle" checked class="accent-amber-500 w-4 h-4 rounded cursor-pointer">
-                    </div>
-                </div>
-
-                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                    <label class="font-bold text-slate-200 block">Default Time Signature</label>
-                    <select id="setting-time-sig-select" class="w-full bg-slate-900 border border-slate-800 rounded-lg py-1.5 px-2 text-slate-200 focus:outline-none">
-                        <option value="4/4">4/4 Standard</option>
-                        <option value="3/4">3/4 Waltz</option>
-                        <option value="6/8">6/8 Ballad</option>
-                        <option value="2/4">2/4 March</option>
-                    </select>
-                </div>
             </div>
-
-            <button id="save-settings-btn" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition">
-                Apply & Save Settings
-            </button>
+            <button id="save-settings-btn" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition">Apply & Save</button>
         </div>
     </div>
 
-    <!-- Error Diagnostics Modal -->
-    <div id="error-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-red-500/40 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div class="flex items-center space-x-2 text-red-400">
-                    <i data-lucide="bug" class="w-5 h-5"></i>
-                    <h3 class="font-bold text-lg">Diagnostics & Error Log</h3>
-                </div>
-                <button id="close-error-modal" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div id="error-logs-container" class="bg-slate-950 rounded-xl p-4 font-mono text-xs text-red-300 h-64 overflow-y-auto space-y-2 border border-slate-800"></div>
-            <div class="flex justify-between items-center text-xs text-slate-500 pt-2">
-                <span id="error-count-text">0 logs recorded</span>
-                <button id="clear-error-logs" class="text-slate-400 hover:text-white underline">Clear Logs</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Application Logic Engine -->
+    <!-- Application Logic Script -->
     <script>
-        const SCALE_SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-        const SCALE_FLATS  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
-
-        const NOTE_FREQS = {
-            'C': 130.81, 'C#': 138.59, 'D': 146.83, 'Eb': 155.56, 'E': 164.81,
-            'F': 174.61, 'F#': 185.00, 'G': 196.00, 'Ab': 207.65, 'A': 220.00,
-            'Bb': 233.08, 'B': 246.94
-        };
-
-        let db = null;
-        let rootHandle = null;
-        let songsHandle = null;
-        let setsHandle = null;
-        let settingsHandle = null;
-
         let loadedSongs = [];
         let loadedSets = [];
         let activeTab = 'songs';
-        
         let activeSong = null;
         let activeSet = null;
         let activeSetSongIndex = -1;
-
         let transposeOffset = 0;
         let fontSizeScale = 1.0;
-        let errorLogs = [];
 
         let isAutoScrolling = false;
         let autoScrollInterval = null;
-        let autoScrollDelayTimeout = null;
-        let autoScrollCountdownInterval = null;
         let autoScrollSpeed = 1.0;
-        let isWaitingPredelay = false;
         let isUserManuallyScrolling = false;
         let userScrollResumeTimer = null;
 
@@ -519,43 +498,18 @@
         let isPadRunning = false;
         let activePadOscillators = [];
         let padGainNode = null;
-
-        let appSettings = {
-            fontSizeScale: 1.0,
-            maxFontSizePercent: 150,
-            autoScaleEnabled: false,
-            textWrapEnabled: true,
-            defaultTimeSig: "4/4",
-            defaultDurationSeconds: 180,
-            defaultPredelaySeconds: 10,
-            lastOpenedSongId: null,
-            lastOpenedSetId: null,
-            theme: 'dark'
-        };
+        let wsClient = null;
+        let secondaryWindow = null;
 
         const elements = {
             modal: document.getElementById('folder-modal'),
-            modalHeaderContent: document.getElementById('modal-header-content'),
             modalProgressContainer: document.getElementById('modal-progress-container'),
             progressStatusTitle: document.getElementById('progress-status-title'),
             progressStatusDetail: document.getElementById('progress-status-detail'),
             progressSongCount: document.getElementById('progress-song-count'),
             progressSetCount: document.getElementById('progress-set-count'),
-            privacyNoticeBox: document.getElementById('privacy-notice-box'),
-            modalActionsBox: document.getElementById('modal-actions-box'),
-            modalTitle: document.getElementById('modal-title'),
-            modalDescription: document.getElementById('modal-description'),
-            modalSelectBtn: document.getElementById('modal-select-folder-btn'),
-            modalBtnText: document.getElementById('modal-btn-text'),
-            modalCloseBtn: document.getElementById('modal-close-btn'),
-            missingFoldersBox: document.getElementById('missing-folders-box'),
-            missingFoldersText: document.getElementById('missing-folders-text'),
-            createMissingFoldersBtn: document.getElementById('create-missing-folders-btn'),
-            iframeNoticeBox: document.getElementById('iframe-notice-box'),
-            fallbackInput: document.getElementById('fallback-folder-input'),
             folderStatus: document.getElementById('folder-status-text'),
             mainScrollContainer: document.getElementById('main-scroll-container'),
-            
             tabSongsBtn: document.getElementById('tab-songs-btn'),
             tabSetsBtn: document.getElementById('tab-sets-btn'),
             tabSongsCount: document.getElementById('tab-songs-count'),
@@ -567,7 +521,6 @@
             rescanBtn: document.getElementById('rescan-btn'),
             sidebar: document.getElementById('sidebar'),
             toggleSidebarBtn: document.getElementById('toggle-sidebar-btn'),
-
             emptyState: document.getElementById('empty-state'),
             songSheet: document.getElementById('song-sheet'),
             sheetTitle: document.getElementById('sheet-title'),
@@ -578,19 +531,16 @@
             sheetCopyright: document.getElementById('sheet-copyright'),
             sheetCcli: document.getElementById('sheet-ccli'),
             sheetUser2: document.getElementById('sheet-user2'),
-
             setViewSheet: document.getElementById('set-view-sheet'),
             setTitle: document.getElementById('set-title'),
             setCountInfo: document.getElementById('set-count-info'),
             setSongsContainer: document.getElementById('set-songs-container'),
-
             setNavBanner: document.getElementById('set-navigation-banner'),
             backToSetBtn: document.getElementById('back-to-set-btn'),
             bannerSetTitle: document.getElementById('banner-set-title'),
             prevSetSongBtn: document.getElementById('prev-set-song-btn'),
             nextSetSongBtn: document.getElementById('next-set-song-btn'),
             setSongIndexLabel: document.getElementById('set-song-index-label'),
-
             floatingMainBtn: document.getElementById('floating-main-btn'),
             floatingMenu: document.getElementById('floating-menu'),
             closeFloatingMenu: document.getElementById('close-floating-menu'),
@@ -606,8 +556,6 @@
             padKeySelect: document.getElementById('pad-key-select'),
             padKeyVal: document.getElementById('pad-key-val'),
             padToggleBtn: document.getElementById('pad-toggle-btn'),
-
-            headerSongInfo: document.getElementById('header-song-info'),
             currentSongTitle: document.getElementById('current-song-title'),
             currentSongAuthor: document.getElementById('current-song-author'),
             metaKey: document.getElementById('meta-key'),
@@ -616,297 +564,143 @@
             transposeDown: document.getElementById('transpose-down'),
             transposeUp: document.getElementById('transpose-up'),
             transposeDisplay: document.getElementById('transpose-offset'),
-            fontDecrease: document.getElementById('font-decrease'),
-            fontIncrease: document.getElementById('font-increase'),
-            fontSizeLabel: document.getElementById('font-size-label'),
             changeFolderBtn: document.getElementById('change-folder-btn'),
             openSettingsBtn: document.getElementById('open-settings-btn'),
-
+            castDisplayBtn: document.getElementById('cast-display-btn'),
+            modalSelectBtn: document.getElementById('modal-select-folder-btn'),
+            modalImportBackupBtn: document.getElementById('modal-import-backup-btn'),
+            fallbackInput: document.getElementById('fallback-folder-input'),
+            backupFileInput: document.getElementById('backup-file-input'),
+            newSongBtn: document.getElementById('new-song-btn'),
+            newSetBtn: document.getElementById('new-set-btn'),
+            editSongBtn: document.getElementById('edit-song-btn'),
+            editSetBtn: document.getElementById('edit-set-btn'),
+            songEditorModal: document.getElementById('song-editor-modal'),
+            closeSongEditor: document.getElementById('close-song-editor'),
+            editSongTitleInput: document.getElementById('edit-song-title-input'),
+            editSongAuthorInput: document.getElementById('edit-song-author-input'),
+            editSongKeyInput: document.getElementById('edit-song-key-input'),
+            editSongTempoInput: document.getElementById('edit-song-tempo-input'),
+            editSongDurationInput: document.getElementById('edit-song-duration-input'),
+            editSongPredelayInput: document.getElementById('edit-song-predelay-input'),
+            editSongLyricsInput: document.getElementById('edit-song-lyrics-input'),
+            saveSongBtn: document.getElementById('save-song-btn'),
+            setEditorModal: document.getElementById('set-editor-modal'),
+            closeSetEditor: document.getElementById('close-set-editor'),
+            editSetTitleInput: document.getElementById('edit-set-title-input'),
+            editSetSongsInput: document.getElementById('edit-set-songs-input'),
+            saveSetBtn: document.getElementById('save-set-btn'),
             settingsModal: document.getElementById('settings-modal'),
             closeSettingsModal: document.getElementById('close-settings-modal'),
-            settingDefaultDurationSlider: document.getElementById('setting-default-duration-slider'),
-            settingDefaultDurationLabel: document.getElementById('setting-default-duration-label'),
-            settingDefaultPredelaySlider: document.getElementById('setting-default-predelay-slider'),
-            settingDefaultPredelayLabel: document.getElementById('setting-default-predelay-label'),
-            settingAutoscaleToggle: document.getElementById('setting-autoscale-toggle'),
-            settingMaxFontSlider: document.getElementById('setting-max-font-slider'),
-            settingMaxFontLabel: document.getElementById('setting-max-font-label'),
-            settingWrapToggle: document.getElementById('setting-wrap-toggle'),
-            settingTimeSigSelect: document.getElementById('setting-time-sig-select'),
-            saveSettingsBtn: document.getElementById('save-settings-btn'),
-
-            errorConsoleBtn: document.getElementById('error-console-btn'),
-            errorBadge: document.getElementById('error-badge'),
-            errorModal: document.getElementById('error-modal'),
-            closeErrorModal: document.getElementById('close-error-modal'),
-            errorLogsContainer: document.getElementById('error-logs-container'),
-            errorCountText: document.getElementById('error-count-text'),
-            clearErrorLogs: document.getElementById('clear-error-logs')
+            settingWsUrl: document.getElementById('setting-ws-url'),
+            saveSettingsBtn: document.getElementById('save-settings-btn')
         };
 
-        const isInIframe = window.self !== window.top;
-
-        function logError(severity, message, details = null) {
-            const timestamp = new Date().toLocaleTimeString();
-            errorLogs.push({ timestamp, severity, message, details });
-            const entry = document.createElement('div');
-            entry.className = 'border-b border-slate-800/80 pb-1.5';
-            entry.innerHTML = `<span class="text-slate-500">[${timestamp}]</span> <strong class="${severity === 'error' ? 'text-red-400' : 'text-amber-400'}">${message}</strong> ${details ? `<pre class="mt-1 text-[10px] text-slate-400 overflow-x-auto">${typeof details === 'object' ? JSON.stringify(details, null, 2) : details}</pre>` : ''}`;
-            elements.errorLogsContainer.appendChild(entry);
-            elements.errorCountText.textContent = `${errorLogs.length} logs recorded`;
-            if (severity === 'error') elements.errorBadge.classList.remove('hidden');
-        }
-
-        window.addEventListener('DOMContentLoaded', async () => {
+        window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            if (isInIframe) elements.iframeNoticeBox.classList.remove('hidden');
-            try {
-                await initIndexedDB();
-                await checkSavedFolderPermission();
-            } catch (err) {
-                logError('error', 'Initialization error', err);
-            }
             setupEventListeners();
             setupManualScrollInterception();
-            window.addEventListener('resize', handleWindowResize);
         });
 
-        function initIndexedDB() {
-            return new Promise((resolve) => {
-                const request = indexedDB.open('OpenSongStudioDB', 2);
-                request.onupgradeneeded = (e) => {
-                    const database = e.target.result;
-                    if (!database.objectStoreNames.contains('settings')) database.createObjectStore('settings');
-                };
-                request.onsuccess = (e) => { db = e.target.result; resolve(); };
-                request.onerror = () => resolve();
-            });
-        }
-
-        async function saveRootDirectoryHandle(handle) {
-            if (!db || !handle) return;
-            return new Promise((resolve) => {
-                const tx = db.transaction('settings', 'readwrite');
-                tx.objectStore('settings').put(handle, 'openSongRootHandle');
-                tx.oncomplete = () => resolve();
-                tx.onerror = () => resolve();
-            });
-        }
-
-        async function getSavedRootDirectoryHandle() {
-            if (!db) return null;
-            return new Promise((resolve) => {
-                const tx = db.transaction('settings', 'readonly');
-                const req = tx.objectStore('settings').get('openSongRootHandle');
-                req.onsuccess = () => resolve(req.result || null);
-                req.onerror = () => resolve(null);
-            });
-        }
-
-        async function checkSavedFolderPermission() {
-            if (isInIframe || !('showDirectoryPicker' in window)) return;
-            try {
-                const saved = await getSavedRootDirectoryHandle();
-                if (saved) {
-                    rootHandle = saved;
-                    elements.modalTitle.textContent = "Re-connect OpenSong Directory";
-                    elements.modalDescription.textContent = `Previously loaded root: "${rootHandle.name}". Click below to verify access permission.`;
-                    elements.modalBtnText.textContent = "Grant Access & Load OpenSongApp Web Studio";
-                    elements.modalCloseBtn.classList.remove('hidden');
-                }
-            } catch (e) {}
-        }
-
-        function showScanProgress(title = "Scanning...", detail = "Reading files...") {
-            elements.modalHeaderContent.classList.add('hidden');
-            elements.privacyNoticeBox.classList.add('hidden');
-            elements.modalActionsBox.classList.add('hidden');
-            elements.modalProgressContainer.classList.remove('hidden');
-            elements.modal.classList.remove('hidden');
-            elements.progressStatusTitle.textContent = title;
-            elements.progressStatusDetail.textContent = detail;
-        }
-
-        function hideScanProgress() {
-            elements.modalHeaderContent.classList.remove('hidden');
-            elements.privacyNoticeBox.classList.remove('hidden');
-            elements.modalActionsBox.classList.remove('hidden');
-            elements.modalProgressContainer.classList.add('hidden');
-        }
-
-        async function handleFolderSelection() {
-            if (isInIframe || !('showDirectoryPicker' in window)) {
-                elements.fallbackInput.click();
-                return;
-            }
-            try {
-                if (rootHandle) {
-                    let perm = await rootHandle.queryPermission({ mode: 'readwrite' });
-                    if (perm !== 'granted') perm = await rootHandle.requestPermission({ mode: 'readwrite' });
-                    if (perm === 'granted') { await processRootDirectory(rootHandle); return; }
-                }
-                const handle = await window.showDirectoryPicker();
-                if (handle) {
-                    rootHandle = handle;
-                    await saveRootDirectoryHandle(handle);
-                    await processRootDirectory(handle);
-                }
-            } catch (err) {
-                hideScanProgress();
-                elements.fallbackInput.click();
-            }
-        }
-
-        async function processRootDirectory(handle) {
-            elements.missingFoldersBox.classList.add('hidden');
-            elements.folderStatus.textContent = handle.name;
-            loadedSongs = [];
-            loadedSets = [];
-            showScanProgress(`Loading "${handle.name}"`, "Checking folder layout...");
-
-            let missing = [];
-            try {
-                try { songsHandle = await handle.getDirectoryHandle('Songs'); } catch(e) { missing.push('Songs'); }
-                try { setsHandle = await handle.getDirectoryHandle('Sets'); } catch(e) { missing.push('Sets'); }
-                try { settingsHandle = await handle.getDirectoryHandle('Settings', { create: true }); loadWebAppSettings(); } catch(e) {}
-
-                if (songsHandle) await scanSongDirectoryRecursively(songsHandle, '');
-                if (setsHandle) await scanSetDirectory(setsHandle);
-
-                updateTabCounts();
-                renderSidebarList();
-                hideScanProgress();
-                elements.modal.classList.add('hidden');
-
-                if (missing.length > 0) {
-                    elements.missingFoldersText.textContent = `Missing directory: ${missing.join(', ')}.`;
-                    elements.missingFoldersBox.classList.remove('hidden');
-                    elements.modal.classList.remove('hidden');
-                } else if (loadedSongs.length > 0) {
-                    renderSongSheet(loadedSongs[0]);
-                } else if (loadedSets.length > 0) {
-                    switchSidebarTab('sets');
-                    renderSetSheet(loadedSets[0]);
-                }
-            } catch (err) {
-                hideScanProgress();
-                logError('error', 'Error reading OpenSong folder', err);
-            }
-        }
-
-        async function scanSongDirectoryRecursively(dirHandle, pathPrefix) {
-            for await (const entry of dirHandle.values()) {
-                if (entry.kind === 'file') {
-                    const file = await entry.getFile();
-                    if (isSongFile(file.name)) {
-                        const text = await file.text();
-                        const song = parseOpenSongXML(text, file.name, pathPrefix);
-                        if (song) loadedSongs.push(song);
-                    }
-                } else if (entry.kind === 'directory') {
-                    const nested = await dirHandle.getDirectoryHandle(entry.name);
-                    await scanSongDirectoryRecursively(nested, pathPrefix ? `${pathPrefix}/${entry.name}` : entry.name);
-                }
-            }
-        }
-
-        async function scanSetDirectory(dirHandle) {
-            for await (const entry of dirHandle.values()) {
-                if (entry.kind === 'file') {
-                    const file = await entry.getFile();
-                    const text = await file.text();
-                    const setObj = parseOpenSongSetXML(text, file.name);
-                    if (setObj) loadedSets.push(setObj);
-                }
-            }
-        }
-
-        elements.fallbackInput.addEventListener('change', async (e) => {
+        // Backup Importer (.osb / .osbs via JSZip)
+        elements.modalImportBackupBtn.addEventListener('click', () => elements.backupFileInput.click());
+        elements.backupFileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files || []);
             if (files.length === 0) return;
-            loadedSongs = [];
-            loadedSets = [];
-            showScanProgress(`Processing ${files.length} Files`, "Reading items into memory...");
+            elements.modalProgressContainer.classList.remove('hidden');
+            elements.progressStatusTitle.textContent = "Unpacking Backup Archive...";
 
             for (const file of files) {
-                const path = file.webkitRelativePath || file.name;
-                const text = await file.text();
-                if (path.toLowerCase().includes('sets/')) {
-                    const s = parseOpenSongSetXML(text, file.name);
-                    if (s) loadedSets.push(s);
-                } else if (isSongFile(file.name) || text.includes('<song')) {
-                    const song = parseOpenSongXML(text, file.name, 'Songs');
-                    if (song) loadedSongs.push(song);
+                try {
+                    const zip = new JSZip();
+                    const zipContent = await zip.loadAsync(file);
+                    
+                    for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
+                        if (zipEntry.dir) continue;
+                        const text = await zipEntry.async("text");
+                        
+                        if (filename.toLowerCase().includes('sets/') || file.name.endsWith('.osbs')) {
+                            const setObj = parseOpenSongSetXML(text, filename.split('/').pop());
+                            if (setObj) loadedSets.push(setObj);
+                        } else {
+                            const songObj = parseOpenSongXML(text, filename.split('/').pop(), 'Imported Backup');
+                            if (songObj) loadedSongs.push(songObj);
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error reading archive", err);
                 }
             }
-            hideScanProgress();
+
+            elements.modalProgressContainer.classList.add('hidden');
             elements.modal.classList.add('hidden');
             updateTabCounts();
             renderSidebarList();
             if (loadedSongs.length > 0) renderSongSheet(loadedSongs[0]);
         });
 
-        async function createMissingDirectories() {
-            if (!rootHandle) return;
-            songsHandle = await rootHandle.getDirectoryHandle('Songs', { create: true });
-            setsHandle = await rootHandle.getDirectoryHandle('Sets', { create: true });
-            settingsHandle = await rootHandle.getDirectoryHandle('Settings', { create: true });
-            elements.missingFoldersBox.classList.add('hidden');
-            processRootDirectory(rootHandle);
+        // Folder Picker
+        elements.modalSelectBtn.addEventListener('click', () => {
+            if ('showDirectoryPicker' in window) {
+                window.showDirectoryPicker().then(handle => processRootDirectory(handle)).catch(() => elements.fallbackInput.click());
+            } else {
+                elements.fallbackInput.click();
+            }
+        });
+
+        elements.fallbackInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files || []);
+            loadedSongs = [];
+            loadedSets = [];
+            for (const file of files) {
+                const text = await file.text();
+                if (file.webkitRelativePath.includes('Sets/')) {
+                    const s = parseOpenSongSetXML(text, file.name);
+                    if (s) loadedSets.push(s);
+                } else if (file.name.endsWith('.xml') || text.includes('<song')) {
+                    const song = parseOpenSongXML(text, file.name, 'Songs');
+                    if (song) loadedSongs.push(song);
+                }
+            }
+            elements.modal.classList.add('hidden');
+            updateTabCounts();
+            renderSidebarList();
+            if (loadedSongs.length > 0) renderSongSheet(loadedSongs[0]);
+        });
+
+        async function processRootDirectory(handle) {
+            elements.folderStatus.textContent = handle.name;
+            loadedSongs = [];
+            loadedSets = [];
+            for await (const entry of handle.values()) {
+                if (entry.kind === 'directory' && entry.name === 'Songs') {
+                    await scanSongDir(entry, '');
+                } else if (entry.kind === 'directory' && entry.name === 'Sets') {
+                    for await (const setFile of entry.values()) {
+                        if (setFile.kind === 'file') {
+                            const f = await setFile.getFile();
+                            const setObj = parseOpenSongSetXML(await f.text(), f.name);
+                            if (setObj) loadedSets.push(setObj);
+                        }
+                    }
+                }
+            }
+            elements.modal.classList.add('hidden');
+            updateTabCounts();
+            renderSidebarList();
+            if (loadedSongs.length > 0) renderSongSheet(loadedSongs[0]);
         }
 
-        async function loadWebAppSettings() {
-            if (!settingsHandle) return;
-            try {
-                const fh = await settingsHandle.getFileHandle('webapp_settings.json');
-                const parsed = JSON.parse(await (await fh.getFile()).text());
-                appSettings = { ...appSettings, ...parsed };
-                applyLoadedSettingsUI();
-            } catch (e) { saveWebAppSettings(); }
-        }
-
-        function formatDurationString(seconds) {
-            if (!seconds || seconds <= 0) return '0s';
-            const m = Math.floor(seconds / 60);
-            const s = seconds % 60;
-            if (m > 0) return s > 0 ? `${m} minutes${s}s` : `${m} minutes`;
-            return `${s}s`;
-        }
-
-        function applyLoadedSettingsUI() {
-            fontSizeScale = appSettings.fontSizeScale || 1.0;
-            elements.settingAutoscaleToggle.checked = !!appSettings.autoScaleEnabled;
-            elements.settingWrapToggle.checked = appSettings.textWrapEnabled !== false;
-            elements.settingMaxFontSlider.value = appSettings.maxFontSizePercent || 150;
-            elements.settingMaxFontLabel.textContent = `${elements.settingMaxFontSlider.value}%`;
-            elements.settingTimeSigSelect.value = appSettings.defaultTimeSig || "4/4";
-            elements.settingDefaultDurationSlider.value = appSettings.defaultDurationSeconds || 180;
-            elements.settingDefaultDurationLabel.textContent = `${elements.settingDefaultDurationSlider.value}s (${formatDurationString(elements.settingDefaultDurationSlider.value)})`;
-            elements.settingDefaultPredelaySlider.value = appSettings.defaultPredelaySeconds ?? 10;
-            elements.settingDefaultPredelayLabel.textContent = `${elements.settingDefaultPredelaySlider.value}s`;
-            updateFontSizeDisplayOnly();
-        }
-
-        async function saveWebAppSettings() {
-            if (!settingsHandle) return;
-            try {
-                appSettings.fontSizeScale = fontSizeScale;
-                appSettings.autoScaleEnabled = elements.settingAutoscaleToggle.checked;
-                appSettings.textWrapEnabled = elements.settingWrapToggle.checked;
-                appSettings.maxFontSizePercent = parseInt(elements.settingMaxFontSlider.value, 10);
-                appSettings.defaultTimeSig = elements.settingTimeSigSelect.value;
-                appSettings.defaultDurationSeconds = parseInt(elements.settingDefaultDurationSlider.value, 10) || 180;
-                appSettings.defaultPredelaySeconds = parseInt(elements.settingDefaultPredelaySlider.value, 10);
-                const fh = await settingsHandle.getFileHandle('webapp_settings.json', { create: true });
-                const writable = await fh.createWritable();
-                await writable.write(JSON.stringify(appSettings, null, 2));
-                await writable.close();
-            } catch (e) {}
-        }
-
-        function isSongFile(filename) {
-            const lower = filename.toLowerCase();
-            return !filename.startsWith('.') && (lower.endsWith('.xml') || lower.endsWith('.ost') || !filename.includes('.'));
+        async function scanSongDir(dirHandle, prefix) {
+            for await (const entry of dirHandle.values()) {
+                if (entry.kind === 'file') {
+                    const f = await entry.getFile();
+                    const song = parseOpenSongXML(await f.text(), f.name, prefix || 'Songs');
+                    if (song) loadedSongs.push(song);
+                } else if (entry.kind === 'directory') {
+                    await scanSongDir(entry, prefix ? `${prefix}/${entry.name}` : entry.name);
+                }
+            }
         }
 
         function parseOpenSongXML(xmlString, filename, folderPath) {
@@ -917,8 +711,8 @@
                 if (!song) return null;
                 const gt = (tag) => { const el = song.querySelector(tag); return el ? el.textContent.trim() : ''; };
                 return {
-                    id: 'song_' + filename.replace(/[^a-zA-Z0-9]/g, '_') + '_' + Math.random().toString(36).substring(2, 6),
-                    filename, folderPath: folderPath || 'Songs',
+                    id: 'song_' + Math.random().toString(36).substring(2, 8),
+                    filename, folderPath,
                     title: gt("title") || filename, author: gt("author"), copyright: gt("copyright"),
                     key: gt("key") || 'C', tempo: gt("tempo"), timeSignature: gt("time_signature"),
                     duration: parseInt(gt("duration"), 10) || null, predelay: parseInt(gt("predelay"), 10) || null,
@@ -934,43 +728,102 @@
                 if (!setNode) return null;
                 const songTitles = [];
                 doc.querySelectorAll("slide_group").forEach(g => {
-                    if (!g.getAttribute("type") || g.getAttribute("type") === "song") {
-                        const name = g.getAttribute("name");
-                        if (name) songTitles.push(name);
-                    }
+                    const name = g.getAttribute("name");
+                    if (name) songTitles.push(name);
                 });
-                return { id: 'set_' + filename.replace(/[^a-zA-Z0-9]/g, '_'), filename, title: setNode.getAttribute("name") || filename, songTitles };
+                return { id: 'set_' + Math.random().toString(36).substring(2, 8), filename, title: setNode.getAttribute("name") || filename, songTitles };
             } catch (e) { return null; }
         }
 
-        // Helper function to normalize song titles/filenames (stripping quotes, apostrophes, and punctuation for reliable matching)
-        function normalizeSongName(name) {
-            if (!name) return '';
-            return name.toLowerCase().replace(/['"‘’“”`]/g, '').replace(/[^a-z0-9]/g, '');
-        }
+        // Song & Set Editors
+        elements.newSongBtn.addEventListener('click', () => {
+            elements.editSongTitleInput.value = '';
+            elements.editSongAuthorInput.value = '';
+            elements.editSongKeyInput.value = 'C';
+            elements.editSongTempoInput.value = '120';
+            elements.editSongDurationInput.value = '180';
+            elements.editSongPredelayInput.value = '10';
+            elements.editSongLyricsInput.value = '[V1]\n.C     G\nLyrics here...';
+            activeSong = null;
+            elements.songEditorModal.classList.remove('hidden');
+        });
 
-        function findMatchingSong(songName) {
-            const cleanTarget = normalizeSongName(songName);
-            return loadedSongs.find(s => 
-                normalizeSongName(s.title) === cleanTarget || 
-                normalizeSongName(s.filename) === cleanTarget ||
-                normalizeSongName(s.filename.replace(/\.[^/.]+$/, "")) === cleanTarget
-            );
-        }
+        elements.editSongBtn.addEventListener('click', () => {
+            if (!activeSong) return;
+            elements.editSongTitleInput.value = activeSong.title;
+            elements.editSongAuthorInput.value = activeSong.author;
+            elements.editSongKeyInput.value = activeSong.key;
+            elements.editSongTempoInput.value = activeSong.tempo;
+            elements.editSongDurationInput.value = activeSong.duration || 180;
+            elements.editSongPredelayInput.value = activeSong.predelay || 10;
+            elements.editSongLyricsInput.value = activeSong.lyrics;
+            elements.songEditorModal.classList.remove('hidden');
+        });
 
+        elements.closeSongEditor.addEventListener('click', () => elements.songEditorModal.classList.add('hidden'));
+        elements.saveSongBtn.addEventListener('click', () => {
+            const newSongData = {
+                id: activeSong ? activeSong.id : 'song_' + Math.random().toString(36).substring(2, 8),
+                filename: activeSong ? activeSong.filename : (elements.editSongTitleInput.value.replace(/[^a-zA-Z0-9]/g, '_') + '.xml'),
+                folderPath: activeSong ? activeSong.folderPath : 'Songs',
+                title: elements.editSongTitleInput.value || 'Untitled',
+                author: elements.editSongAuthorInput.value,
+                key: elements.editSongKeyInput.value || 'C',
+                tempo: elements.editSongTempoInput.value,
+                duration: parseInt(elements.editSongDurationInput.value, 10),
+                predelay: parseInt(elements.editSongPredelayInput.value, 10),
+                lyrics: elements.editSongLyricsInput.value
+            };
+            if (activeSong) {
+                const idx = loadedSongs.findIndex(s => s.id === activeSong.id);
+                if (idx !== -1) loadedSongs[idx] = newSongData;
+            } else {
+                loadedSongs.push(newSongData);
+            }
+            elements.songEditorModal.classList.add('hidden');
+            updateTabCounts();
+            renderSidebarList();
+            renderSongSheet(newSongData);
+        });
+
+        elements.newSetBtn.addEventListener('click', () => {
+            elements.editSetTitleInput.value = '';
+            elements.editSetSongsInput.value = '';
+            activeSet = null;
+            elements.setEditorModal.classList.remove('hidden');
+        });
+
+        elements.editSetBtn.addEventListener('click', () => {
+            if (!activeSet) return;
+            elements.editSetTitleInput.value = activeSet.title;
+            elements.editSetSongsInput.value = activeSet.songTitles.join('\n');
+            elements.setEditorModal.classList.remove('hidden');
+        });
+
+        elements.closeSetEditor.addEventListener('click', () => elements.setEditorModal.classList.add('hidden'));
+        elements.saveSetBtn.addEventListener('click', () => {
+            const titles = elements.editSetSongsInput.value.split('\n').map(t => t.trim()).filter(Boolean);
+            const newSetData = {
+                id: activeSet ? activeSet.id : 'set_' + Math.random().toString(36).substring(2, 8),
+                filename: activeSet ? activeSet.filename : 'NewSet.xml',
+                title: elements.editSetTitleInput.value || 'Untitled Set',
+                songTitles: titles
+            };
+            if (activeSet) {
+                const idx = loadedSets.findIndex(s => s.id === activeSet.id);
+                if (idx !== -1) loadedSets[idx] = newSetData;
+            } else {
+                loadedSets.push(newSetData);
+            }
+            elements.setEditorModal.classList.add('hidden');
+            updateTabCounts();
+            renderSidebarList();
+            renderSetSheet(newSetData);
+        });
+
+        // Lyrics & Comments Rendering
         function renderSongSheet(song, fromSetContext = null, songIndexInSet = -1) {
             activeSong = song;
-            transposeOffset = 0;
-            elements.transposeDisplay.textContent = '0';
-            if (isAutoScrolling || isWaitingPredelay) stopAutoScroll();
-
-            const bpm = parseInt(song.tempo, 10);
-            if (!isNaN(bpm) && bpm >= 40) {
-                metronomeBpm = bpm;
-                elements.metronomeSlider.value = metronomeBpm;
-                elements.metronomeBpmVal.textContent = `${metronomeBpm} BPM`;
-            }
-
             elements.emptyState.classList.add('hidden');
             elements.setViewSheet.classList.add('hidden');
             elements.songSheet.classList.remove('hidden');
@@ -986,48 +839,17 @@
             }
 
             elements.sheetTitle.textContent = song.title;
-            elements.sheetAuthor.textContent = song.author || 'Unknown Author';
-            elements.sheetFolderPath.textContent = `/${song.folderPath || 'Songs'}`;
+            elements.sheetAuthor.textContent = song.author || '';
             elements.sheetKeyBadge.textContent = `Key: ${song.key || 'C'}`;
-            elements.sheetCopyright.textContent = song.copyright ? `© ${song.copyright}` : '';
-            elements.sheetCcli.textContent = song.ccli ? `CCLI Song #: ${song.ccli}` : '';
-            elements.sheetUser2.textContent = song.user2 ? `Notes: ${song.user2}` : '';
-
             elements.currentSongTitle.textContent = song.title;
-            elements.currentSongAuthor.textContent = song.author || 'Unknown';
+            elements.currentSongAuthor.textContent = song.author || '';
             elements.metaKey.textContent = song.key || 'C';
             elements.metaTempo.textContent = song.tempo || '--';
-            elements.metaSig.textContent = song.timeSignature || '--';
-
-            const effDur = song.duration !== null ? song.duration : (appSettings.defaultDurationSeconds || 180);
-            elements.songDurationLabel.textContent = `${formatDurationString(effDur)}${song.duration === null ? ' (Default)' : ''}`;
-            const effPre = song.predelay !== null ? song.predelay : (appSettings.defaultPredelaySeconds ?? 10);
-            elements.songPredelayLabel.textContent = `${effPre}s${song.predelay === null ? ' (Default)' : ''}`;
-            elements.autoscrollStatusVal.textContent = "Ready";
 
             renderSongLyrics(song.lyrics);
-            setTimeout(() => applyAutoScaling(), 30);
-        }
-
-        function renderSetSheet(setObj) {
-            activeSet = setObj;
-            activeSong = null;
-            elements.emptyState.classList.add('hidden');
-            elements.songSheet.classList.add('hidden');
-            elements.setViewSheet.classList.remove('hidden');
-            elements.setTitle.textContent = setObj.title;
-            elements.setCountInfo.textContent = `${setObj.songTitles.length} songs in set`;
-            elements.setSongsContainer.innerHTML = '';
-
-            setObj.songTitles.forEach((songName, idx) => {
-                const matched = findMatchingSong(songName);
-                const card = document.createElement('div');
-                card.className = `p-4 rounded-xl border transition flex items-center justify-between cursor-pointer ${matched ? 'bg-slate-900/80 border-slate-800 hover:border-indigo-500/50' : 'opacity-60'}`;
-                card.innerHTML = `<div class="flex items-center space-x-3"><span class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-300 font-mono text-xs font-bold flex items-center justify-center">${idx + 1}</span><div><h4 class="text-sm font-bold text-slate-100">${songName}</h4><p class="text-xs text-slate-500">${matched ? (matched.author || 'Local Song') : 'Song file not found'}</p></div></div>`;
-                if (matched) card.addEventListener('click', () => renderSongSheet(matched, setObj, idx));
-                elements.setSongsContainer.appendChild(card);
-            });
-            lucide.createIcons();
+            if (secondaryWindow && !secondaryWindow.closed) {
+                updateSecondaryWindow();
+            }
         }
 
         function renderSongLyrics(rawLyrics) {
@@ -1035,18 +857,39 @@
             if (!rawLyrics) return;
             const lines = rawLyrics.split('\n');
             let sectionContainer = null;
-            const allowWrap = appSettings.textWrapEnabled !== false;
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 const trimmed = line.trim();
 
+                // Comment line starting with semicolon (supports guitar tabs)
+                if (trimmed.startsWith(';')) {
+                    if (!sectionContainer) {
+                        sectionContainer = document.createElement('div');
+                        sectionContainer.className = 'p-4 rounded-xl bg-slate-900/40 border border-slate-800 space-y-2';
+                        elements.sheetContent.appendChild(sectionContainer);
+                    }
+                    const commDiv = document.createElement('div');
+                    commDiv.className = 'comment-line';
+                    commDiv.textContent = trimmed.substring(1).trim();
+                    sectionContainer.appendChild(commDiv);
+                    continue;
+                }
+
                 if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
                     const code = trimmed.slice(1, -1);
                     sectionContainer = document.createElement('div');
                     const isChorus = code.toLowerCase().startsWith('c');
-                    sectionContainer.className = `p-4 rounded-xl border ${isChorus ? 'bg-slate-900/80 border-amber-500/30 shadow-md' : 'bg-slate-900/40 border-slate-800'} space-y-3`;
-                    sectionContainer.innerHTML = `<h4 class="text-xs font-bold uppercase tracking-wider ${isChorus ? 'text-amber-400' : 'text-slate-400'} mb-3 flex items-center gap-2"><span class="w-2 h-2 rounded-full ${isChorus ? 'bg-amber-400' : 'bg-slate-600'}"></span>${expandSectionTitle(code)}</h4>`;
+                    sectionContainer.className = `p-4 rounded-xl border cursor-pointer hover:border-amber-400/60 transition ${isChorus ? 'bg-slate-900/85 border-amber-500/30' : 'bg-slate-900/40 border-slate-800'} space-y-3`;
+                    sectionContainer.innerHTML = `<h4 class="text-xs font-bold uppercase tracking-wider ${isChorus ? 'text-amber-400' : 'text-slate-400'} flex items-center gap-2"><span class="w-2 h-2 rounded-full ${isChorus ? 'bg-amber-400' : 'bg-slate-600'}"></span>${code} (Click to Cast)</h4>`;
+                    
+                    // Click section to cast/mirror to secondary window
+                    sectionContainer.addEventListener('click', () => {
+                        if (secondaryWindow && !secondaryWindow.closed) {
+                            secondaryWindow.document.getElementById('cast-content').innerHTML = sectionContainer.innerHTML;
+                        }
+                    });
+
                     elements.sheetContent.appendChild(sectionContainer);
                     continue;
                 }
@@ -1067,19 +910,16 @@
 
                     const pairLine = document.createElement('div');
                     pairLine.className = 'chord-lyric-pair-line';
-                    pairLine.style.fontSize = `${1.0 * fontSizeScale}rem`;
-
                     parseChordLyricTokens(transposed, lyric).forEach(tok => {
                         const box = document.createElement('div');
                         box.className = 'chord-lyric-pair';
-                        box.innerHTML = `<span class="chord-above">${tok.chord || ''}</span><span class="lyric-below ${allowWrap ? 'whitespace-pre-wrap' : 'whitespace-pre'}">${tok.lyric || '\u00A0'}</span>`;
+                        box.innerHTML = `<span class="chord-above">${tok.chord || ''}</span><span class="lyric-below whitespace-pre-wrap">${tok.lyric || '\u00A0'}</span>`;
                         pairLine.appendChild(box);
                     });
                     sectionContainer.appendChild(pairLine);
                 } else if (trimmed.length > 0) {
                     const div = document.createElement('div');
-                    div.className = `lyric-below opacity-90 py-0.5 ${allowWrap ? 'whitespace-pre-wrap' : 'whitespace-pre'}`;
-                    div.style.fontSize = `${1.0 * fontSizeScale}rem`;
+                    div.className = 'lyric-below opacity-90 py-0.5 whitespace-pre-wrap';
                     div.textContent = line.startsWith(' ') ? line.substring(1) : line;
                     sectionContainer.appendChild(div);
                 }
@@ -1109,36 +949,68 @@
             return tokens;
         }
 
-        function expandSectionTitle(code) {
-            const u = code.toUpperCase();
-            if (u.startsWith('V')) return `Verse ${u.substring(1)}`;
-            if (u.startsWith('C')) return `Chorus ${u.substring(1)}`;
-            if (u.startsWith('B')) return `Bridge ${u.substring(1)}`;
-            return `Section ${code}`;
+        function renderSetSheet(setObj) {
+            activeSet = setObj;
+            activeSong = null;
+            elements.emptyState.classList.add('hidden');
+            elements.songSheet.classList.add('hidden');
+            elements.setViewSheet.classList.remove('hidden');
+            elements.setTitle.textContent = setObj.title;
+            elements.setCountInfo.textContent = `${setObj.songTitles.length} songs in set`;
+            elements.setSongsContainer.innerHTML = '';
+
+            setObj.songTitles.forEach((songName, idx) => {
+                const matched = loadedSongs.find(s => s.title.toLowerCase() === songName.toLowerCase());
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border transition flex items-center justify-between cursor-pointer ${matched ? 'bg-slate-900/80 border-slate-800 hover:border-indigo-500/50' : 'opacity-60'}`;
+                card.innerHTML = `<div class="flex items-center space-x-3"><span class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-300 font-mono text-xs font-bold flex items-center justify-center">${idx + 1}</span><div><h4 class="text-sm font-bold text-slate-100">${songName}</h4></div></div>`;
+                if (matched) card.addEventListener('click', () => renderSongSheet(matched, setObj, idx));
+                elements.setSongsContainer.appendChild(card);
+            });
+            lucide.createIcons();
         }
 
-        function applyAutoScaling() {
-            if (!activeSong) return;
-            const container = elements.mainScrollContainer;
-            const availW = container.clientWidth - 48;
-            if (availW <= 200) return;
+        // Secondary Screen Casting Window
+        elements.castDisplayBtn.addEventListener('click', () => {
+            secondaryWindow = window.open('', 'OpenSongStageCast', 'width=1024,height=768');
+            secondaryWindow.document.write(`
+                <!DOCTYPE html>
+                <html class="h-full bg-slate-950 text-slate-100">
+                <head>
+                    <title>OpenSongApp Web - Stage Display</title>
+                    <script src="https://cdn.tailwindcss.com"><\/script>
+                </head>
+                <body class="h-full flex items-center justify-center p-8 bg-slate-950 font-sans">
+                    <div id="cast-content" class="text-3xl font-bold text-amber-400 text-center max-w-4xl space-y-4">
+                        Click any section in the main app to project it here.
+                    </div>
+                </body>
+                </html>
+            `);
+        });
 
-            fontSizeScale = 1.0;
-            renderSongLyrics(activeSong.lyrics);
-
-            let maxW = 0;
-            document.querySelectorAll('.chord-lyric-pair-line').forEach(l => { if (l.scrollWidth > maxW) maxW = l.scrollWidth; });
-            const maxAllowed = (appSettings.maxFontSizePercent || 150) / 100;
-
-            if (maxW > availW && maxW > 0) {
-                fontSizeScale = Math.max(0.65, Math.min(maxAllowed, (availW / maxW) * 0.96));
-                renderSongLyrics(activeSong.lyrics);
+        function updateSecondaryWindow() {
+            if (secondaryWindow && !secondaryWindow.closed) {
+                secondaryWindow.document.getElementById('cast-content').innerHTML = `<h2 class="text-4xl text-amber-400 font-extrabold">${activeSong.title}</h2>`;
             }
-            updateFontSizeDisplayOnly();
         }
 
-        function handleWindowResize() { if (activeSong) applyAutoScaling(); }
+        // WebSocket Remote Cueing setup
+        function initWebSocket(url) {
+            if (!url) return;
+            try {
+                wsClient = new WebSocket(url);
+                wsClient.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    if (data.action === 'cueSong' && data.title) {
+                        const target = loadedSongs.find(s => s.title.toLowerCase() === data.title.toLowerCase());
+                        if (target) renderSongSheet(target);
+                    }
+                };
+            } catch (e) { console.error("WebSocket error", e); }
+        }
 
+        // Transposition & Sidebar UI
         function transposeLine(line, semitones) {
             if (semitones === 0) return line;
             return line.replace(/([A-G][b#]?)(m|maj|min|dim|aug|sus[24]?|add[0-9]?|[0-9])?(\/([A-G][b#]?))?/g, (m, root, q, s, slashRoot) => {
@@ -1147,288 +1019,10 @@
         }
 
         function transposeNote(note, semitones) {
-            let scale = SCALE_SHARPS, idx = scale.indexOf(note);
-            if (idx === -1) { scale = SCALE_FLATS; idx = scale.indexOf(note); }
+            const SCALE_SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            let idx = SCALE_SHARPS.indexOf(note);
             if (idx === -1) return note;
-            return scale[(idx + semitones + 120) % 12];
-        }
-
-        function getAudioContext() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            return audioCtx;
-        }
-
-        function toggleMetronome() {
-            const ctx = getAudioContext();
-            if (!ctx) return;
-            isMetronomeRunning = !isMetronomeRunning;
-            if (isMetronomeRunning) {
-                elements.metronomeToggleBtn.innerHTML = `<i data-lucide="square" class="w-4 h-4 text-amber-400"></i>`;
-                metronomeBeat = 0;
-                scheduleMetronomeTick();
-            } else {
-                elements.metronomeToggleBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i>`;
-                clearTimeout(metronomeTimer);
-            }
-            lucide.createIcons();
-        }
-
-        function scheduleMetronomeTick() {
-            if (!isMetronomeRunning) return;
-            const ctx = getAudioContext();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            const beats = parseInt(appSettings.defaultTimeSig.split('/')[0], 10) || 4;
-            const accent = (metronomeBeat % beats === 0);
-
-            osc.frequency.value = accent ? 1200 : 800;
-            gain.gain.setValueAtTime(1, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.05);
-
-            elements.metronomeFlash.className = `w-3 h-3 rounded-full ${accent ? 'bg-amber-400 scale-125' : 'bg-sky-450'} transition-transform`;
-            setTimeout(() => elements.metronomeFlash.className = "w-3 h-3 rounded-full bg-slate-600", 100);
-
-            metronomeBeat++;
-            metronomeTimer = setTimeout(scheduleMetronomeTick, (60 / metronomeBpm) * 1000);
-        }
-
-        function togglePadSynth() {
-            const ctx = getAudioContext();
-            if (!ctx) return;
-            isPadRunning = !isPadRunning;
-            if (isPadRunning) {
-                startPadSynth();
-                elements.padToggleBtn.innerHTML = `<i data-lucide="power" class="w-4 h-4 text-indigo-400"></i>`;
-            } else {
-                stopPadSynth();
-                elements.padToggleBtn.innerHTML = `<i data-lucide="power" class="w-4 h-4"></i>`;
-            }
-            lucide.createIcons();
-        }
-
-        function startPadSynth() {
-            stopPadSynth();
-            const ctx = getAudioContext();
-            const base = NOTE_FREQS[elements.padKeySelect.value] || 130.81;
-            padGainNode = ctx.createGain();
-            padGainNode.gain.setValueAtTime(0.01, ctx.currentTime);
-            padGainNode.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 2.0);
-            padGainNode.connect(ctx.destination);
-
-            [base, base * 1.498, base * 2.0].forEach(f => {
-                const o = ctx.createOscillator();
-                o.type = 'sine';
-                o.frequency.value = f;
-                o.connect(padGainNode);
-                o.start();
-                activePadOscillators.push(o);
-            });
-        }
-
-        function stopPadSynth() {
-            if (padGainNode && audioCtx) {
-                padGainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.8);
-                setTimeout(() => { activePadOscillators.forEach(o => { try{o.stop();}catch(e){} }); activePadOscillators = []; }, 850);
-            } else {
-                activePadOscillators.forEach(o => { try{o.stop();}catch(e){} });
-                activePadOscillators = [];
-            }
-            isPadRunning = false;
-        }
-
-        function toggleAutoScroll() {
-            if (isAutoScrolling || isWaitingPredelay) stopAutoScroll();
-            else startAutoScroll();
-        }
-
-        function startAutoScroll() {
-            const container = elements.mainScrollContainer;
-            if (!container) return;
-            const maxScroll = container.scrollHeight - container.clientHeight;
-            if (maxScroll <= 10) return;
-
-            const predelay = (activeSong && activeSong.predelay !== null) ? activeSong.predelay : (appSettings.defaultPredelaySeconds ?? 10);
-            const duration = (activeSong && activeSong.duration !== null) ? activeSong.duration : (appSettings.defaultDurationSeconds || 180);
-            const targetSec = Math.max(5, duration * 0.90);
-            const tickMs = 50;
-            const basePxPerTick = maxScroll / ((targetSec * 1000) / tickMs);
-
-            elements.floatingMainBtn.classList.add('animate-pulse-ring', 'ring-4', 'ring-sky-500/50');
-
-            const runLoop = () => {
-                isWaitingPredelay = false;
-                isAutoScrolling = true;
-                elements.autoscrollToggleBtn.innerHTML = `<i data-lucide="pause" class="w-4 h-4 text-sky-400"></i>`;
-                elements.autoscrollStatusVal.textContent = "Scrolling...";
-
-                autoScrollInterval = setInterval(() => {
-                    if (!isUserManuallyScrolling) {
-                        container.scrollTop += basePxPerTick * autoScrollSpeed;
-                        if (container.scrollTop + container.clientHeight >= container.scrollHeight - 2) {
-                            stopAutoScroll();
-                            elements.autoscrollStatusVal.textContent = "Finished";
-                        }
-                    }
-                }, tickMs);
-                lucide.createIcons();
-            };
-
-            if (predelay > 0) {
-                isWaitingPredelay = true;
-                let rem = predelay;
-                elements.autoscrollToggleBtn.innerHTML = `<i data-lucide="square" class="w-4 h-4 text-amber-400"></i>`;
-                elements.autoscrollStatusVal.textContent = `Delay: ${rem}s`;
-
-                autoScrollCountdownInterval = setInterval(() => {
-                    rem--;
-                    if (rem > 0) elements.autoscrollStatusVal.textContent = `Delay: ${rem}s`;
-                    else clearInterval(autoScrollCountdownInterval);
-                }, 1000);
-
-                autoScrollDelayTimeout = setTimeout(() => {
-                    clearInterval(autoScrollCountdownInterval);
-                    runLoop();
-                }, predelay * 1000);
-            } else {
-                runLoop();
-            }
-        }
-
-        function stopAutoScroll() {
-            isAutoScrolling = false;
-            isWaitingPredelay = false;
-            if (autoScrollInterval) clearInterval(autoScrollInterval);
-            if (autoScrollDelayTimeout) clearTimeout(autoScrollDelayTimeout);
-            if (autoScrollCountdownInterval) clearInterval(autoScrollCountdownInterval);
-            if (userScrollResumeTimer) clearTimeout(userScrollResumeTimer);
-            elements.autoscrollToggleBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i>`;
-            elements.floatingMainBtn.classList.remove('animate-pulse-ring', 'ring-4', 'ring-sky-500/50');
-            elements.autoscrollStatusVal.textContent = "Stopped";
-            lucide.createIcons();
-        }
-
-        function setupManualScrollInterception() {
-            const container = elements.mainScrollContainer;
-            const handleUserInteraction = () => {
-                if (!isAutoScrolling) return;
-                isUserManuallyScrolling = true;
-                elements.autoscrollStatusVal.textContent = "Paused (Manual Drag)";
-                if (userScrollResumeTimer) clearTimeout(userScrollResumeTimer);
-                userScrollResumeTimer = setTimeout(() => {
-                    if (isAutoScrolling) {
-                        isUserManuallyScrolling = false;
-                        elements.autoscrollStatusVal.textContent = "Scrolling...";
-                    }
-                }, 2000);
-            };
-            container.addEventListener('wheel', handleUserInteraction, { passive: true });
-            container.addEventListener('touchstart', handleUserInteraction, { passive: true });
-            container.addEventListener('pointerdown', handleUserInteraction, { passive: true });
-        }
-
-        function setupEventListeners() {
-            elements.modalSelectBtn.addEventListener('click', handleFolderSelection);
-            elements.createMissingFoldersBtn.addEventListener('click', createMissingDirectories);
-            elements.changeFolderBtn.addEventListener('click', () => {
-                elements.modalTitle.textContent = "Select OpenSong Root Directory";
-                elements.modalCloseBtn.classList.remove('hidden');
-                elements.modal.classList.remove('hidden');
-            });
-            elements.modalCloseBtn.addEventListener('click', () => elements.modal.classList.add('hidden'));
-
-            elements.floatingMainBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                elements.floatingMenu.classList.toggle('hidden');
-            });
-            elements.closeFloatingMenu.addEventListener('click', () => elements.floatingMenu.classList.add('hidden'));
-            document.addEventListener('click', (e) => {
-                if (!elements.floatingMenu.contains(e.target) && !elements.floatingMainBtn.contains(e.target)) {
-                    elements.floatingMenu.classList.add('hidden');
-                }
-            });
-
-            elements.metronomeSlider.addEventListener('input', (e) => {
-                metronomeBpm = parseInt(e.target.value, 10);
-                elements.metronomeBpmVal.textContent = `${metronomeBpm} BPM`;
-            });
-            elements.metronomeToggleBtn.addEventListener('click', toggleMetronome);
-            elements.autoscrollSlider.addEventListener('input', (e) => autoScrollSpeed = parseFloat(e.target.value));
-            elements.autoscrollToggleBtn.addEventListener('click', toggleAutoScroll);
-
-            elements.padKeySelect.addEventListener('change', (e) => {
-                elements.padKeyVal.textContent = `Key: ${e.target.value}`;
-                if (isPadRunning) startPadSynth();
-            });
-            elements.padToggleBtn.addEventListener('click', togglePadSynth);
-
-            elements.openSettingsBtn.addEventListener('click', () => elements.settingsModal.classList.remove('hidden'));
-            elements.closeSettingsModal.addEventListener('click', () => elements.settingsModal.classList.add('hidden'));
-
-            elements.settingDefaultDurationSlider.addEventListener('input', (e) => {
-                const sec = parseInt(e.target.value, 10);
-                elements.settingDefaultDurationLabel.textContent = `${sec}s (${formatDurationString(sec)})`;
-            });
-            elements.settingDefaultPredelaySlider.addEventListener('input', (e) => elements.settingDefaultPredelayLabel.textContent = `${e.target.value}s`);
-            elements.settingMaxFontSlider.addEventListener('input', (e) => elements.settingMaxFontLabel.textContent = `${e.target.value}%`);
-
-            elements.saveSettingsBtn.addEventListener('click', () => {
-                elements.settingsModal.classList.add('hidden');
-                saveWebAppSettings();
-                if (activeSong) renderSongSheet(activeSong);
-            });
-
-            elements.tabSongsBtn.addEventListener('click', () => switchSidebarTab('songs'));
-            elements.tabSetsBtn.addEventListener('click', () => switchSidebarTab('sets'));
-            elements.rescanBtn.addEventListener('click', () => rootHandle ? processRootDirectory(rootHandle) : handleFolderSelection());
-
-            elements.songSearch.addEventListener('input', (e) => {
-                const q = e.target.value.toLowerCase();
-                elements.clearSearch.classList.toggle('hidden', !q);
-                renderSidebarList(q);
-            });
-            elements.clearSearch.addEventListener('click', () => {
-                elements.songSearch.value = '';
-                elements.clearSearch.classList.add('hidden');
-                renderSidebarList('');
-            });
-
-            elements.transposeUp.addEventListener('click', () => { if (activeSong) { transposeOffset++; updateTranspose(); } });
-            elements.transposeDown.addEventListener('click', () => { if (activeSong) { transposeOffset--; updateTranspose(); } });
-
-            elements.fontIncrease.addEventListener('click', () => { fontSizeScale = Math.min(2.5, fontSizeScale + 0.1); updateFontSize(); });
-            elements.fontDecrease.addEventListener('click', () => { fontSizeScale = Math.max(0.7, fontSizeScale - 0.1); updateFontSize(); });
-
-            elements.backToSetBtn.addEventListener('click', () => { if (activeSet) renderSetSheet(activeSet); });
-            elements.prevSetSongBtn.addEventListener('click', () => navigateSetSong(-1));
-            elements.nextSetSongBtn.addEventListener('click', () => navigateSetSong(1));
-            elements.toggleSidebarBtn.addEventListener('click', () => elements.sidebar.classList.toggle('-translate-x-full'));
-
-            elements.errorConsoleBtn.addEventListener('click', () => { elements.errorModal.classList.remove('hidden'); elements.errorBadge.classList.add('hidden'); });
-            elements.closeErrorModal.addEventListener('click', () => elements.errorModal.classList.add('hidden'));
-            elements.clearErrorLogs.addEventListener('click', () => { errorLogs = []; elements.errorLogsContainer.innerHTML = ''; elements.errorCountText.textContent = '0 logs recorded'; });
-        }
-
-        function updateTranspose() {
-            elements.transposeDisplay.textContent = (transposeOffset > 0 ? '+' : '') + transposeOffset;
-            renderSongLyrics(activeSong.lyrics);
-            const transposedKey = transposeNote(activeSong.key || 'C', transposeOffset);
-            elements.sheetKeyBadge.textContent = `Key: ${transposedKey}`;
-            elements.metaKey.textContent = transposedKey;
-        }
-
-        function updateFontSize() {
-            elements.fontSizeLabel.textContent = `${Math.round(fontSizeScale * 100)}%`;
-            if (activeSong) renderSongLyrics(activeSong.lyrics);
-            saveWebAppSettings();
-        }
-
-        function updateFontSizeDisplayOnly() {
-            elements.fontSizeLabel.textContent = `${Math.round(fontSizeScale * 100)}%`;
+            return SCALE_SHARPS[(idx + semitones + 120) % 12];
         }
 
         function switchSidebarTab(tab) {
@@ -1444,26 +1038,16 @@
             elements.tabSetsCount.textContent = `(${loadedSets.length})`;
         }
 
-        function navigateSetSong(delta) {
-            if (!activeSet || activeSetSongIndex === -1) return;
-            const newIdx = activeSetSongIndex + delta;
-            if (newIdx >= 0 && newIdx < activeSet.songTitles.length) {
-                const matched = findMatchingSong(activeSet.songTitles[newIdx]);
-                if (matched) renderSongSheet(matched, activeSet, newIdx);
-            }
-        }
-
         function renderSidebarList(query = '') {
             elements.songList.innerHTML = '';
             if (activeTab === 'songs') {
                 loadedSongs.sort((a, b) => a.title.localeCompare(b.title));
-                const filtered = loadedSongs.filter(s => s.title.toLowerCase().includes(query) || s.author.toLowerCase().includes(query));
-                filtered.forEach(song => {
+                loadedSongs.filter(s => s.title.toLowerCase().includes(query) || s.author.toLowerCase().includes(query)).forEach(song => {
                     const li = document.createElement('li');
                     const isActive = activeSong && activeSong.id === song.id;
                     li.className = `p-3 rounded-xl cursor-pointer transition flex items-center justify-between border ${isActive ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 font-bold' : 'hover:bg-slate-800/60 text-slate-300 border-transparent'}`;
                     li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${song.title}</div><div class="text-xs text-slate-500 font-normal">${song.author || 'Unknown'}</div></div><span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800">${song.key || '?'}</span>`;
-                    li.addEventListener('click', () => { activeSet = null; renderSongSheet(song); renderSidebarList(query); if (window.innerWidth < 1024) elements.sidebar.classList.add('-translate-x-full'); });
+                    li.addEventListener('click', () => { activeSet = null; renderSongSheet(song); });
                     elements.songList.appendChild(li);
                 });
             } else {
@@ -1473,11 +1057,30 @@
                     const isActive = activeSet && activeSet.id === setObj.id;
                     li.className = `p-3 rounded-xl cursor-pointer transition flex items-center justify-between border ${isActive ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400 font-bold' : 'hover:bg-slate-800/60 text-slate-300 border-transparent'}`;
                     li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${setObj.title}</div><div class="text-xs text-slate-500 font-normal">${setObj.songTitles.length} songs</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>`;
-                    li.addEventListener('click', () => { renderSetSheet(setObj); renderSidebarList(query); if (window.innerWidth < 1024) elements.sidebar.classList.add('-translate-x-full'); });
+                    li.addEventListener('click', () => renderSetSheet(setObj));
                     elements.songList.appendChild(li);
                 });
-                lucide.createIcons();
             }
+            lucide.createIcons();
+        }
+
+        function setupManualScrollInterception() {
+            const container = elements.mainScrollContainer;
+            container.addEventListener('wheel', () => { isUserManuallyScrolling = true; }, { passive: true });
+        }
+
+        function setupEventListeners() {
+            elements.tabSongsBtn.addEventListener('click', () => switchSidebarTab('songs'));
+            elements.tabSetsBtn.addEventListener('click', () => switchSidebarTab('sets'));
+            elements.floatingMainBtn.addEventListener('click', () => elements.floatingMenu.classList.toggle('hidden'));
+            elements.closeFloatingMenu.addEventListener('click', () => elements.floatingMenu.classList.add('hidden'));
+            
+            elements.openSettingsBtn.addEventListener('click', () => elements.settingsModal.classList.remove('hidden'));
+            elements.closeSettingsModal.addEventListener('click', () => elements.settingsModal.classList.add('hidden'));
+            elements.saveSettingsBtn.addEventListener('click', () => {
+                elements.settingsModal.classList.add('hidden');
+                initWebSocket(elements.settingWsUrl.value);
+            });
         }
     </script>
 </body>
