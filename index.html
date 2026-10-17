@@ -38,7 +38,7 @@
             display: flex;
             flex-wrap: wrap;
             row-gap: 0.5rem;
-            column-gap: 0.35rem;
+            /* column-gap removed so chunks butt up cleanly against each other */
             line-height: 1.4;
             max-width: 100%;
             word-break: break-word;
@@ -144,7 +144,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.2c</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.2d</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1764,7 +1764,7 @@
 
             if (chordsMap[0].index > 0) {
                 let leadingText = lyricLine.slice(0, chordsMap[0].index);
-                html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span style="width: 0; overflow: visible; white-space: nowrap;"><div class="chord-above" style="visibility: hidden;">&nbsp;</div></span><span class="lyric-below" style="white-space: pre-wrap;">${leadingText}</span></span>`;
+                html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span style="width: 0; overflow: visible; white-space: nowrap;"><div class="chord-above" style="visibility: hidden;">&nbsp;</div></span><span class="lyric-below" style="white-space: pre;">${leadingText}</span></span>`;
             }
 
             chordsMap.forEach((c, i) => {
@@ -1783,8 +1783,7 @@
                     topHtml = `<div class="chord-above" style="white-space: pre; font-weight:700; color:#f59e0b;">${nativeChord}</div><div class="chord-capo-above" style="white-space: pre; font-weight:700; color:#a855f7;">${capoChord}</div>`;
                 }
 
-                // Wrap chords in width:0 overflow:visible so wide chords (e.g. F#m, A/G#) don't inflate column spacing
-                html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span style="width: 0; overflow: visible; white-space: nowrap; display: flex; flex-direction: column;">${topHtml}</span><span class="lyric-below" style="white-space: pre-wrap;">${chunk}</span></span>`;
+                html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span style="width: 0; overflow: visible; white-space: nowrap; display: flex; flex-direction: column;">${topHtml}</span><span class="lyric-below" style="white-space: pre;">${chunk}</span></span>`;
             });
 
             return html;
