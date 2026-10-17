@@ -51,11 +51,13 @@
             position: relative;
         }
 
+        .chord-above:empty, .chord-capo-above:empty {
+            display: none;
+        }
         .chord-above {
             font-weight: 700;
             color: #f59e0b;
-            line-height: 1.0;
-            min-height: 1.0em;
+            line-height: 1.1;
             user-select: none;
             white-space: pre;
             font-size: var(--chord-font-scale, 1rem);
@@ -63,8 +65,7 @@
         .chord-capo-above {
             font-weight: 700;
             color: #a855f7;
-            line-height: 1.0;
-            min-height: 1.0em;
+            line-height: 1.1;
             user-select: none;
             white-space: pre;
             font-size: var(--chord-font-scale, 1rem);
@@ -127,7 +128,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0c</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0d</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1556,7 +1557,7 @@
                 const trimmed = line.trim();
                 if (trimmed.startsWith('[')) {
                     sectionContainer = document.createElement('div');
-                    sectionContainer.className = 'p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5';
+                    sectionContainer.className = 'p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1';
                     const prettyName = formatSectionHeading(trimmed);
                     sectionContainer.innerHTML = `<h4 class="section-heading text-amber-400">${prettyName}</h4>`;
                     elements.sheetContent.appendChild(sectionContainer);
@@ -1564,15 +1565,15 @@
                 }
                 if (!sectionContainer) {
                     sectionContainer = document.createElement('div');
-                    sectionContainer.className = 'p-3 rounded-xl bg-slate-900/40 border border-slate-800 space-y-1.5';
+                    sectionContainer.className = 'p-3 rounded-xl bg-slate-900/40 border border-slate-800 space-y-1';
                     elements.sheetContent.appendChild(sectionContainer);
                 }
 
                 const div = document.createElement('div');
                 div.className = 'py-0.5 space-y-0.5';
 
-                if (line.startsWith('.') || (capoDisplayMode === 'both' && capoFret)) {
-                    const chordLine = line.startsWith('.') ? line.slice(1) : line;
+                if (line.startsWith('.')) {
+                    const chordLine = line.slice(1);
                     div.innerHTML = `<div class="chord-above">${chordLine}</div>`;
                     if (capoFret && capoDisplayMode === 'both') {
                         const transposedChordLine = chordLine.split(' ').map(c => c ? transposeChord(c, -parseInt(capoFret, 10)) : '').join(' ');
