@@ -1744,20 +1744,16 @@
                 return `<div class="chord-above" style="white-space: pre;">${chordLine}</div>`;
             }
 
+            // Normalize non-breaking spaces in chord line to standard spaces so regex indices match properly
+            const normalizedChordLine = chordLine.replace(/\xA0/g, ' ');
             const chordRegex = /([A-G][b#]?[^\s]*)/g;
             let match;
             let chordsMap = [];
-            while ((match = chordRegex.exec(chordLine)) !== null) {
+            while ((match = chordRegex.exec(normalizedChordLine)) !== null) {
                 chordsMap.push({ text: match[1], index: match.index });
             }
 
             if (chordsMap.length === 0) return `<div class="lyric-below" style="white-space: pre-wrap;">${lyricLine}</div>`;
-
-            // DEBUG LOGGING: Inspect the alignment mapping
-            console.log("--- Chord-Lyric Mapping ---");
-            console.log("Chord Line:", chordLine);
-            console.log("Lyric Line:", lyricLine);
-            console.log("Detected Chords & Indices:", chordsMap);
 
             let html = '';
             let lastIdx = 0;
@@ -1783,7 +1779,8 @@
                     topHtml = `<div class="chord-above" style="white-space: pre; font-weight:700; color:#f59e0b;">${nativeChord}</div><div class="chord-capo-above" style="white-space: pre; font-weight:700; color:#a855f7;">${capoChord}</div>`;
                 }
 
-                html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span class="flex flex-col">${topHtml}</span><span class="lyric-below" style="white-space: pre;">${chunk}</span></span>`;
+                // Preserve exact spacing cell width using inline-block and pre-wrap formatting
+                html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span class="flex flex-col">${topHtml}</span><span class="lyric-below" style="white-space: pre-wrap;">${chunk}</span></span>`;
                 lastIdx = c.index;
             });
 
