@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenSong Web Studio</title>
+    <title>OpenSongApp Web Studio</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -87,7 +87,7 @@
                     <i data-lucide="music" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">OpenSong<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Studio</span></h1>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Studio</span></h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
             </div>
@@ -711,7 +711,7 @@
                     rootHandle = saved;
                     elements.modalTitle.textContent = "Re-connect OpenSong Directory";
                     elements.modalDescription.textContent = `Previously loaded root: "${rootHandle.name}". Click below to verify access permission.`;
-                    elements.modalBtnText.textContent = "Grant Access & Load OpenSong";
+                    elements.modalBtnText.textContent = "Grant Access & Load OpenSongApp Web Studio";
                     elements.modalCloseBtn.classList.remove('hidden');
                 }
             } catch (e) {}
