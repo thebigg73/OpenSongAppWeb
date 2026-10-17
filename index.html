@@ -130,7 +130,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.1</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1671,12 +1671,10 @@
         }
 
         function buildChordLyricPairs(chordLine, lyricLine, capoFret, capoSteps, mode) {
-            // If no lyrics, just output the chord line directly
             if (!lyricLine) {
                 return `<div class="chord-above">${chordLine}</div>`;
             }
 
-            // Extract chords with their index positions
             const chordRegex = /([A-G][b#]?[^\s]*)/g;
             let match;
             let chordsMap = [];
@@ -1689,29 +1687,32 @@
             let html = '';
             let lastIdx = 0;
 
-            chordsMap.forEach((c, idx) => {
-                // Text chunk before this chord
+            chordsMap.forEach((c) => {
                 let chunk = lyricLine.slice(lastIdx, c.index);
                 let nativeChord = c.text;
                 let capoChord = capoFret ? transposeChord(nativeChord, capoSteps) : nativeChord;
 
                 let topHtml = '';
                 if (mode === 'native' || !capoFret) {
-                    topHtml = `<span class="chord-above">${nativeChord}</span>`;
+                    topHtml = `<div class="chord-above">${nativeChord}</div>`;
                 } else if (mode === 'capo') {
-                    topHtml = `<span class="chord-capo-above">${capoChord}</span>`;
+                    topHtml = `<div class="chord-capo-above">${capoChord}</div>`;
                 } else if (mode === 'both') {
-                    topHtml = `<span class="chord-above">${nativeChord}</span><span class="chord-capo-above">${capoChord}</span>`;
+                    topHtml = `<div class="chord-above">${nativeChord}</div><div class="chord-capo-above">${capoChord}</div>`;
                 }
 
-                html += `<span class="chord-lyric-pair"><span class="flex">${topHtml}</span><span class="lyric-below">${chunk}</span></span>`;
+                html += `<span class="chord-lyric-pair"><span class="flex flex-col">${topHtml}</span><span class="lyric-below">${chunk}</span></span>`;
                 lastIdx = c.index;
             });
 
-            // Remaining lyric text after the last chord
+            // Trailing text with matching empty spacer rows so line height stays perfectly level
             let trailing = lyricLine.slice(lastIdx);
             if (trailing) {
-                html += `<span class="chord-lyric-pair"><span class="chord-above"></span><span class="lyric-below">${trailing}</span></span>`;
+                let spacerHtml = `<div class="chord-above">&nbsp;</div>`;
+                if (mode === 'both' && capoFret) {
+                    spacerHtml += `<div class="chord-capo-above">&nbsp;</div>`;
+                }
+                html += `<span class="chord-lyric-pair"><span class="flex flex-col">${spacerHtml}</span><span class="lyric-below">${trailing}</span></span>`;
             }
 
             return html;
