@@ -130,7 +130,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0a</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0b</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1598,33 +1598,33 @@
         }
 
         function formatSectionHeading(tag) {
-            // Strip out surrounding square brackets and any extra whitespace first
-            const inner = tag.replace(/^\[+\vert{}\]+$/g, '').trim();
-            const upper = inner.toUpperCase();
+            if (!tag) return '';
+            // Strip out all brackets and whitespace
+            const clean = tag.replace(/[\[\]]/g, '').trim().toUpperCase();
             
-            if (upper.startsWith('V')) {
-                const num = upper.slice(1);
+            if (clean.startsWith('V')) {
+                const num = clean.slice(1);
                 return num ? `Verse ${num}` : 'Verse';
-            } else if (upper.startsWith('C')) {
-                const num = upper.slice(1);
+            } else if (clean.startsWith('C')) {
+                const num = clean.slice(1);
                 return num ? `Chorus ${num}` : 'Chorus';
-            } else if (upper.startsWith('B')) {
-                const num = upper.slice(1);
+            } else if (clean.startsWith('B')) {
+                const num = clean.slice(1);
                 return num ? `Bridge ${num}` : 'Bridge';
-            } else if (upper.startsWith('T')) {
-                const num = upper.slice(1);
+            } else if (clean.startsWith('T')) {
+                const num = clean.slice(1);
                 return num ? `Tag ${num}` : 'Tag';
-            } else if (upper.startsWith('P')) {
-                const num = upper.slice(1);
+            } else if (clean.startsWith('P')) {
+                const num = clean.slice(1);
                 return num ? `Pre-Chorus ${num}` : 'Pre-Chorus';
-            } else if (upper.startsWith('I')) {
-                const num = upper.slice(1);
+            } else if (clean.startsWith('I')) {
+                const num = clean.slice(1);
                 return num ? `Intro ${num}` : 'Intro';
-            } else if (upper.startsWith('O')) {
-                const num = upper.slice(1);
+            } else if (clean.startsWith('O')) {
+                const num = clean.slice(1);
                 return num ? `Outro ${num}` : 'Outro';
             }
-            return inner;
+            return tag.replace(/[\[\]]/g, '').trim();
         }
 
         function renderSongLyrics(rawLyrics, capoFret) {
