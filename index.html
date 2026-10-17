@@ -139,7 +139,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.3d</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.3e</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -2169,140 +2169,137 @@
 
         const castBtn = document.getElementById('cast-display-btn');
         if (castBtn) {
-            castBtn.addEventListener('click', () => {
-                showToast("Opening stage presentation window...");
+            showToast("Opening stage presentation window...");
                 castWindow = window.open('', '_blank', 'width=1024,height=768');
                 if (castWindow) {
-                    castWindow.document.write(`
-                        <html>
-                        <head><title>OpenSongApp Stage Cast</title>
-                        <script src="https://cdn.tailwindcss.com"><\/script>
-                        <style>
-                            ::-webkit-scrollbar { width: 6px; }
-                            ::-webkit-scrollbar-track { background: #0f172a; }
-                            ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-                        </style>
-                        </head>
-                        <body class="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden select-none">
-                            <!-- Cast Control Toolbar -->
-                            <header class="h-14 bg-slate-900 border-b border-slate-800 px-6 flex items-center justify-between shrink-0">
-                                <div>
-                                    <h1 class="text-lg font-extrabold text-amber-400 truncate" id="cast-song-title">${activeSong ? activeSong.title : 'Stage Presentation'}</h1>
-                                    <p class="text-xs text-slate-400" id="cast-song-author">${activeSong ? (activeSong.author || '') : ''}</p>
-                                </div>
-                                <div class="flex items-center gap-4 text-xs">
-                                    <label class="flex items-center gap-2 cursor-pointer text-slate-300 font-semibold">
-                                        <input type="checkbox" id="cast-show-chords" checked class="accent-amber-500 w-4 h-4 rounded"> Show Chords
-                                    </label>
-                                    <div class="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded-lg border border-slate-700">
-                                        <span class="text-slate-400">Font:</span>
-                                        <button onclick="adjustCastFont(-0.1)" class="px-1.5 py-0.5 bg-slate-700 hover:bg-slate-600 rounded text-slate-200 font-bold">-</button>
-                                        <button onclick="adjustCastFont(0.1)" class="px-1.5 py-0.5 bg-slate-700 hover:bg-slate-600 rounded text-slate-200 font-bold">+</button>
-                                    </div>
-                                </div>
-                            </header>
+                    castWindow.document.open();
+                    castWindow.document.write(`<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <title>OpenSongApp Stage Cast</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    </style>
+</head>
+<body class="h-full flex flex-col overflow-hidden select-none bg-slate-950 text-slate-100 font-sans">
+    <header class="h-14 bg-slate-900 border-b border-slate-800 px-6 flex items-center justify-between shrink-0">
+        <div>
+            <h1 class="text-lg font-extrabold text-amber-400 truncate" id="cast-song-title">Stage Presentation</h1>
+            <p class="text-xs text-slate-400" id="cast-song-author"></p>
+        </div>
+        <div class="flex items-center gap-4 text-xs">
+            <label class="flex items-center gap-2 cursor-pointer text-slate-300 font-semibold">
+                <input type="checkbox" id="cast-show-chords" checked class="accent-amber-500 w-4 h-4 rounded"> Show Chords
+            </label>
+            <div class="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded-lg border border-slate-700">
+                <span class="text-slate-400">Font:</span>
+                <button onclick="adjustCastFont(-0.1)" class="px-1.5 py-0.5 bg-slate-700 hover:bg-slate-600 rounded text-slate-200 font-bold">-</button>
+                <button onclick="adjustCastFont(0.1)" class="px-1.5 py-0.5 bg-slate-700 hover:bg-slate-600 rounded text-slate-200 font-bold">+</button>
+            </div>
+        </div>
+    </header>
 
-                            <!-- Cast Content Viewport -->
-                            <main id="cast-main-container" class="flex-1 overflow-y-auto p-8 flex justify-center">
-                                <div id="cast-content-area" class="w-full max-w-3xl space-y-6 text-xl transition-all" style="font-size: 1.25rem;">
-                                    <div class="text-center text-slate-500 my-auto">Waiting for active song or section selection...</div>
-                                </div>
-                            </main>
+    <main class="flex-1 overflow-y-auto p-8 flex justify-center">
+        <div id="cast-content-area" class="w-full max-w-3xl space-y-6" style="font-size: 1.25rem;">
+            <div class="text-center text-slate-500 my-auto">Waiting for active song or section selection...</div>
+        </div>
+    </main>
 
-                            <script>
-                                let currentSongData = ${JSON.stringify(activeSong || null)};
-                                let showChords = true;
-                                let currentScale = 1.25;
+    <script>
+        let currentSongData = null;
+        let showChords = true;
+        let currentScale = 1.25;
 
-                                document.getElementById('cast-show-chords').addEventListener('change', (e) => {
-                                    showChords = e.target.checked;
-                                    if (currentSongData) renderCastSong(currentSongData);
-                                });
+        document.getElementById('cast-show-chords').addEventListener('change', (e) => {
+            showChords = e.target.checked;
+            if (currentSongData) renderCastSong(currentSongData);
+        });
 
-                                function adjustCastFont(delta) {
-                                    currentScale = Math.max(0.8, Math.min(2.5, currentScale + delta));
-                                    document.getElementById('cast-content-area').style.fontSize = currentScale + 'rem';
-                                }
+        function adjustCastFont(delta) {
+            currentScale = Math.max(0.8, Math.min(2.5, currentScale + delta));
+            document.getElementById('cast-content-area').style.fontSize = currentScale + 'rem';
+        }
 
-                                function formatSectionHeading(tag) {
-                                    if (!tag) return '';
-                                    const clean = tag.replace(/[\\[\\]]/g, '').trim().toUpperCase();
-                                    if (clean.startsWith('V')) return clean.slice(1) ? 'Verse ' + clean.slice(1) : 'Verse';
-                                    if (clean.startsWith('C')) return clean.slice(1) ? 'Chorus ' + clean.slice(1) : 'Chorus';
-                                    if (clean.startsWith('B')) return clean.slice(1) ? 'Bridge ' + clean.slice(1) : 'Bridge';
-                                    if (clean.startsWith('I')) return clean.slice(1) ? 'Intro ' + clean.slice(1) : 'Intro';
-                                    if (clean.startsWith('O')) return clean.slice(1) ? 'Outro ' + clean.slice(1) : 'Outro';
-                                    return clean;
-                                }
+        function formatSectionHeading(tag) {
+            if (!tag) return '';
+            const clean = tag.replace(/[\\\\[\\\\]]/g, '').trim().toUpperCase();
+            if (clean.startsWith('V')) return clean.slice(1) ? 'Verse ' + clean.slice(1) : 'Verse';
+            if (clean.startsWith('C')) return clean.slice(1) ? 'Chorus ' + clean.slice(1) : 'Chorus';
+            if (clean.startsWith('B')) return clean.slice(1) ? 'Bridge ' + clean.slice(1) : 'Bridge';
+            if (clean.startsWith('I')) return clean.slice(1) ? 'Intro ' + clean.slice(1) : 'Intro';
+            if (clean.startsWith('O')) return clean.slice(1) ? 'Outro ' + clean.slice(1) : 'Outro';
+            return clean;
+        }
 
-                                function renderCastSong(song, highlightSection = '') {
-                                    const container = document.getElementById('cast-content-area');
-                                    container.innerHTML = '';
-                                    if (!song || !song.lyrics) {
-                                        container.innerHTML = '<div class="text-center text-slate-500">No lyrics available.</div>';
-                                        return;
-                                    }
+        function renderCastSong(song, highlightSection = '') {
+            const container = document.getElementById('cast-content-area');
+            container.innerHTML = '';
+            if (!song || !song.lyrics) {
+                container.innerHTML = '<div class="text-center text-slate-500">No lyrics available.</div>';
+                return;
+            }
 
-                                    document.getElementById('cast-song-title').textContent = song.title;
-                                    document.getElementById('cast-song-author').textContent = song.author || '';
+            document.getElementById('cast-song-title').textContent = song.title;
+            document.getElementById('cast-song-author').textContent = song.author || '';
 
-                                    const lines = song.lyrics.split('\\n');
-                                    let sectionDiv = null;
-                                    let currentHeading = '';
+            const lines = song.lyrics.split('\\n');
+            let sectionDiv = null;
+            let currentHeading = '';
 
-                                    for (let i = 0; i < lines.length; i++) {
-                                        const line = lines[i];
-                                        const trimmed = line.trim();
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmed = line.trim();
 
-                                        if (trimmed.startsWith('[')) {
-                                            currentHeading = formatSectionHeading(trimmed);
-                                            sectionDiv = document.createElement('div');
-                                            sectionDiv.className = \`p-5 rounded-2xl bg-slate-900/80 border \${currentHeading === highlightSection ? 'border-amber-500 ring-2 ring-amber-500/50' : 'border-slate-800'} space-y-3\`;
-                                            sectionDiv.innerHTML = \`<h3 class="text-amber-400 font-extrabold text-sm uppercase tracking-wider">\${currentHeading}</h3>\`;
-                                            container.appendChild(sectionDiv);
-                                            continue;
-                                        }
+                if (trimmed.startsWith('[')) {
+                    currentHeading = formatSectionHeading(trimmed);
+                    sectionDiv = document.createElement('div');
+                    sectionDiv.className = 'p-5 rounded-2xl bg-slate-900/80 border ' + (currentHeading === highlightSection ? 'border-amber-500 ring-2 ring-amber-500/50' : 'border-slate-800') + ' space-y-3';
+                    sectionDiv.innerHTML = '<h3 class="text-amber-400 font-extrabold text-sm uppercase tracking-wider">' + currentHeading + '</h3>';
+                    container.appendChild(sectionDiv);
+                    continue;
+                }
 
-                                        if (!sectionDiv) {
-                                            sectionDiv = document.createElement('div');
-                                            sectionDiv.className = 'p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3';
-                                            container.appendChild(sectionDiv);
-                                        }
+                if (!sectionDiv) {
+                    sectionDiv = document.createElement('div');
+                    sectionDiv.className = 'p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3';
+                    container.appendChild(sectionDiv);
+                }
 
-                                        const row = document.createElement('div');
-                                        if (line.startsWith('.')) {
-                                            if (showChords) {
-                                                const chordText = line.slice(1);
-                                                const lyricText = (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) ? lines[i + 1] : '';
-                                                if (lyricText) i++;
-                                                row.innerHTML = \`<div class="font-bold text-amber-400 text-base font-mono mb-0.5">\${chordText}</div><div class="text-slate-100 whitespace-pre-wrap">\${lyricText}</div>\`;
-                                                sectionDiv.appendChild(row);
-                                            } else {
-                                                if (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) {
-                                                    i++;
-                                                    row.innerHTML = \`<div class="text-slate-100 whitespace-pre-wrap">\${lines[i]}</div>\`;
-                                                    sectionDiv.appendChild(row);
-                                                }
-                                            }
-                                        } else {
-                                            row.innerHTML = \`<div class="text-slate-100 whitespace-pre-wrap">\${line}</div>\`;
-                                            sectionDiv.appendChild(row);
-                                        }
-                                    }
-                                }
+                const row = document.createElement('div');
+                if (line.startsWith('.')) {
+                    if (showChords) {
+                        const chordText = line.slice(1);
+                        const lyricText = (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) ? lines[i + 1] : '';
+                        if (lyricText) i++;
+                        row.innerHTML = '<div class="font-bold text-amber-400 text-base font-mono mb-0.5">' + chordText + '</div><div class="text-slate-100 whitespace-pre-wrap">' + lyricText + '</div>';
+                        sectionDiv.appendChild(row);
+                    } else {
+                        if (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) {
+                            i++;
+                            row.innerHTML = '<div class="text-slate-100 whitespace-pre-wrap">' + lines[i] + '</div>';
+                            sectionDiv.appendChild(row);
+                        }
+                    }
+                } else {
+                    row.innerHTML = '<div class="text-slate-100 whitespace-pre-wrap">' + line + '</div>';
+                    sectionDiv.appendChild(row);
+                }
+            }
+        }
 
-                                window.addEventListener('message', (event) => {
-                                    if (event.data && event.data.type === 'OPENSONG_CAST_UPDATE') {
-                                        currentSongData = event.data.song;
-                                        renderCastSong(currentSongData, event.data.sectionName || '');
-                                    }
-                                });
-
-                                if (currentSongData) renderCastSong(currentSongData);
-                            </script>
-                        </body>
-                        </html>
-                    `);
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'OPENSONG_CAST_UPDATE') {
+                currentSongData = event.data.song;
+                renderCastSong(currentSongData, event.data.sectionName || '');
+            }
+        });
+    <\/script>
+</body>
+</html>`);
                     castWindow.document.close();
                     if (activeSong) updateCastWindow(activeSong);
                 }
