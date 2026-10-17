@@ -912,15 +912,41 @@
         function generateOpenSongXML(song) {
             return `<?xml version="1.0" encoding="UTF-8"?>
 <song>
-    <title>${escapeXml(song.title)}</title>
+    <title>${escapeXml(song.title || '')}</title>
     <author>${escapeXml(song.author || '')}</author>
     <copyright>${escapeXml(song.copyright || '')}</copyright>
     <presentation>${escapeXml(song.presentation || '')}</presentation>
+    <hymn_number>${escapeXml(song.hymn_number || '')}</hymn_number>
     <key>${escapeXml(song.key || 'C')}</key>
+    <keyoriginal>${escapeXml(song.keyoriginal || '')}</keyoriginal>
     <capo>${escapeXml(song.capo || '')}</capo>
     <tempo>${song.tempo || 120}</tempo>
     <time_sig>${escapeXml(song.time_sig || '4/4')}</time_sig>
+    <duration>${escapeXml(song.duration || '')}</duration>
+    <predelay>${escapeXml(song.predelay || '')}</predelay>
+    <ccli>${escapeXml(song.ccli || '')}</ccli>
+    <theme>${escapeXml(song.theme || '')}</theme>
+    <altheme>${escapeXml(song.altheme || '')}</altheme>
+    <user1>${escapeXml(song.user1 || '')}</user1>
+    <user2>${escapeXml(song.user2 || '')}</user2>
+    <user3>${escapeXml(song.user3 || '')}</user3>
+    <beatbuddysong>${escapeXml(song.beatbuddysong || '')}</beatbuddysong>
+    <beatbuddykit>${escapeXml(song.beatbuddykit || '')}</beatbuddykit>
+    <drummer>${escapeXml(song.drummer || '')}</drummer>
+    <drummerkit>${escapeXml(song.drummerkit || '')}</drummerkit>
+    <preferedinstrument>${escapeXml(song.preferedinstrument || '')}</preferedinstrument>
+    <previewoverride>${escapeXml(song.previewoverride || '')}</previewoverride>
+    <aka>${escapeXml(song.aka || '')}</aka>
+    <midi>${escapeXml(song.midi || '')}</midi>
+    <midi_index>${escapeXml(song.midi_index || '')}</midi_index>
     <notes>${escapeXml(song.notes || '')}</notes>
+    <pad_file>${escapeXml(song.pad_file || '')}</pad_file>
+    <custom_chords>${escapeXml(song.custom_chords || '')}</custom_chords>
+    <link_web>${escapeXml(song.link_web || '')}</link_web>
+    <link_audio>${escapeXml(song.link_audio || '')}</link_audio>
+    <loop_audio>${song.loop_audio ? 'true' : 'false'}</loop_audio>
+    <abc_notation>${escapeXml(song.abc_notation || '')}</abc_notation>
+    <abc_transpose>${escapeXml(song.abc_transpose || '')}</abc_transpose>
     <uuid>${escapeXml(song.uuid || generateUUID())}</uuid>
     <modified>${escapeXml(song.modified || new Date().toISOString())}</modified>
     <lyrics>${escapeXml(song.lyrics || '')}</lyrics>
@@ -1311,25 +1337,61 @@
                 if (doc.querySelector("parsererror")) return null;
                 const song = doc.querySelector("song");
                 if (!song) return null;
-                const gt = (tag) => { const el = song.querySelector(tag); return el ? el.textContent.trim() : ''; };
-                // Strip .ost extension if present
+                
+                const getVal = (tagName) => {
+                    const el = song.getElementsByTagName(tagName)[0];
+                    return el ? el.textContent.trim() : '';
+                };
+                
                 const cleanFilename = filename.endsWith('.ost') ? filename.slice(0, -4) : filename;
+                
                 return {
                     id: 'song_' + Math.random().toString(36).substring(2, 8),
-                    filename: cleanFilename, folderPath: folderPath || 'MAIN',
-                    title: gt("title") || cleanFilename,
-                    author: gt("author"),
-                    copyright: gt("copyright"),
-                    presentation: gt("presentation"),
-                    key: gt("key") || 'C',
-                    capo: gt("capo"),
-                    tempo: gt("tempo") || 120,
-                    time_sig: gt("time_sig") || '4/4',
-                    uuid: gt("uuid") || generateUUID(),
-                    modified: gt("modified") || new Date().toISOString(),
-                    lyrics: gt("lyrics")
+                    filename: cleanFilename, 
+                    folderPath: folderPath || 'MAIN',
+                    title: getVal("title") || cleanFilename,
+                    author: getVal("author"),
+                    copyright: getVal("copyright"),
+                    presentation: getVal("presentation"),
+                    key: getVal("key") || 'C',
+                    keyoriginal: getVal("keyoriginal"),
+                    capo: getVal("capo"),
+                    tempo: getVal("tempo") || 120,
+                    time_sig: getVal("time_sig") || '4/4',
+                    hymn_number: getVal("hymn_number"),
+                    duration: getVal("duration"),
+                    predelay: getVal("predelay"),
+                    ccli: getVal("ccli"),
+                    theme: getVal("theme"),
+                    altheme: getVal("altheme"),
+                    user1: getVal("user1"),
+                    user2: getVal("user2"),
+                    user3: getVal("user3"),
+                    beatbuddysong: getVal("beatbuddysong"),
+                    beatbuddykit: getVal("beatbuddykit"),
+                    drummer: getVal("drummer"),
+                    drummerkit: getVal("drummerkit"),
+                    preferedinstrument: getVal("preferedinstrument"),
+                    previewoverride: getVal("previewoverride"),
+                    aka: getVal("aka"),
+                    midi: getVal("midi"),
+                    midi_index: getVal("midi_index"),
+                    notes: getVal("notes"),
+                    pad_file: getVal("pad_file"),
+                    custom_chords: getVal("custom_chords"),
+                    link_web: getVal("link_web"),
+                    link_audio: getVal("link_audio"),
+                    loop_audio: getVal("loop_audio") === 'true',
+                    abc_notation: getVal("abc_notation"),
+                    abc_transpose: getVal("abc_transpose"),
+                    uuid: getVal("uuid") || generateUUID(),
+                    modified: getVal("modified") || new Date().toISOString(),
+                    lyrics: getVal("lyrics")
                 };
-            } catch (e) { return null; }
+            } catch (e) { 
+                console.error("XML parse error:", e);
+                return null; 
+            }
         }
 
         function parseOpenSongSetXML(xmlString, filename) {
@@ -1711,6 +1773,58 @@
                 if (activePane) activePane.classList.remove('hidden');
             });
         });
+        }
+
+        // Transpose Buttons
+        let currentTransposeOffset = 0;
+        const transposeUpBtn = document.getElementById('transpose-up');
+        const transposeDownBtn = document.getElementById('transpose-down');
+        
+        if (transposeUpBtn) {
+            transposeUpBtn.addEventListener('click', () => {
+                currentTransposeOffset = (currentTransposeOffset + 1) % 12;
+                document.getElementById('transpose-offset').textContent = currentTransposeOffset > 0 ? `+${currentTransposeOffset}` : currentTransposeOffset;
+                if (activeSong) renderSongSheet(activeSong);
+                showToast(`Transposed by +${currentTransposeOffset}`);
+            });
+        }
+        
+        if (transposeDownBtn) {
+            transposeDownBtn.addEventListener('click', () => {
+                currentTransposeOffset = (currentTransposeOffset - 1 + 12) % 12;
+                document.getElementById('transpose-offset').textContent = currentTransposeOffset > 0 ? `+${currentTransposeOffset}` : currentTransposeOffset;
+                if (activeSong) renderSongSheet(activeSong);
+                showToast(`Transposed by -${Math.abs(currentTransposeOffset)}`);
+            });
+        }
+
+        // Cast / Secondary Display Button
+        const castBtn = document.getElementById('cast-display-btn');
+        if (castBtn) {
+            castBtn.addEventListener('click', () => {
+                showToast("Opening stage presentation window...");
+                const win = window.open('', '_blank', 'width=1024,height=768');
+                if (win) {
+                    win.document.write(`
+                        <html>
+                        <head><title>OpenSongApp Stage Cast</title>
+                        <script src="https://cdn.tailwindcss.com"></script></head>
+                        <body class="bg-slate-950 text-white flex flex-col items-center justify-center h-screen p-8 text-center">
+                            <h1 class="text-4xl font-extrabold text-amber-400 mb-4" id="cast-title">Stage Presentation View</h1>
+                            <div class="text-2xl text-slate-300 max-w-3xl whitespace-pre-wrap leading-relaxed" id="cast-content">${activeSong ? activeSong.title : 'Waiting for active song...'}</div>
+                        </body>
+                        </html>
+                    `);
+                }
+            });
+        }
+
+        // Settings Button
+        const settingsBtn = document.getElementById('open-settings-btn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                showToast("Settings: Local storage directory is connected.");
+            });
         }
     </script>
 </body>
