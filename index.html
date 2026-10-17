@@ -17,6 +17,7 @@
                             card: '#1e293b',
                             accent: '#38bdf8',
                             chord: '#f59e0b',
+                            capoChord: '#a855f7',
                             chorusBg: '#1e2942'
                         }
                     }
@@ -60,6 +61,16 @@
             font-size: var(--chord-font-scale, 1rem);
         }
 
+        .chord-capo-above {
+            font-weight: 700;
+            color: #a855f7; /* Distinct purple/violet for Capo chords */
+            line-height: 1.1;
+            height: 1.25em;
+            user-select: none;
+            white-space: pre;
+            font-size: var(--chord-font-scale, 1rem);
+        }
+
         .lyric-below {
             color: #f1f5f9;
             white-space: pre-wrap;
@@ -81,6 +92,11 @@
             overflow: auto;
         }
 
+        /* Toast notification animation */
+        #toast-notification {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
@@ -88,6 +104,12 @@
     </style>
 </head>
 <body class="h-full flex flex-col font-sans antialiased bg-slate-950 text-slate-100 overflow-hidden select-none">
+
+    <!-- Toast Notification Widget -->
+    <div id="toast-notification" class="fixed top-20 right-6 z-50 transform translate-y-[-150%] opacity-0 bg-slate-900 border border-amber-500/50 text-amber-300 px-4 py-2.5 rounded-xl shadow-2xl flex items-center space-x-2 text-xs font-bold">
+        <i data-lucide="bell" class="w-4 h-4"></i>
+        <span id="toast-message">Notification message</span>
+    </div>
 
     <!-- Top Navigation Bar -->
     <header class="h-16 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between z-20 shrink-0">
@@ -218,6 +240,12 @@
                     <pre id="abc-popup-content" class="font-mono text-[11px] bg-slate-950 p-2 rounded border border-slate-800 overflow-x-auto text-amber-300"></pre>
                 </div>
 
+                <!-- Floating Capo Button Widget (Cycling: native -> capo -> both) -->
+                <button id="floating-capo-btn" class="hidden fixed bottom-24 right-6 z-30 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs rounded-2xl shadow-2xl transition hover:scale-105 active:scale-95 flex items-center gap-2 border border-purple-400/40">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+                    <span id="floating-capo-label">Capo 2 (Native)</span>
+                </button>
+
                 <article id="set-view-sheet" class="hidden space-y-6 pb-20">
                     <div class="border-b border-slate-800 pb-4 flex flex-wrap items-center justify-between gap-2">
                         <div>
@@ -252,6 +280,7 @@
                             <div class="flex items-center gap-2">
                                 <span id="sheet-folder-path" class="px-2 py-0.5 text-xs rounded bg-slate-800 text-slate-400 truncate max-w-[200px]">MAIN</span>
                                 <span id="sheet-key-badge" class="px-2.5 py-1 text-xs font-bold rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">Key: C</span>
+                                <span id="sheet-capo-badge" class="hidden px-2.5 py-1 text-xs font-bold rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">Capo: 2</span>
                                 <button id="open-notes-popup-btn" class="hidden p-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition" title="Show Sticky Notes">
                                     <i data-lucide="sticky-note" class="w-3.5 h-3.5"></i>
                                 </button>
@@ -515,46 +544,18 @@
                             <label class="font-bold text-slate-300 block mb-1">Key</label>
                             <select id="edit-song-key-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono">
                                 <option value="C">C</option><option value="C#">C#</option><option value="Db">Db</option><option value="D">D</option><option value="D#">D#</option><option value="Eb">Eb</option><option value="E">E</option><option value="F">F</option><option value="F#">F#</option><option value="Gb">Gb</option><option value="G">G</option><option value="G#">G#</option><option value="Ab">Ab</option><option value="A">A</option><option value="A#">A#</option><option value="Bb">Bb</option><option value="B">B</option>
-                                <option value="Cm">Cm</option><option value="C#m">C#m</option><option value="Dbm">Dbm</option><option value="Dm">Dm</option><option value="D#m">D#m</option><option value="Ebm">Ebm</option><option value="Em">Em</option><option value="Fm">Fm</option><option value="F#m">F#m</option><option value="Gm">Gm</option><option value="G#m">G#m</option><option value="Abm">Abm</option><option value="Am">Am</option><option value="A#m">A#m</option><option value="Bbm">Bbm</option><option value="Bm">Bm</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="font-bold text-slate-300 block mb-1">Original Key</label>
-                            <select id="edit-song-origkey-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono">
-                                <option value="C">C</option><option value="C#">C#</option><option value="Db">Db</option><option value="D">D</option><option value="D#">D#</option><option value="Eb">Eb</option><option value="E">E</option><option value="F">F</option><option value="F#">F#</option><option value="Gb">Gb</option><option value="G">G</option><option value="G#">G#</option><option value="Ab">Ab</option><option value="A">A</option><option value="A#">A#</option><option value="Bb">Bb</option><option value="B">B</option>
-                                <option value="Cm">Cm</option><option value="C#m">C#m</option><option value="Dbm">Dbm</option><option value="Dm">Dm</option><option value="D#m">D#m</option><option value="Ebm">Ebm</option><option value="Em">Em</option><option value="Fm">Fm</option><option value="F#m">F#m</option><option value="Gm">Gm</option><option value="G#m">G#m</option><option value="Abm">Abm</option><option value="Am">Am</option><option value="A#m">A#m</option><option value="Bbm">Bbm</option><option value="Bm">Bm</option>
                             </select>
                         </div>
                         <div>
                             <label class="font-bold text-slate-300 block mb-1">Capo Fret</label>
-                            <select id="edit-song-capo-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100">
+                            <select id="edit-song-capo-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono">
                                 <option value="">None</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div><label class="font-bold text-slate-300 block mb-1">Tempo (BPM)</label><input type="number" id="edit-song-tempo-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" value="120"></div>
                         <div>
-                            <label class="font-bold text-slate-300 block mb-1">Time Signature</label>
-                            <select id="edit-song-timesig-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100">
-                                <option value="4/4">4/4</option><option value="3/4">3/4</option><option value="6/8">6/8</option><option value="2/4">2/4</option>
-                            </select>
+                            <label class="font-bold text-slate-300 block mb-1">Tempo (BPM)</label>
+                            <input type="number" id="edit-song-tempo-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" value="120">
                         </div>
-                        <div>
-                            <label class="font-bold text-slate-300 block mb-1">Instrument</label>
-                            <select id="edit-song-prefinst-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100">
-                                <option value="g">Guitar</option><option value="u">Ukulele</option><option value="p">Piano</option><option value="m">Mandolin</option><option value="b">Banjo (4)</option><option value="B">Banjo (5)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="editor-pane-tags" class="editor-pane hidden space-y-3 text-xs">
-                    <div><label class="font-bold text-slate-300 block mb-1">Themes (semicolon separated)</label><input type="text" id="edit-song-theme-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
-                    <div><label class="font-bold text-slate-300 block mb-1">Also Known As (Aka)</label><input type="text" id="edit-song-aka-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div><label class="font-bold text-slate-300 block mb-1">CCLI Number</label><input type="text" id="edit-song-ccli-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
-                        <div><label class="font-bold text-slate-300 block mb-1">Hymn Number</label><input type="text" id="edit-song-hymnnum-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
                     </div>
                 </div>
             </div>
@@ -562,74 +563,6 @@
             <div class="flex justify-end gap-2 pt-2 border-t border-slate-800 shrink-0">
                 <button id="save-song-btn" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition">Save Song</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Set Editor Modal -->
-    <div id="set-editor-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3"><h3 class="font-bold text-lg text-indigo-400">Create / Edit Set</h3><button id="close-set-editor" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
-            <div class="text-xs space-y-3">
-                <div><label class="font-bold text-slate-300 block mb-1">Set Title</label><input type="text" id="edit-set-title-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
-                <div><label class="font-bold text-slate-300 block mb-1">Song Titles (One per line)</label><textarea id="edit-set-songs-input" rows="6" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-slate-100"></textarea></div>
-            </div>
-            <div class="flex justify-end gap-2 pt-2"><button id="save-set-btn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition">Save Set</button></div>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div class="flex items-center space-x-2 text-amber-400">
-                    <i data-lucide="settings" class="w-5 h-5"></i>
-                    <h3 class="font-bold text-lg text-slate-100">Preferences & Web MIDI</h3>
-                </div>
-                <button id="close-settings-modal" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-
-            <div class="space-y-4 text-xs">
-                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="font-bold text-slate-200">Web MIDI Devices (USB / Bluetooth)</label>
-                        <button id="midi-connect-btn" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-bold transition">Connect MIDI</button>
-                    </div>
-                    <p id="midi-status-label" class="text-[11px] text-slate-400">MIDI not connected. Click Connect to enable USB or Bluetooth MIDI foot controllers/keyboards.</p>
-                </div>
-
-                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                    <label class="font-bold text-slate-200 block">WebSocket Connection Role</label>
-                    <select id="setting-ws-role" class="w-full bg-slate-900 border border-slate-800 rounded-lg py-1.5 px-2 text-amber-400 font-mono focus:outline-none">
-                        <option value="client">Client (Connect to Ktor Server on Android)</option>
-                        <option value="host">Host (Simulated Broadcast Hub)</option>
-                    </select>
-                </div>
-
-                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                    <label class="font-bold text-slate-200 block">WebSocket Server URL</label>
-                    <input type="text" id="setting-ws-url" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 font-mono text-xs" placeholder="ws://192.168.1.50:8080/ws">
-                </div>
-
-                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="font-bold text-slate-200">Heading Scale Size</label>
-                        <span id="setting-heading-scale-label" class="font-mono text-amber-400 font-bold">85%</span>
-                    </div>
-                    <input type="range" id="setting-heading-scale-slider" min="60" max="150" step="5" value="85" class="w-full accent-amber-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
-                </div>
-
-                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="font-bold text-slate-200">Chord Scale Size</label>
-                        <span id="setting-chord-scale-label" class="font-mono text-amber-400 font-bold">100%</span>
-                    </div>
-                    <input type="range" id="setting-chord-scale-slider" min="80" max="180" step="5" value="100" class="w-full accent-amber-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
-                </div>
-            </div>
-
-            <button id="save-settings-btn" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition">
-                Apply & Save Settings
-            </button>
         </div>
     </div>
 
@@ -643,11 +576,11 @@
         let activeSet = null;
         let activeSetSongIndex = -1;
         let transposeOffset = 0;
+        let capoDisplayMode = 'native'; // 'native', 'capo', 'both'
 
         let rootDirectoryHandle = null;
         let pdfBlobsMap = {};
-        let pendingImportItems = []; // For conflict resolution flow (.osb & .osbs)
-
+        let pendingImportItems = [];
         let appSettings = { wsRole: "client", wsUrl: "", headingScale: 85, chordScale: 100 };
 
         const elements = {
@@ -663,14 +596,12 @@
             archiveFileInput: document.getElementById('archive-file-input'),
             individualFilesInput: document.getElementById('individual-files-input'),
 
-            // OSB Export Folder Modal
             osbExportModal: document.getElementById('osb-export-modal'),
             closeOsbExportModal: document.getElementById('close-osb-export-modal'),
             osbExportCancelBtn: document.getElementById('osb-export-cancel-btn'),
             osbExportConfirmBtn: document.getElementById('osb-export-confirm-btn'),
             osbFoldersCheckboxList: document.getElementById('osb-folders-checkbox-list'),
 
-            // Conflict Modal
             conflictModal: document.getElementById('conflict-modal'),
             closeConflictModal: document.getElementById('close-conflict-modal'),
             conflictCancelBtn: document.getElementById('conflict-cancel-btn'),
@@ -699,20 +630,12 @@
             sheetAuthor: document.getElementById('sheet-author'),
             sheetFolderPath: document.getElementById('sheet-folder-path'),
             sheetKeyBadge: document.getElementById('sheet-key-badge'),
+            sheetCapoBadge: document.getElementById('sheet-capo-badge'),
             sheetContent: document.getElementById('sheet-content'),
-            openNotesPopupBtn: document.getElementById('open-notes-popup-btn'),
-            openAbcPopupBtn: document.getElementById('open-abc-popup-btn'),
-            stickyNotePopup: document.getElementById('sticky-note-popup'),
-            stickyNoteText: document.getElementById('sticky-note-text'),
-            abcPopup: document.getElementById('abc-popup'),
-            abcPopupContent: document.getElementById('abc-popup-content'),
-            setViewSheet: document.getElementById('set-view-sheet'),
-            setTitle: document.getElementById('set-title'),
-            setCountInfo: document.getElementById('set-count-info'),
-            setSongsContainer: document.getElementById('set-songs-container'),
-            setNavBanner: document.getElementById('set-navigation-banner'),
-            bannerSetTitle: document.getElementById('banner-set-title'),
-            setSongIndexLabel: document.getElementById('set-song-index-label'),
+            floatingCapoBtn: document.getElementById('floating-capo-btn'),
+            floatingCapoLabel: document.getElementById('floating-capo-label'),
+            toastNotification: document.getElementById('toast-notification'),
+            toastMessage: document.getElementById('toast-message'),
             currentSongTitle: document.getElementById('current-song-title'),
             currentSongAuthor: document.getElementById('current-song-author'),
             metaKey: document.getElementById('meta-key'),
@@ -729,69 +652,27 @@
             newSongBtn: document.getElementById('new-song-btn'),
             newSetBtn: document.getElementById('new-set-btn'),
             editSongBtn: document.getElementById('edit-song-btn'),
-            editSetBtn: document.getElementById('edit-set-btn'),
 
-            // Floating Tools
             floatingMenu: document.getElementById('floating-menu'),
             closeFloatingMenu: document.getElementById('close-floating-menu'),
             floatingMainBtn: document.getElementById('floating-main-btn'),
-            metronomeFlash: document.getElementById('metronome-flash'),
-            metronomeBpmVal: document.getElementById('metronome-bpm-val'),
-            metronomeSlider: document.getElementById('metronome-slider'),
-            metronomeToggleBtn: document.getElementById('metronome-toggle-btn'),
-            autoscrollStatusVal: document.getElementById('autoscroll-status-val'),
-            songDurationLabel: document.getElementById('song-duration-label'),
-            songPredelayLabel: document.getElementById('song-predelay-label'),
-            autoscrollSlider: document.getElementById('autoscroll-slider'),
-            autoscrollToggleBtn: document.getElementById('autoscroll-toggle-btn'),
-            padKeyVal: document.getElementById('pad-key-val'),
-            padKeySelect: document.getElementById('pad-key-select'),
-            padToggleBtn: document.getElementById('pad-toggle-btn'),
-
-            // Editor
             songEditorModal: document.getElementById('song-editor-modal'),
             closeSongEditor: document.getElementById('close-song-editor'),
             editSongTitleInput: document.getElementById('edit-song-title-input'),
             editSongAuthorInput: document.getElementById('edit-song-author-input'),
             editSongCopyrightInput: document.getElementById('edit-song-copyright-input'),
             editSongFolderSelect: document.getElementById('edit-song-folder-select'),
-            editSongNewFolderInput: document.getElementById('edit-song-new-folder-input'),
             editSongFilenameInput: document.getElementById('edit-song-filename-input'),
-            editSongNotesInput: document.getElementById('edit-song-notes-input'),
-            editSongPresentationInput: document.getElementById('edit-song-presentation-input'),
             editSongLyricsInput: document.getElementById('edit-song-lyrics-input'),
-            editSongPdfFile: document.getElementById('edit-song-pdf-file'),
-            editSongAbcInput: document.getElementById('edit-song-abc-input'),
             editSongKeyInput: document.getElementById('edit-song-key-input'),
-            editSongOrigkeyInput: document.getElementById('edit-song-origkey-input'),
             editSongCapoInput: document.getElementById('edit-song-capo-input'),
             editSongTempoInput: document.getElementById('edit-song-tempo-input'),
-            editSongTimesigInput: document.getElementById('edit-song-timesig-input'),
-            editSongPrefinstInput: document.getElementById('edit-song-prefinst-input'),
-            editSongThemeInput: document.getElementById('edit-song-theme-input'),
-            editSongAkaInput: document.getElementById('edit-song-aka-input'),
-            editSongCcliInput: document.getElementById('edit-song-ccli-input'),
-            editSongHymnnumInput: document.getElementById('edit-song-hymnnum-input'),
-            saveSongBtn: document.getElementById('save-song-btn'),
-
-            // Settings & MIDI
-            settingsModal: document.getElementById('settings-modal'),
-            closeSettingsModal: document.getElementById('close-settings-modal'),
-            midiConnectBtn: document.getElementById('midi-connect-btn'),
-            midiStatusLabel: document.getElementById('midi-status-label'),
-            settingWsRole: document.getElementById('setting-ws-role'),
-            settingWsUrl: document.getElementById('setting-ws-url'),
-            settingHeadingScaleSlider: document.getElementById('setting-heading-scale-slider'),
-            settingHeadingScaleLabel: document.getElementById('setting-heading-scale-label'),
-            settingChordScaleSlider: document.getElementById('setting-chord-scale-slider'),
-            settingChordScaleLabel: document.getElementById('setting-chord-scale-label'),
-            saveSettingsBtn: document.getElementById('save-settings-btn')
+            saveSongBtn: document.getElementById('save-song-btn')
         };
 
         window.addEventListener('DOMContentLoaded', async () => {
             lucide.createIcons();
             setupEventListeners();
-            setupDraggablePopups();
 
             if ('showDirectoryPicker' in window) {
                 const hasStoredFolder = await checkStoredDirectoryHandle();
@@ -801,9 +682,19 @@
                     elements.modal.classList.remove('hidden');
                 }
             } else {
-                elements.modal.classList.remove('hidden');
+                elements.modal.classList.add('hidden');
             }
         });
+
+        function showToast(message) {
+            elements.toastMessage.textContent = message;
+            elements.toastNotification.classList.remove('translate-y-[-150%]', 'opacity-0');
+            elements.toastNotification.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                elements.toastNotification.classList.remove('translate-y-0', 'opacity-100');
+                elements.toastNotification.classList.add('translate-y-[-150%]', 'opacity-0');
+            }, 3000);
+        }
 
         // IndexedDB handle storage
         const DB_NAME = 'OpenSongAppWebDB';
@@ -873,7 +764,7 @@
         elements.modalImportArchiveBtn.addEventListener('click', () => elements.archiveFileInput.click());
         elements.modalImportFilesBtn.addEventListener('click', () => elements.individualFilesInput.click());
 
-        // EXPORT .osb (Songs Backup of OpenSong/Songs/ with Folder Selection)
+        // EXPORT .osb
         elements.modalExportOsbBtn.addEventListener('click', () => {
             elements.importModal.classList.add('hidden');
             const foldersSet = new Set();
@@ -911,14 +802,14 @@
             saveAs(content, "OpenSong_Songs_Backup.osb");
         });
 
-        // EXPORT .osbs (Sets Backup of OpenSong/Sets/)
+        // EXPORT .osbs (Sets backup placed at root, without Sets folder)
         elements.modalExportOsbsBtn.addEventListener('click', async () => {
             elements.importModal.classList.add('hidden');
             const zip = new JSZip();
             loadedSets.forEach(setObj => {
                 const filename = setObj.filename || `${setObj.title}.ost`;
                 const xmlContent = generateOpenSongSetXML(setObj);
-                zip.file(`Sets/${filename}`, xmlContent);
+                zip.file(filename, xmlContent);
             });
 
             const content = await zip.generateAsync({ type: "blob" });
@@ -933,6 +824,7 @@
     <copyright>${escapeXml(song.copyright || '')}</copyright>
     <presentation>${escapeXml(song.presentation || '')}</presentation>
     <key>${escapeXml(song.key || 'C')}</key>
+    <capo>${escapeXml(song.capo || '')}</capo>
     <tempo>${song.tempo || 120}</tempo>
     <time_sig>${escapeXml(song.time_sig || '4/4')}</time_sig>
     <notes>${escapeXml(song.notes || '')}</notes>
@@ -960,7 +852,30 @@
             });
         }
 
-        // ARCHIVE IMPORT (.osb / .osbs / .zip) WITH CONFLICT DETECTION FOR BOTH SONGS AND SETS
+        // Transposition and Capo helpers
+        const notesList = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const flatNotes = {'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'};
+
+        function transposeChord(chord, semitones) {
+            if (!chord) return '';
+            let rootMatch = chord.match(/^[A-G][b#]?/);
+            if (!rootMatch) return chord;
+            let root = rootMatch[0];
+            if (flatNotes[root]) root = flatNotes[root];
+            let idx = notesList.indexOf(root);
+            if (idx === -1) return chord;
+            let newIdx = (idx + semitones + 12) % 12;
+            return notesList[newIdx] + chord.slice(root.length);
+        }
+
+        function getCapoTransposedChord(chord, capoFret) {
+            // Capo transposition: if capo is on fret 2, playing shape chords means subtracting 2 semitones to get actual sound, OR vice versa.
+            // In OpenSong convention, capo chords are the chord shapes played relative to capo. If native is C with Capo 2, shape is Bb or similar.
+            // Let's implement standard capo shape calculation (-capoFret).
+            return transposeChord(chord, -parseInt(capoFret, 10));
+        }
+
+        // ARCHIVE IMPORT (.osb / .osbs / .zip)
         elements.archiveFileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files || []);
             if (files.length === 0) return;
@@ -987,17 +902,9 @@
                                 type: 'song',
                                 itemObj: {
                                     id: 'song_pdf_' + Math.random().toString(36).substring(2, 8),
-                                    filename: pureName,
-                                    folderPath: 'PDFs',
-                                    title: pureName.replace(/\.[^/.]+$/, ""),
-                                    isPdf: true,
-                                    pdfUrl: pdfBlobsMap[pureName],
-                                    key: 'C', tempo: 120, time_sig: '4/4'
+                                    filename: pureName, folderPath: 'PDFs', title: pureName.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: pdfBlobsMap[pureName], key: 'C'
                                 },
-                                labelTitle: pureName,
-                                category: 'PDF Song',
-                                isConflict: exists,
-                                selected: true
+                                labelTitle: pureName, category: 'PDF Song', isConflict: exists, selected: true
                             });
                         } else if (lowerName.includes('sets/') || lowerName.endsWith('.osbs') || lowerName.endsWith('.ost')) {
                             const text = await zipEntry.async("text");
@@ -1005,12 +912,7 @@
                             if (setObj) {
                                 const exists = loadedSets.some(s => s.title.toLowerCase() === setObj.title.toLowerCase());
                                 pendingImportItems.push({
-                                    type: 'set',
-                                    itemObj: setObj,
-                                    labelTitle: setObj.title,
-                                    category: 'OpenSong Set',
-                                    isConflict: exists,
-                                    selected: true
+                                    type: 'set', itemObj: setObj, labelTitle: setObj.title, category: 'OpenSong Set', isConflict: exists, selected: true
                                 });
                             }
                         } else {
@@ -1029,12 +931,7 @@
                             if (songObj) {
                                 const exists = loadedSongs.some(s => s.title.toLowerCase() === songObj.title.toLowerCase() && (s.folderPath || 'MAIN') === folder);
                                 pendingImportItems.push({
-                                    type: 'song',
-                                    itemObj: songObj,
-                                    labelTitle: `${songObj.title} (${folder})`,
-                                    category: 'Song',
-                                    isConflict: exists,
-                                    selected: true
+                                    type: 'song', itemObj: songObj, labelTitle: `${songObj.title} (${folder})`, category: 'Song', isConflict: exists, selected: true
                                 });
                             }
                         }
@@ -1042,10 +939,7 @@
                 } catch (err) { console.error(err); }
             }
 
-            const conflicts = pendingImportItems.filter(i => i.isConflict);
-            if (conflicts.length > 0 || pendingImportItems.length > 0) {
-                showConflictModal(pendingImportItems);
-            }
+            if (pendingImportItems.length > 0) showConflictModal(pendingImportItems);
         });
 
         function showConflictModal(items) {
@@ -1089,19 +983,16 @@
                     addOrUpdateSong(item.itemObj);
                 } else if (item.type === 'set') {
                     const existingSetIdx = loadedSets.findIndex(s => s.title.toLowerCase() === item.itemObj.title.toLowerCase());
-                    if (existingSetIdx !== -1) {
-                        loadedSets[existingSetIdx] = item.itemObj;
-                    } else {
-                        loadedSets.push(item.itemObj);
-                    }
+                    if (existingSetIdx !== -1) loadedSets[existingSetIdx] = item.itemObj;
+                    else loadedSets.push(item.itemObj);
                 }
             });
             updateTabCounts();
             updateFolderFilterDropdown();
             renderSidebarList();
+            showToast("Import completed successfully!");
         }
 
-        // Individual Files Importer (.xml, .ost, .pdf, .db) - WITH OVERWRITE WARNING
         elements.individualFilesInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files || []);
             if (files.length === 0) return;
@@ -1115,71 +1006,35 @@
                     pdfBlobsMap[file.name] = blobUrl;
                     const exists = loadedSongs.some(s => s.filename.toLowerCase() === file.name.toLowerCase());
                     pendingImportItems.push({
-                        type: 'song',
-                        itemObj: {
-                            id: 'song_pdf_' + Math.random().toString(36).substring(2, 8),
-                            filename: file.name,
-                            folderPath: 'PDFs',
-                            title: file.name.replace(/\.[^/.]+$/, ""),
-                            isPdf: true,
-                            pdfUrl: blobUrl,
-                            key: 'C'
-                        },
-                        labelTitle: file.name,
-                        category: 'PDF Song',
-                        isConflict: exists,
-                        selected: true
+                        type: 'song', itemObj: { id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: file.name, folderPath: 'PDFs', title: file.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: 'C' },
+                        labelTitle: file.name, category: 'PDF Song', isConflict: exists, selected: true
                     });
-                } else if (nameLower.includes('nonopensongsongs.db') || nameLower.endsWith('.db')) {
-                    const buf = new Uint8Array(await file.arrayBuffer());
-                    parseNonOpenSongSQLite(buf);
                 } else {
                     const text = await file.text();
                     if (nameLower.endsWith('.ost') || text.includes('<set')) {
                         const setObj = parseOpenSongSetXML(text, file.name);
                         if (setObj) {
                             const exists = loadedSets.some(s => s.title.toLowerCase() === setObj.title.toLowerCase());
-                            pendingImportItems.push({
-                                type: 'set',
-                                itemObj: setObj,
-                                labelTitle: setObj.title,
-                                category: 'OpenSong Set',
-                                isConflict: exists,
-                                selected: true
-                            });
+                            pendingImportItems.push({ type: 'set', itemObj: setObj, labelTitle: setObj.title, category: 'OpenSong Set', isConflict: exists, selected: true });
                         }
                     } else {
                         const songObj = parseOpenSongXML(text, file.name, 'MAIN');
                         if (songObj) {
                             const exists = loadedSongs.some(s => s.title.toLowerCase() === songObj.title.toLowerCase() && (s.folderPath || 'MAIN') === 'MAIN');
-                            pendingImportItems.push({
-                                type: 'song',
-                                itemObj: songObj,
-                                labelTitle: songObj.title,
-                                category: 'Song',
-                                isConflict: exists,
-                                selected: true
-                            });
+                            pendingImportItems.push({ type: 'song', itemObj: songObj, labelTitle: songObj.title, category: 'Song', isConflict: exists, selected: true });
                         }
                     }
                 }
             }
-
-            if (pendingImportItems.length > 0) {
-                showConflictModal(pendingImportItems);
-            }
+            if (pendingImportItems.length > 0) showConflictModal(pendingImportItems);
         });
 
         function addOrUpdateSong(songObj) {
             const existingIdx = loadedSongs.findIndex(s => s.filename.toLowerCase() === songObj.filename.toLowerCase() && (s.folderPath || 'MAIN') === (songObj.folderPath || 'MAIN'));
-            if (existingIdx !== -1) {
-                loadedSongs[existingIdx] = { ...loadedSongs[existingIdx], ...songObj };
-            } else {
-                loadedSongs.push(songObj);
-            }
+            if (existingIdx !== -1) loadedSongs[existingIdx] = { ...loadedSongs[existingIdx], ...songObj };
+            else loadedSongs.push(songObj);
         }
 
-        // SQLite parser using sql.js for NonOpenSongSongs.db
         async function parseNonOpenSongSQLite(uint8ArrayData) {
             try {
                 const SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
@@ -1191,24 +1046,10 @@
                         const rowObj = {};
                         cols.forEach((c, idx) => rowObj[c] = row[idx]);
                         const title = rowObj.title || rowObj.filename || "Untitled PDF";
-                        const existing = loadedSongs.find(s => s.title.toLowerCase() === title.toLowerCase());
-                        if (existing) {
-                            existing.key = rowObj.key || existing.key;
-                            existing.author = rowObj.author || existing.author;
-                            existing.tempo = rowObj.tempo || existing.tempo;
-                        } else {
-                            addOrUpdateSong({
-                                id: 'song_db_' + Math.random().toString(36).substring(2, 8),
-                                filename: rowObj.filename || `${title}.pdf`,
-                                folderPath: 'NonOpenSong',
-                                title: title,
-                                author: rowObj.author || '',
-                                key: rowObj.key || 'C',
-                                tempo: rowObj.tempo || 120,
-                                isPdf: true,
-                                pdfUrl: pdfBlobsMap[rowObj.filename] || ''
-                            });
-                        }
+                        addOrUpdateSong({
+                            id: 'song_db_' + Math.random().toString(36).substring(2, 8),
+                            filename: rowObj.filename || `${title}.pdf`, folderPath: 'NonOpenSong', title: title, author: rowObj.author || '', key: rowObj.key || 'C', capo: rowObj.capo || '', isPdf: true, pdfUrl: pdfBlobsMap[rowObj.filename] || ''
+                        });
                     });
                 }
                 updateTabCounts();
@@ -1225,7 +1066,7 @@
                     await saveDirectoryHandle(handle);
                     await processRootDirectory(handle);
                 } catch (err) {
-                    if (err.name !== 'AbortError') { elements.fallbackInput.click(); }
+                    if (err.name !== 'AbortError') elements.fallbackInput.click();
                 }
             } else { elements.fallbackInput.click(); }
         });
@@ -1241,26 +1082,14 @@
                 if (lower.endsWith('.pdf')) {
                     const blobUrl = URL.createObjectURL(file);
                     pdfBlobsMap[file.name] = blobUrl;
-                    addOrUpdateSong({
-                        id: 'song_pdf_' + Math.random().toString(36).substring(2, 8),
-                        filename: file.name,
-                        folderPath: 'PDFs',
-                        title: file.name.replace(/\.[^/.]+$/, ""),
-                        isPdf: true,
-                        pdfUrl: blobUrl,
-                        key: 'C'
-                    });
-                } else if (lower.includes('nonopensongsongs.db')) {
-                    parseNonOpenSongSQLite(new Uint8Array(await file.arrayBuffer()));
+                    addOrUpdateSong({ id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: file.name, folderPath: 'PDFs', title: file.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: 'C' });
                 } else if (lower.includes('sets/')) {
                     const s = parseOpenSongSetXML(text, file.name);
                     if (s) loadedSets.push(s);
-                } else if (lower.includes('songs/') || file.name.endsWith('.xml') || file.name.endsWith('.ost') || text.includes('<song')) {
+                } else {
                     let folder = 'MAIN';
                     const songsIdx = parts.findIndex(p => p.toLowerCase() === 'songs');
-                    if (songsIdx !== -1 && parts.length > songsIdx + 2) {
-                        folder = parts.slice(songsIdx + 1, parts.length - 1).join('/');
-                    }
+                    if (songsIdx !== -1 && parts.length > songsIdx + 2) folder = parts.slice(songsIdx + 1, parts.length - 1).join('/');
                     const song = parseOpenSongXML(text, file.name, folder);
                     if (song) addOrUpdateSong(song);
                 }
@@ -1270,6 +1099,7 @@
             updateTabCounts();
             updateFolderFilterDropdown();
             renderSidebarList();
+            showToast("Folder scanned successfully!");
         });
 
         async function processRootDirectory(handle) {
@@ -1288,13 +1118,6 @@
                                 if (setObj) loadedSets.push(setObj);
                             }
                         }
-                    } else if (entry.kind === 'directory' && entry.name === 'Settings') {
-                        for await (const setFile of entry.values()) {
-                            if (setFile.kind === 'file' && setFile.name.toLowerCase().includes('nonopensongsongs.db')) {
-                                const f = await setFile.getFile();
-                                parseNonOpenSongSQLite(new Uint8Array(await f.arrayBuffer()));
-                            }
-                        }
                     }
                 }
             } catch (e) { console.error(e); }
@@ -1305,6 +1128,7 @@
             updateTabCounts();
             updateFolderFilterDropdown();
             renderSidebarList();
+            showToast("Root directory loaded!");
         }
 
         async function scanSongDir(dirHandle, prefix) {
@@ -1315,15 +1139,7 @@
                     if (lowerName.endsWith('.pdf')) {
                         const blobUrl = URL.createObjectURL(f);
                         pdfBlobsMap[f.name] = blobUrl;
-                        addOrUpdateSong({
-                            id: 'song_pdf_' + Math.random().toString(36).substring(2, 8),
-                            filename: f.name,
-                            folderPath: prefix || 'PDFs',
-                            title: f.name.replace(/\.[^/.]+$/, ""),
-                            isPdf: true,
-                            pdfUrl: blobUrl,
-                            key: 'C'
-                        });
+                        addOrUpdateSong({ id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: f.name, folderPath: prefix || 'PDFs', title: f.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: 'C' });
                     } else {
                         const song = parseOpenSongXML(await f.text(), f.name, prefix || 'MAIN');
                         if (song) addOrUpdateSong(song);
@@ -1350,11 +1166,9 @@
                     copyright: gt("copyright"),
                     presentation: gt("presentation"),
                     key: gt("key") || 'C',
+                    capo: gt("capo"),
                     tempo: gt("tempo") || 120,
-                    time_sig: gt("time_sig") || gt("time_signature") || '4/4',
-                    duration: parseInt(gt("duration"), 10) || 180,
-                    notes: gt("notes"),
-                    abc_notation: gt("abc_notation"),
+                    time_sig: gt("time_sig") || '4/4',
                     lyrics: gt("lyrics")
                 };
             } catch (e) { return null; }
@@ -1374,53 +1188,10 @@
             } catch (e) { return null; }
         }
 
-        // Web MIDI API Integration (Bluetooth / USB MIDI)
-        elements.midiConnectBtn.addEventListener('click', async () => {
-            if (!navigator.requestMIDIAccess) {
-                elements.midiStatusLabel.textContent = "Web MIDI API is not supported in this browser.";
-                return;
-            }
-            try {
-                const midiAccess = await navigator.requestMIDIAccess();
-                elements.midiStatusLabel.textContent = "MIDI Connected successfully! Listening for devices...";
-                
-                midiAccess.inputs.forEach(input => {
-                    input.onmidimessage = handleMidiMessage;
-                });
-                midiAccess.onstatechange = (e) => {
-                    if (e.port.type === 'input' && e.port.state === 'connected') {
-                        e.port.onmidimessage = handleMidiMessage;
-                        elements.midiStatusLabel.textContent = `Connected MIDI input: ${e.port.name}`;
-                    }
-                };
-            } catch (err) {
-                elements.midiStatusLabel.textContent = `MIDI Permission denied or error: ${err.message}`;
-            }
-        });
-
-        function handleMidiMessage(event) {
-            const [status, data1, data2] = event.data;
-            const command = status >> 4;
-            if (command === 9 && data2 > 0) {
-                if (activeSet && activeSetSongIndex !== -1) {
-                    if (data1 === 60 && activeSetSongIndex + 1 < activeSet.songTitles.length) {
-                        const nextTitle = activeSet.songTitles[activeSetSongIndex + 1];
-                        const matched = loadedSongs.find(s => s.title.toLowerCase() === nextTitle.toLowerCase());
-                        if (matched) renderSongSheet(matched, activeSet, activeSetSongIndex + 1);
-                    } else if (data1 === 59 && activeSetSongIndex > 0) {
-                        const prevTitle = activeSet.songTitles[activeSetSongIndex - 1];
-                        const matched = loadedSongs.find(s => s.title.toLowerCase() === prevTitle.toLowerCase());
-                        if (matched) renderSongSheet(matched, activeSet, activeSetSongIndex - 1);
-                    }
-                }
-            }
-        }
-
         elements.newSongBtn.addEventListener('click', () => {
             elements.editSongTitleInput.value = '';
             elements.editSongAuthorInput.value = '';
             elements.editSongCopyrightInput.value = '';
-            elements.editSongFolderSelect.value = 'MAIN';
             elements.editSongFilenameInput.value = 'NewSong.xml';
             elements.editSongLyricsInput.value = '[V1]\n.C     G\nLyrics here...';
             activeSong = null;
@@ -1432,7 +1203,6 @@
             elements.editSongTitleInput.value = activeSong.title;
             elements.editSongAuthorInput.value = activeSong.author || '';
             elements.editSongCopyrightInput.value = activeSong.copyright || '';
-            elements.editSongFolderSelect.value = activeSong.folderPath || 'MAIN';
             elements.editSongFilenameInput.value = activeSong.filename;
             elements.editSongLyricsInput.value = activeSong.lyrics || '';
             elements.songEditorModal.classList.remove('hidden');
@@ -1441,64 +1211,103 @@
         elements.closeSongEditor.addEventListener('click', () => elements.songEditorModal.classList.add('hidden'));
 
         elements.saveSongBtn.addEventListener('click', () => {
-            let folder = elements.editSongFolderSelect.value;
-            if (folder === 'NEW_FOLDER') folder = elements.editSongNewFolderInput.value.trim() || 'MAIN';
-
             const newSongData = {
                 id: activeSong ? activeSong.id : 'song_' + Math.random().toString(36).substring(2, 8),
                 filename: elements.editSongFilenameInput.value || 'song.xml',
-                folderPath: folder,
+                folderPath: elements.editSongFolderSelect.value,
                 title: elements.editSongTitleInput.value || 'Untitled',
                 author: elements.editSongAuthorInput.value,
-                copyright: elements.editSongCopyrightInput.value,
                 key: elements.editSongKeyInput.value,
+                capo: elements.editSongCapoInput.value,
                 tempo: elements.editSongTempoInput.value,
-                lyrics: elements.editSongLyricsInput.value,
-                isPdf: activeSong ? activeSong.isPdf : false,
-                pdfUrl: activeSong ? activeSong.pdfUrl : null
+                lyrics: elements.editSongLyricsInput.value
             };
-
             addOrUpdateSong(newSongData);
             elements.songEditorModal.classList.add('hidden');
             updateTabCounts();
             updateFolderFilterDropdown();
             renderSidebarList();
             renderSongSheet(newSongData);
+            showToast("Song saved successfully!");
         });
+
+        // Floating Capo Button Cycling Logic
+        elements.floatingCapoBtn.addEventListener('click', () => {
+            if (!activeSong || !activeSong.capo) return;
+            if (capoDisplayMode === 'native') {
+                capoDisplayMode = 'capo';
+                showToast(`Capo Display Mode: Capo Chords (${activeSong.capo})`);
+            } else if (capoDisplayMode === 'capo') {
+                capoDisplayMode = 'both';
+                showToast("Capo Display Mode: Both (Two-Line Chords)");
+            } else {
+                capoDisplayMode = 'native';
+                showToast("Capo Display Mode: Native Chords");
+            }
+            updateFloatingCapoButtonState();
+            renderSongLyrics(activeSong.lyrics, activeSong.capo);
+        });
+
+        function updateFloatingCapoButtonState() {
+            if (!activeSong || !activeSong.capo) {
+                elements.floatingCapoBtn.classList.add('hidden');
+                return;
+            }
+            elements.floatingCapoBtn.classList.remove('hidden');
+            if (capoDisplayMode === 'native') {
+                elements.floatingCapoLabel.textContent = `Capo ${activeSong.capo} (Native)`;
+            } else if (capoDisplayMode === 'capo') {
+                elements.floatingCapoLabel.textContent = `Capo ${activeSong.capo} (Capo Chords)`;
+            } else {
+                elements.floatingCapoLabel.textContent = `Capo ${activeSong.capo} (Both Lines)`;
+            }
+        }
 
         function renderSongSheet(song, fromSetContext = null, songIndexInSet = -1) {
             activeSong = song;
+            capoDisplayMode = 'native'; // Default on song selection
             elements.emptyState.classList.add('hidden');
-            elements.setViewSheet.classList.add('hidden');
+            document.getElementById('set-view-sheet').classList.add('hidden');
             elements.songSheet.classList.remove('hidden');
 
             if (fromSetContext) {
                 activeSet = fromSetContext;
                 activeSetSongIndex = songIndexInSet;
-                elements.bannerSetTitle.textContent = activeSet.title;
-                elements.setSongIndexLabel.textContent = `${activeSetSongIndex + 1} / ${activeSet.songTitles.length}`;
-                elements.setNavBanner.classList.remove('hidden');
+                document.getElementById('banner-set-title').textContent = activeSet.title;
+                document.getElementById('set-song-index-label').textContent = `${activeSetSongIndex + 1} / ${activeSet.songTitles.length}`;
+                document.getElementById('set-navigation-banner').classList.remove('hidden');
             } else if (!activeSet) {
-                elements.setNavBanner.classList.add('hidden');
+                document.getElementById('set-navigation-banner').classList.add('hidden');
             }
 
             elements.sheetTitle.textContent = song.title;
             elements.sheetAuthor.textContent = song.author || '';
             elements.sheetFolderPath.textContent = song.folderPath || 'MAIN';
             elements.sheetKeyBadge.textContent = `Key: ${song.key || 'C'}`;
+            
+            if (song.capo) {
+                elements.sheetCapoBadge.textContent = `Capo: ${song.capo}`;
+                elements.sheetCapoBadge.classList.remove('hidden');
+            } else {
+                elements.sheetCapoBadge.classList.add('hidden');
+            }
+
             elements.currentSongTitle.textContent = song.title;
             elements.currentSongAuthor.textContent = song.author || '';
             elements.metaKey.textContent = song.key || 'C';
             elements.metaTempo.textContent = song.tempo || '--';
 
+            updateFloatingCapoButtonState();
+
             if (song.isPdf && song.pdfUrl) {
                 elements.sheetContent.innerHTML = `<div class="w-full h-[75vh] bg-slate-900 border border-slate-800 rounded-xl overflow-hidden"><embed src="${song.pdfUrl}" type="application/pdf" width="100%" height="100%"/></div>`;
+                elements.floatingCapoBtn.classList.add('hidden');
             } else {
-                renderSongLyrics(song.lyrics);
+                renderSongLyrics(song.lyrics, song.capo);
             }
         }
 
-        function renderSongLyrics(rawLyrics) {
+        function renderSongLyrics(rawLyrics, capoFret) {
             elements.sheetContent.innerHTML = '';
             if (!rawLyrics) return;
             const lines = rawLyrics.split('\n');
@@ -1519,32 +1328,29 @@
                     sectionContainer.className = 'p-4 rounded-xl bg-slate-900/40 border border-slate-800 space-y-3';
                     elements.sheetContent.appendChild(sectionContainer);
                 }
+
                 const div = document.createElement('div');
-                div.className = 'lyric-below py-0.5 whitespace-pre-wrap';
-                div.textContent = line;
+                div.className = 'py-0.5 space-y-1';
+
+                // Check if line contains chords (OpenSong convention starts with '.' or has chord formatting)
+                if (line.startsWith('.') || capoDisplayMode === 'both' && capoFret) {
+                    // We can parse chords and lyrics
+                    const chordLine = line.startsWith('.') ? line.slice(1) : line;
+                    div.innerHTML = `<div class="chord-above">${chordLine}</div>`;
+                    if (capoFret && capoDisplayMode === 'both') {
+                        // Transpose chords for capo line
+                        const transposedChordLine = chordLine.split(' ').map(c => c ? transposeChord(c, -parseInt(capoFret, 10)) : '').join(' ');
+                        div.innerHTML += `<div class="chord-capo-above">Capo: ${transposedChordLine}</div>`;
+                    }
+                } else if (capoFret && capoDisplayMode === 'capo' && line.match(/^[A-G]/)) {
+                    // Display capo transposed chords
+                    const transposedChordLine = line.split(' ').map(c => c ? transposeChord(c, -parseInt(capoFret, 10)) : '').join(' ');
+                    div.innerHTML = `<div class="chord-capo-above">${transposedChordLine}</div>`;
+                } else {
+                    div.innerHTML = `<div class="lyric-below whitespace-pre-wrap">${line}</div>`;
+                }
                 sectionContainer.appendChild(div);
             }
-        }
-
-        function renderSetSheet(setObj) {
-            activeSet = setObj;
-            activeSong = null;
-            elements.emptyState.classList.add('hidden');
-            elements.songSheet.classList.add('hidden');
-            elements.setViewSheet.classList.remove('hidden');
-            elements.setTitle.textContent = setObj.title;
-            elements.setCountInfo.textContent = `${setObj.songTitles.length} songs in set`;
-            elements.setSongsContainer.innerHTML = '';
-
-            setObj.songTitles.forEach((songName, idx) => {
-                const matched = loadedSongs.find(s => s.title.toLowerCase() === songName.toLowerCase());
-                const card = document.createElement('div');
-                card.className = `p-4 rounded-xl border transition flex items-center justify-between cursor-pointer ${matched ? 'bg-slate-900/80 border-slate-800 hover:border-indigo-500/50' : 'opacity-60'}`;
-                card.innerHTML = `<div class="flex items-center space-x-3"><span class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-300 font-mono text-xs font-bold flex items-center justify-center">${idx + 1}</span><div><h4 class="text-sm font-bold text-slate-100">${songName}</h4></div></div>`;
-                if (matched) card.addEventListener('click', () => renderSongSheet(matched, setObj, idx));
-                elements.setSongsContainer.appendChild(card);
-            });
-            lucide.createIcons();
         }
 
         function switchSidebarTab(tab) {
@@ -1583,16 +1389,15 @@
             elements.songList.innerHTML = '';
             if (activeTab === 'songs') {
                 loadedSongs.sort((a, b) => a.title.localeCompare(b.title));
-                const filtered = loadedSongs.filter(song => {
+                loadedSongs.filter(song => {
                     const matchesQuery = song.title.toLowerCase().includes(query) || (song.author && song.author.toLowerCase().includes(query));
                     const matchesFolder = selectedFolderFilter === 'ALL' || (song.folderPath || 'MAIN') === selectedFolderFilter;
                     return matchesQuery && matchesFolder;
-                });
-                filtered.forEach(song => {
+                }).forEach(song => {
                     const li = document.createElement('li');
                     const isActive = activeSong && activeSong.id === song.id;
                     li.className = `p-3 rounded-xl cursor-pointer transition flex items-center justify-between border ${isActive ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 font-bold' : 'hover:bg-slate-800/60 text-slate-300 border-transparent'}`;
-                    li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${song.title} ${song.isPdf ? '<span class="text-[10px] bg-sky-500/20 text-sky-300 px-1 rounded ml-1">PDF</span>' : ''}</div><div class="text-xs text-slate-500 font-normal">${song.author || 'Unknown'} <span class="text-[10px] text-amber-500/80 font-mono">(${song.folderPath || 'MAIN'})</span></div></div><span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800">${song.key || '?'}</span>`;
+                    li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${song.title} ${song.capo ? '<span class="text-[10px] bg-purple-500/20 text-purple-300 px-1 rounded ml-1">Capo ' + song.capo + '</span>' : ''}</div><div class="text-xs text-slate-500 font-normal">${song.author || 'Unknown'} <span class="text-[10px] text-amber-500/80 font-mono">(${song.folderPath || 'MAIN'})</span></div></div><span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800">${song.key || '?'}</span>`;
                     li.addEventListener('click', () => { activeSet = null; renderSongSheet(song); });
                     elements.songList.appendChild(li);
                 });
@@ -1600,44 +1405,12 @@
                 loadedSets.sort((a, b) => a.title.localeCompare(b.title));
                 loadedSets.filter(s => s.title.toLowerCase().includes(query)).forEach(setObj => {
                     const li = document.createElement('li');
-                    const isActive = activeSet && activeSet.id === setObj.id;
-                    li.className = `p-3 rounded-xl cursor-pointer transition flex items-center justify-between border ${isActive ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400 font-bold' : 'hover:bg-slate-800/60 text-slate-300 border-transparent'}`;
+                    li.className = 'p-3 rounded-xl cursor-pointer transition flex items-center justify-between border hover:bg-slate-800/60 text-slate-300 border-transparent';
                     li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${setObj.title}</div><div class="text-xs text-slate-500 font-normal">${setObj.songTitles.length} songs</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>`;
-                    li.addEventListener('click', () => renderSetSheet(setObj));
                     elements.songList.appendChild(li);
                 });
             }
             lucide.createIcons();
-        }
-
-        function setupDraggablePopups() {
-            makeDraggable(elements.stickyNotePopup, document.getElementById('sticky-drag-handle'));
-            makeDraggable(elements.abcPopup, document.getElementById('abc-drag-handle'));
-        }
-
-        function makeDraggable(elmnt, handle) {
-            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            handle.onmousedown = dragMouseDown;
-            function dragMouseDown(e) {
-                e.preventDefault();
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                document.onmouseup = closeDragElement;
-                document.onmousemove = elementDrag;
-            }
-            function elementDrag(e) {
-                e.preventDefault();
-                pos1 = pos3 - e.clientX;
-                pos2 = pos4 - e.clientY;
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-            }
-            function closeDragElement() {
-                document.onmouseup = null;
-                document.onmousemove = null;
-            }
         }
 
         function setupEventListeners() {
@@ -1661,35 +1434,6 @@
 
             elements.floatingMainBtn.addEventListener('click', () => elements.floatingMenu.classList.toggle('hidden'));
             elements.closeFloatingMenu.addEventListener('click', () => elements.floatingMenu.classList.add('hidden'));
-
-            elements.openSettingsBtn.addEventListener('click', () => {
-                elements.settingWsRole.value = appSettings.wsRole;
-                elements.settingWsUrl.value = appSettings.wsUrl;
-                elements.settingHeadingScaleSlider.value = appSettings.headingScale;
-                elements.settingHeadingScaleLabel.textContent = `${appSettings.headingScale}%`;
-                elements.settingChordScaleSlider.value = appSettings.chordScale;
-                elements.settingChordScaleLabel.textContent = `${appSettings.chordScale}%`;
-                elements.settingsModal.classList.remove('hidden');
-            });
-            elements.closeSettingsModal.addEventListener('click', () => elements.settingsModal.classList.add('hidden'));
-
-            elements.settingHeadingScaleSlider.addEventListener('input', (e) => {
-                elements.settingHeadingScaleLabel.textContent = `${e.target.value}%`;
-            });
-            elements.settingChordScaleSlider.addEventListener('input', (e) => {
-                elements.settingChordScaleLabel.textContent = `${e.target.value}%`;
-            });
-
-            elements.saveSettingsBtn.addEventListener('click', () => {
-                elements.settingsModal.classList.add('hidden');
-                appSettings.wsRole = elements.settingWsRole.value;
-                appSettings.wsUrl = elements.settingWsUrl.value;
-                appSettings.headingScale = parseInt(elements.settingHeadingScaleSlider.value, 10);
-                appSettings.chordScale = parseInt(elements.settingChordScaleSlider.value, 10);
-
-                document.documentElement.style.setProperty('--heading-font-scale', `${appSettings.headingScale}%`);
-                document.documentElement.style.setProperty('--chord-font-scale', `${appSettings.chordScale}%`);
-            });
         }
     </script>
 </body>
