@@ -144,7 +144,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.2d</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.2e</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1783,7 +1783,8 @@
                     topHtml = `<div class="chord-above" style="white-space: pre; font-weight:700; color:#f59e0b;">${nativeChord}</div><div class="chord-capo-above" style="white-space: pre; font-weight:700; color:#a855f7;">${capoChord}</div>`;
                 }
 
-                html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span style="width: 0; overflow: visible; white-space: nowrap; display: flex; flex-direction: column;">${topHtml}</span><span class="lyric-below" style="white-space: pre;">${chunk}</span></span>`;
+                // Added a micro-adjustment transform (translateX(2px)) to correct the leftward proportional font offset
+                html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span style="width: 0; overflow: visible; white-space: nowrap; display: flex; flex-direction: column; transform: translateX(2px);">${topHtml}</span><span class="lyric-below" style="white-space: pre;">${chunk}</span></span>`;
             });
 
             return html;
