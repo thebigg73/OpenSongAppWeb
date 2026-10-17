@@ -119,7 +119,6 @@
         </div>
 
         <div class="flex items-center space-x-2">
-            <!-- New Item Action Buttons -->
             <div class="hidden sm:flex items-center gap-1 bg-slate-800/80 p-1 rounded-lg border border-slate-700">
                 <button id="new-song-btn" class="px-2 py-1 text-xs font-bold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 rounded transition flex items-center gap-1">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Song
@@ -129,25 +128,21 @@
                 </button>
             </div>
 
-            <!-- Transpose Controls -->
             <div class="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700">
                 <button id="transpose-down" class="px-2 py-1 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700 rounded transition">-1</button>
                 <span id="transpose-offset" class="px-2 text-xs font-mono font-bold text-amber-400">0</span>
                 <button id="transpose-up" class="px-2 py-1 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700 rounded transition">+1</button>
             </div>
 
-            <!-- Secondary Display / Cast Button -->
             <button id="cast-display-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Open Stage Secondary Display Window">
                 <i data-lucide="monitor-play" class="w-5 h-5"></i>
             </button>
 
-            <!-- Settings Button -->
             <button id="open-settings-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Application Settings">
                 <i data-lucide="settings" class="w-5 h-5"></i>
             </button>
 
-            <!-- Change Folder Button -->
-            <button id="change-folder-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Change Storage Directory">
+            <button id="change-folder-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Change Storage Directory / Backup">
                 <i data-lucide="folder-open" class="w-5 h-5"></i>
             </button>
         </div>
@@ -192,7 +187,7 @@
                         <i data-lucide="music-4" class="w-12 h-12"></i>
                     </div>
                     <h3 class="text-lg font-bold text-slate-300 mb-1">No Item Selected</h3>
-                    <p class="text-sm text-slate-500 max-w-sm mb-4">Select a song or set from the sidebar, or import backup archives (.osb / .osbs) to get started.</p>
+                    <p class="text-sm text-slate-500 max-w-sm mb-4">Select a song or set from the sidebar, or click the folder icon above to load your OpenSong folder or backup zip.</p>
                 </div>
 
                 <article id="set-view-sheet" class="hidden space-y-6 pb-20">
@@ -280,8 +275,8 @@
                             <span id="autoscroll-status-val" class="text-[11px] font-mono text-sky-400">Ready</span>
                         </div>
                         <div class="text-[11px] text-slate-400 flex justify-between bg-slate-950 px-2 py-1 rounded border border-slate-800">
-                            <span>Duration: <strong id="song-duration-label" class="text-slate-200">3 minutes (Default)</strong></span>
-                            <span>Pre-delay: <strong id="song-predelay-label" class="text-slate-200">10s (Default)</strong></span>
+                            <span>Duration: <strong id="song-duration-label" class="text-slate-200">3 minutes</strong></span>
+                            <span>Pre-delay: <strong id="song-predelay-label" class="text-slate-200">10s</strong></span>
                         </div>
                         <div class="flex items-center gap-2">
                             <input type="range" id="autoscroll-slider" min="0.5" max="5" step="0.25" value="1" class="w-full accent-sky-400 h-1.5 bg-slate-950 rounded-lg cursor-pointer">
@@ -337,9 +332,9 @@
                 <div class="inline-flex p-3 bg-amber-500/10 text-amber-400 rounded-full mb-2">
                     <i data-lucide="folder-tree" class="w-8 h-8"></i>
                 </div>
-                <h3 id="modal-title" class="text-xl font-bold text-white">Select OpenSong Storage or Backup (.osb / .osbs)</h3>
+                <h3 id="modal-title" class="text-xl font-bold text-white">Select OpenSong Storage or Backup</h3>
                 <p id="modal-description" class="text-sm text-slate-400 leading-relaxed">
-                    Choose your local OpenSong folder or import OpenSongApp zip backup archives directly.
+                    Choose your local OpenSong folder or import OpenSongApp zip backup archives (.osb / .osbs).
                 </p>
             </div>
 
@@ -411,8 +406,8 @@
                 </div>
             </div>
             <div>
-                <label class="font-bold text-slate-300 block mb-1 text-xs">Lyrics & Chords (OpenSong XML format)</label>
-                <textarea id="edit-song-lyrics-input" rows="10" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-slate-100 focus:outline-none focus:border-amber-500" placeholder="[V1]&#10;.C     G&#10;Amazing grace..."></textarea>
+                <label class="font-bold text-slate-300 block mb-1 text-xs">Lyrics & Chords (OpenSong XML format / ; for tab comments)</label>
+                <textarea id="edit-song-lyrics-input" rows="10" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-slate-100 focus:outline-none focus:border-amber-500" placeholder="[V1]&#10;;e|------------------|&#10;.C     G&#10;Amazing grace..."></textarea>
             </div>
             <div class="flex justify-end gap-2 pt-2">
                 <button id="save-song-btn" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition">Save Song</button>
@@ -443,13 +438,13 @@
         </div>
     </div>
 
-    <!-- Settings Modal (including WebSocket endpoint) -->
+    <!-- Settings Modal (Restored all options & WebSocket) -->
     <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div class="flex items-center space-x-2 text-amber-400">
                     <i data-lucide="settings" class="w-5 h-5"></i>
-                    <h3 class="font-bold text-lg text-slate-100">OpenSongApp Web Preferences</h3>
+                    <h3 class="font-bold text-lg text-slate-100">Preferences & View Settings</h3>
                 </div>
                 <button id="close-settings-modal" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
@@ -460,6 +455,7 @@
                     <input type="text" id="setting-ws-url" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 font-mono text-xs" placeholder="ws://localhost:8080">
                     <p class="text-slate-400">Connects to OpenSongApp remote control listener for automatic song cueing.</p>
                 </div>
+
                 <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex items-center justify-between">
                         <label class="font-bold text-slate-200">Default Song Duration (Fallback)</label>
@@ -467,8 +463,43 @@
                     </div>
                     <input type="range" id="setting-default-duration-slider" min="30" max="600" step="15" value="180" class="w-full accent-amber-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
                 </div>
+
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="font-bold text-slate-200">Auto-Scale Text to Screen Width</label>
+                        <input type="checkbox" id="setting-autoscale-toggle" class="accent-amber-500 w-4 h-4 rounded cursor-pointer">
+                    </div>
+                </div>
+
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="font-bold text-slate-200">Max Allowed Font Size</label>
+                        <span id="setting-max-font-label" class="font-mono text-amber-400 font-bold">150%</span>
+                    </div>
+                    <input type="range" id="setting-max-font-slider" min="100" max="250" step="10" value="150" class="w-full accent-amber-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                </div>
+
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="font-bold text-slate-200">Wrap Long Lyric Lines</label>
+                        <input type="checkbox" id="setting-wrap-toggle" checked class="accent-amber-500 w-4 h-4 rounded cursor-pointer">
+                    </div>
+                </div>
+
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                    <label class="font-bold text-slate-200 block">Default Time Signature</label>
+                    <select id="setting-time-sig-select" class="w-full bg-slate-900 border border-slate-800 rounded-lg py-1.5 px-2 text-slate-200 focus:outline-none">
+                        <option value="4/4">4/4 Standard</option>
+                        <option value="3/4">3/4 Waltz</option>
+                        <option value="6/8">6/8 Ballad</option>
+                        <option value="2/4">2/4 March</option>
+                    </select>
+                </div>
             </div>
-            <button id="save-settings-btn" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition">Apply & Save</button>
+
+            <button id="save-settings-btn" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition">
+                Apply & Save Settings
+            </button>
         </div>
     </div>
 
@@ -487,7 +518,6 @@
         let autoScrollInterval = null;
         let autoScrollSpeed = 1.0;
         let isUserManuallyScrolling = false;
-        let userScrollResumeTimer = null;
 
         let audioCtx = null;
         let isMetronomeRunning = false;
@@ -501,13 +531,20 @@
         let wsClient = null;
         let secondaryWindow = null;
 
+        let appSettings = {
+            autoScaleEnabled: false,
+            maxFontSizePercent: 150,
+            textWrapEnabled: true,
+            defaultTimeSig: "4/4",
+            defaultDurationSeconds: 180,
+            wsUrl: ""
+        };
+
         const elements = {
             modal: document.getElementById('folder-modal'),
             modalProgressContainer: document.getElementById('modal-progress-container'),
             progressStatusTitle: document.getElementById('progress-status-title'),
             progressStatusDetail: document.getElementById('progress-status-detail'),
-            progressSongCount: document.getElementById('progress-song-count'),
-            progressSetCount: document.getElementById('progress-set-count'),
             folderStatus: document.getElementById('folder-status-text'),
             mainScrollContainer: document.getElementById('main-scroll-container'),
             tabSongsBtn: document.getElementById('tab-songs-btn'),
@@ -593,6 +630,13 @@
             settingsModal: document.getElementById('settings-modal'),
             closeSettingsModal: document.getElementById('close-settings-modal'),
             settingWsUrl: document.getElementById('setting-ws-url'),
+            settingDefaultDurationSlider: document.getElementById('setting-default-duration-slider'),
+            settingDefaultDurationLabel: document.getElementById('setting-default-duration-label'),
+            settingAutoscaleToggle: document.getElementById('setting-autoscale-toggle'),
+            settingMaxFontSlider: document.getElementById('setting-max-font-slider'),
+            settingMaxFontLabel: document.getElementById('setting-max-font-label'),
+            settingWrapToggle: document.getElementById('setting-wrap-toggle'),
+            settingTimeSigSelect: document.getElementById('setting-time-sig-select'),
             saveSettingsBtn: document.getElementById('save-settings-btn')
         };
 
@@ -600,9 +644,16 @@
             lucide.createIcons();
             setupEventListeners();
             setupManualScrollInterception();
+            // Show folder modal on launch if no songs loaded
+            elements.modal.classList.remove('hidden');
         });
 
-        // Backup Importer (.osb / .osbs via JSZip)
+        // Change / Open Folder Button
+        elements.changeFolderBtn.addEventListener('click', () => {
+            elements.modal.classList.remove('hidden');
+        });
+
+        // Zip Backup Importer (.osb / .osbs / .zip)
         elements.modalImportBackupBtn.addEventListener('click', () => elements.backupFileInput.click());
         elements.backupFileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files || []);
@@ -618,17 +669,18 @@
                     for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
                         if (zipEntry.dir) continue;
                         const text = await zipEntry.async("text");
+                        const lowerName = filename.toLowerCase();
                         
-                        if (filename.toLowerCase().includes('sets/') || file.name.endsWith('.osbs')) {
+                        if (lowerName.includes('sets/') || lowerName.endsWith('.osbs') || text.includes('<set')) {
                             const setObj = parseOpenSongSetXML(text, filename.split('/').pop());
                             if (setObj) loadedSets.push(setObj);
-                        } else {
-                            const songObj = parseOpenSongXML(text, filename.split('/').pop(), 'Imported Backup');
+                        } else if (lowerName.includes('songs/') || lowerName.endsWith('.osb') || lowerName.endsWith('.xml') || lowerName.endsWith('.ost') || text.includes('<song')) {
+                            const songObj = parseOpenSongXML(text, filename.split('/').pop(), 'Backup Import');
                             if (songObj) loadedSongs.push(songObj);
                         }
                     }
                 } catch (err) {
-                    console.error("Error reading archive", err);
+                    console.error("Error reading backup zip", err);
                 }
             }
 
@@ -639,7 +691,7 @@
             if (loadedSongs.length > 0) renderSongSheet(loadedSongs[0]);
         });
 
-        // Folder Picker
+        // Folder Picker Directory API & Fallback
         elements.modalSelectBtn.addEventListener('click', () => {
             if ('showDirectoryPicker' in window) {
                 window.showDirectoryPicker().then(handle => processRootDirectory(handle)).catch(() => elements.fallbackInput.click());
@@ -650,18 +702,22 @@
 
         elements.fallbackInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files || []);
+            if (files.length === 0) return;
             loadedSongs = [];
             loadedSets = [];
             for (const file of files) {
                 const text = await file.text();
-                if (file.webkitRelativePath.includes('Sets/')) {
+                const path = file.webkitRelativePath || file.name;
+                const lower = path.toLowerCase();
+                if (lower.includes('sets/')) {
                     const s = parseOpenSongSetXML(text, file.name);
                     if (s) loadedSets.push(s);
-                } else if (file.name.endsWith('.xml') || text.includes('<song')) {
+                } else if (lower.includes('songs/') || file.name.endsWith('.xml') || file.name.endsWith('.ost') || text.includes('<song')) {
                     const song = parseOpenSongXML(text, file.name, 'Songs');
                     if (song) loadedSongs.push(song);
                 }
             }
+            elements.folderStatus.textContent = "Custom Folder Loaded";
             elements.modal.classList.add('hidden');
             updateTabCounts();
             renderSidebarList();
@@ -883,7 +939,6 @@
                     sectionContainer.className = `p-4 rounded-xl border cursor-pointer hover:border-amber-400/60 transition ${isChorus ? 'bg-slate-900/85 border-amber-500/30' : 'bg-slate-900/40 border-slate-800'} space-y-3`;
                     sectionContainer.innerHTML = `<h4 class="text-xs font-bold uppercase tracking-wider ${isChorus ? 'text-amber-400' : 'text-slate-400'} flex items-center gap-2"><span class="w-2 h-2 rounded-full ${isChorus ? 'bg-amber-400' : 'bg-slate-600'}"></span>${code} (Click to Cast)</h4>`;
                     
-                    // Click section to cast/mirror to secondary window
                     sectionContainer.addEventListener('click', () => {
                         if (secondaryWindow && !secondaryWindow.closed) {
                             secondaryWindow.document.getElementById('cast-content').innerHTML = sectionContainer.innerHTML;
@@ -1077,9 +1132,21 @@
             
             elements.openSettingsBtn.addEventListener('click', () => elements.settingsModal.classList.remove('hidden'));
             elements.closeSettingsModal.addEventListener('click', () => elements.settingsModal.classList.add('hidden'));
+            elements.settingDefaultDurationSlider.addEventListener('input', (e) => {
+                elements.settingDefaultDurationLabel.textContent = `${e.target.value}s`;
+            });
+            elements.settingMaxFontSlider.addEventListener('input', (e) => {
+                elements.settingMaxFontLabel.textContent = `${e.target.value}%`;
+            });
             elements.saveSettingsBtn.addEventListener('click', () => {
                 elements.settingsModal.classList.add('hidden');
-                initWebSocket(elements.settingWsUrl.value);
+                appSettings.wsUrl = elements.settingWsUrl.value;
+                appSettings.defaultDurationSeconds = parseInt(elements.settingDefaultDurationSlider.value, 10);
+                appSettings.autoScaleEnabled = elements.settingAutoscaleToggle.checked;
+                appSettings.maxFontSizePercent = parseInt(elements.settingMaxFontSlider.value, 10);
+                appSettings.textWrapEnabled = elements.settingWrapToggle.checked;
+                appSettings.defaultTimeSig = elements.settingTimeSigSelect.value;
+                initWebSocket(appSettings.wsUrl);
             });
         }
     </script>
