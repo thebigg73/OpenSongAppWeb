@@ -95,6 +95,7 @@
 
         #toast-notification {
             transition: transform 0.3s ease, opacity 0.3s ease;
+            pointer-events-none;
         }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -139,7 +140,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.3f</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.3g</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -858,11 +859,11 @@
 
         function showToast(message) {
             elements.toastMessage.textContent = message;
-            elements.toastNotification.classList.remove('translate-y-[-150%]', 'opacity-0');
+            elements.toastNotification.classList.remove('translate-y-[-150%]', 'opacity-0', 'pointer-events-none');
             elements.toastNotification.classList.add('translate-y-0', 'opacity-100');
             setTimeout(() => {
                 elements.toastNotification.classList.remove('translate-y-0', 'opacity-100');
-                elements.toastNotification.classList.add('translate-y-[-150%]', 'opacity-0');
+                elements.toastNotification.classList.add('translate-y-[-150%]', 'opacity-0', 'pointer-events-none');
             }, 3000);
         }
 
@@ -1854,23 +1855,27 @@
             const lines = rawLyrics.split('\n');
             let sectionContainer = null;
             const capoSteps = capoFret ? -parseInt(capoFret, 10) : 0;
+            let sectionCounter = -1;
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 const trimmed = line.trim();
                 
                 if (trimmed.startsWith('[')) {
+                    sectionCounter++;
+                    const thisSectionIdx = sectionCounter;
+                    
                     sectionContainer = document.createElement('div');
                     sectionContainer.className = 'p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2 cursor-pointer hover:border-amber-500/40 transition';
                     const prettyName = formatSectionHeading(trimmed);
                     sectionContainer.innerHTML = `<h4 class="section-heading text-amber-400 font-extrabold text-sm tracking-wide mb-2">${prettyName}</h4>`;
                     
-                    // Cast window section click sync listener
+                    // Cast window exact section content sync
                     sectionContainer.addEventListener('click', () => {
                         document.querySelectorAll('#sheet-content > div').forEach(el => el.classList.remove('ring-2', 'ring-amber-500'));
                         sectionContainer.classList.add('ring-2', 'ring-amber-500');
-                        updateCastWindow(activeSong, prettyName);
-                        showToast(`Cast updated: ${prettyName}`);
+                        updateCastWindow(activeSong, thisSectionIdx);
+                        showToast(`Casting: ${prettyName}`);
                     });
 
                     elements.sheetContent.appendChild(sectionContainer);
@@ -1878,6 +1883,8 @@
                 }
                 
                 if (!sectionContainer) {
+                    sectionCounter++;
+                    const thisSectionIdx = sectionCounter;
                     sectionContainer = document.createElement('div');
                     sectionContainer.className = 'p-4 rounded-xl bg-slate-900/40 border border-slate-800 space-y-2';
                     elements.sheetContent.appendChild(sectionContainer);
@@ -2215,22 +2222,46 @@
         }
 
         let castWindow = null;
-        function updateCastWindow(song, activeSectionName = '') {
-            if (castWindow && !castWindow.closed) {
-                castWindow.postMessage({
-                    type: 'OPENSONG_CAST_UPDATE',
-                    song: song,
-                    sectionName: activeSectionName
-                }, '*');
+        // Helper to extract a specific section's lines by index or heading
+        function extractSectionContent(lyrics, targetSectionIndex) {
+            if (!lyrics) return { heading: '', content: '' };
+            const lines = lyrics.split('\n');
+            let currentIdx = -1;
+            let sectionLines = [];
+            let currentHeading = '';
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmed = line.trim();
+
+                if (trimmed.startsWith('[')) {
+                    if (currentIdx === targetSectionIndex) break; // Finished target section
+                    currentIdx++;
+                    if (currentIdx === targetSectionIndex) {
+                        currentHeading = formatSectionHeading(trimmed);
+                        continue;
+                    }
+                }
+
+                if (currentIdx === targetSectionIndex) {
+                    sectionLines.push(line);
+                }
             }
+
+            return {
+                heading: currentHeading,
+                content: sectionLines.join('\n')
+            };
         }
 
-        function updateCastWindow(song, activeSectionName = '') {
-            if (castWindow && !castWindow.closed) {
+        function updateCastWindow(song, sectionIndex = 0) {
+            if (castWindow && !castWindow.closed && song) {
+                const extracted = extractSectionContent(song.lyrics, sectionIndex);
                 castWindow.postMessage({
                     type: 'OPENSONG_CAST_UPDATE',
-                    song: song,
-                    sectionName: activeSectionName,
+                    title: song.title,
+                    heading: extracted.heading,
+                    lyrics: extracted.content,
                     settings: castSettings
                 }, '*');
             }
@@ -2352,9 +2383,38 @@
 
         window.addEventListener('message', (e) => {
             if (e.data && e.data.type === 'OPENSONG_CAST_UPDATE') {
-                currentSong = e.data.song;
-                currentSettings = e.data.settings || currentSettings;
-                renderCast(currentSong, e.data.sectionName || '', currentSettings);
+                const container = document.getElementById('cast-content');
+                container.innerHTML = '';
+                
+                document.getElementById('cast-viewport').style.fontSize = (e.data.settings.fontScale || 1.4) + 'rem';
+                
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'p-8 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-6 shadow-2xl';
+                sectionDiv.innerHTML = '<h2 class="text-amber-400 font-extrabold text-2xl uppercase tracking-wider mb-4 border-b border-slate-800 pb-3">' + e.data.heading + '</h2>';
+
+                const lines = e.data.lyrics.split('\\n');
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    const div = document.createElement('div');
+                    if (line.startsWith('.')) {
+                        if (e.data.settings.showChords) {
+                            const chordLine = line.slice(1);
+                            const nextLine = (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) ? lines[i + 1] : '';
+                            if (nextLine) i++;
+                            div.className = 'chord-lyric-pair-line mb-3';
+                            div.innerHTML = buildPairs(chordLine, nextLine);
+                        } else {
+                            if (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) {
+                                i++;
+                                div.innerHTML = '<div class="lyric-below text-2xl mb-3">' + lines[i] + '</div>';
+                            }
+                        }
+                    } else {
+                        div.innerHTML = '<div class="lyric-below text-2xl mb-3">' + line + '</div>';
+                    }
+                    sectionDiv.appendChild(div);
+                }
+                container.appendChild(sectionDiv);
             }
         });
     <\/script>
