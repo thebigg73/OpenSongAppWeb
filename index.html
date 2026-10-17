@@ -1177,18 +1177,22 @@
             } catch (err) { console.error("SQLite parse error:", err); }
         }
 
-        elements.modalSelectBtn.addEventListener('click', async () => {
+        async function triggerFolderSelection() {
             if ('showDirectoryPicker' in window) {
                 try {
                     const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
                     rootDirectoryHandle = handle;
                     await saveDirectoryHandle(handle);
                     await processRootDirectory(handle);
+                    return;
                 } catch (err) {
-                    if (err.name !== 'AbortError') elements.fallbackInput.click();
+                    if (err.name === 'AbortError') return;
                 }
-            } else { elements.fallbackInput.click(); }
-        });
+            }
+            elements.fallbackInput.click();
+        }
+
+        elements.modalSelectBtn.addEventListener('click', triggerFolderSelection);
 
         elements.fallbackInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files || []);
