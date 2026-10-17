@@ -2169,7 +2169,8 @@
 
         const castBtn = document.getElementById('cast-display-btn');
         if (castBtn) {
-            showToast("Opening stage presentation window...");
+            castBtn.addEventListener('click', () => {
+                showToast("Opening stage presentation window...");
                 castWindow = window.open('', '_blank', 'width=1024,height=768');
                 if (castWindow) {
                     castWindow.document.open();
