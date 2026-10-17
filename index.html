@@ -100,6 +100,9 @@
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Make Lucide icon SVGs pass clicks through to buttons */
+        button svg { pointer-events: none; }
     </style>
 </head>
 <body class="h-full flex flex-col font-sans antialiased bg-slate-950 text-slate-100 overflow-hidden select-none">
@@ -120,8 +123,11 @@
                 <div class="p-2 bg-amber-500/10 text-amber-500 rounded-lg">
                     <i data-lucide="music" class="w-6 h-6"></i>
                 </div>
-                <div>
-                    <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span></h1>
+               <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
+                        OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0a</span>
+                    </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
             </div>
@@ -1537,7 +1543,7 @@
             }
             return inner;
         }
-        
+
         function renderSongLyrics(rawLyrics, capoFret) {
             elements.sheetContent.innerHTML = '';
             if (!rawLyrics) return;
