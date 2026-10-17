@@ -24,8 +24,10 @@
             }
         }
     </script>
-    <!-- JSZip for .osb and .osbs backup extraction -->
+    <!-- JSZip for .osb and .osbs backup extraction & creation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FileSaver.js for triggering browser downloads -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <!-- sql.js for reading NonOpenSongSongs.db SQLite databases -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
     <!-- Lucide Icons -->
@@ -69,16 +71,6 @@
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-        }
-
-        .comment-line {
-            font-family: monospace;
-            color: #94a3b8;
-            background: rgba(30, 41, 59, 0.5);
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.375rem;
-            font-size: 0.85rem;
-            white-space: pre-wrap;
         }
 
         .draggable-popup {
@@ -135,8 +127,8 @@
                 <button id="new-set-btn" class="px-2 py-1 text-xs font-bold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 rounded transition flex items-center gap-1">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Set
                 </button>
-                <button id="open-import-modal-btn" class="px-2 py-1 text-xs font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 rounded transition flex items-center gap-1" title="Import Archives / Files">
-                    <i data-lucide="upload" class="w-3.5 h-3.5"></i> Import
+                <button id="open-import-modal-btn" class="px-2 py-1 text-xs font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 rounded transition flex items-center gap-1" title="Import / Export Archives">
+                    <i data-lucide="repeat" class="w-3.5 h-3.5"></i> Import/Export
                 </button>
             </div>
 
@@ -381,29 +373,85 @@
         </div>
     </div>
 
-    <!-- Separate Import Modal (.osb, .osbs, .xml, .ost, .pdf, .db) -->
+    <!-- Import / Export Modal -->
     <div id="import-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div class="flex items-center space-x-2 text-emerald-400">
-                    <i data-lucide="upload" class="w-5 h-5"></i>
-                    <h3 class="font-bold text-lg text-slate-100">Import Archives or Files</h3>
+                    <i data-lucide="repeat" class="w-5 h-5"></i>
+                    <h3 class="font-bold text-lg text-slate-100">Import & Export Archives</h3>
                 </div>
                 <button id="close-import-modal" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <p class="text-xs text-slate-400 leading-relaxed">
-                Import OpenSongApp backup archives (<strong class="text-emerald-400">.osb / .osbs</strong>), individual song/set files (<strong class="text-emerald-400">.xml, .ost</strong>), PDFs (<strong class="text-emerald-400">.pdf</strong>), or <strong class="text-emerald-400">NonOpenSongSongs.db</strong>. Items will be merged into your library.
-            </p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button id="modal-import-archive-btn" class="py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition flex items-center justify-center space-x-2">
-                    <i data-lucide="file-archive" class="w-5 h-5"></i><span>Import .osb/.osbs/Zip</span>
-                </button>
-                <button id="modal-import-files-btn" class="py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition flex items-center justify-center space-x-2">
-                    <i data-lucide="file-plus" class="w-5 h-5"></i><span>Import Songs/PDFs/DB</span>
-                </button>
+            
+            <div class="space-y-4 text-xs">
+                <div>
+                    <h4 class="font-bold text-slate-200 mb-2">Import Backups or Files</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button id="modal-import-archive-btn" class="py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition flex items-center justify-center space-x-2">
+                            <i data-lucide="file-archive" class="w-4 h-4"></i><span>Import .osb / .osbs / Zip</span>
+                        </button>
+                        <button id="modal-import-files-btn" class="py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition flex items-center justify-center space-x-2">
+                            <i data-lucide="file-plus" class="w-4 h-4"></i><span>Import Songs / PDFs / DB</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-800 pt-3">
+                    <h4 class="font-bold text-slate-200 mb-2">Export Library</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button id="modal-export-osb-btn" class="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded-xl border border-slate-700 transition flex items-center justify-center space-x-2">
+                            <i data-lucide="folder-output" class="w-4 h-4"></i><span>Export Songs Folders (.osb)</span>
+                        </button>
+                        <button id="modal-export-osbs-btn" class="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-indigo-400 font-bold rounded-xl border border-slate-700 transition flex items-center justify-center space-x-2">
+                            <i data-lucide="archive" class="w-4 h-4"></i><span>Export Sets Backup (.osbs)</span>
+                        </button>
+                    </div>
+                </div>
             </div>
+
             <input type="file" id="archive-file-input" accept=".osb,.osbs,.zip" multiple class="hidden">
             <input type="file" id="individual-files-input" accept=".xml,.ost,.pdf,.db,.csv" multiple class="hidden">
+        </div>
+    </div>
+
+    <!-- OSB Folder Selection Export Modal -->
+    <div id="osb-export-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
+                <div class="flex items-center space-x-2 text-amber-400">
+                    <i data-lucide="folder-output" class="w-5 h-5"></i>
+                    <h3 class="font-bold text-lg text-slate-100">Select Folders to Export (.osb)</h3>
+                </div>
+                <button id="close-osb-export-modal" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed shrink-0">Choose which song folders from OpenSong/Songs/ to bundle into your .osb backup:</p>
+            <div id="osb-folders-checkbox-list" class="flex-1 overflow-y-auto space-y-2 pr-1 text-xs divide-y divide-slate-800/60"></div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-800 shrink-0">
+                <button id="osb-export-cancel-btn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition">Cancel</button>
+                <button id="osb-export-confirm-btn" class="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition">Export Selected (.osb)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conflict Resolution Modal (For Overwrite Warning & Selection) -->
+    <div id="conflict-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
+                <div class="flex items-center space-x-2 text-amber-400">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    <h3 class="font-bold text-lg text-slate-100">Files Already Exist</h3>
+                </div>
+                <button id="close-conflict-modal" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed shrink-0">
+                The archive contains items that already exist in your library. Select which files you wish to overwrite or skip:
+            </p>
+            <div id="conflict-items-list" class="flex-1 overflow-y-auto space-y-2 pr-1 text-xs divide-y divide-slate-800/60"></div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-800 shrink-0">
+                <button id="conflict-cancel-btn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition">Cancel Import</button>
+                <button id="conflict-proceed-btn" class="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition">Proceed with Selected</button>
+            </div>
         </div>
     </div>
 
@@ -423,8 +471,6 @@
             </div>
 
             <div class="flex-1 overflow-y-auto space-y-4 pr-1">
-                
-                <!-- 1. MAIN TAB -->
                 <div id="editor-pane-main" class="editor-pane space-y-3 text-xs">
                     <div><label class="font-bold text-slate-300 block mb-1">Title *</label><input type="text" id="edit-song-title-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
                     <div><label class="font-bold text-slate-300 block mb-1">Author / Artist</label><input type="text" id="edit-song-author-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
@@ -443,7 +489,6 @@
                     <div><label class="font-bold text-slate-300 block mb-1">Sticky Notes / Popup Notes</label><textarea id="edit-song-notes-input" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></textarea></div>
                 </div>
 
-                <!-- 2. LYRICS / PDF TAB -->
                 <div id="editor-pane-lyrics" class="editor-pane hidden space-y-3 text-xs">
                     <div><label class="font-bold text-slate-300 block mb-1">Presentation Order e.g. V1 C V2 C</label><input type="text" id="edit-song-presentation-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono"></div>
                     <div>
@@ -464,7 +509,6 @@
                     </div>
                 </div>
 
-                <!-- 3. SONG FEATURES TAB -->
                 <div id="editor-pane-features" class="editor-pane hidden space-y-3 text-xs">
                     <div class="grid grid-cols-3 gap-2">
                         <div>
@@ -505,7 +549,6 @@
                     </div>
                 </div>
 
-                <!-- 4. TAGS TAB -->
                 <div id="editor-pane-tags" class="editor-pane hidden space-y-3 text-xs">
                     <div><label class="font-bold text-slate-300 block mb-1">Themes (semicolon separated)</label><input type="text" id="edit-song-theme-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
                     <div><label class="font-bold text-slate-300 block mb-1">Also Known As (Aka)</label><input type="text" id="edit-song-aka-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
@@ -514,7 +557,6 @@
                         <div><label class="font-bold text-slate-300 block mb-1">Hymn Number</label><input type="text" id="edit-song-hymnnum-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
                     </div>
                 </div>
-
             </div>
 
             <div class="flex justify-end gap-2 pt-2 border-t border-slate-800 shrink-0">
@@ -547,7 +589,6 @@
             </div>
 
             <div class="space-y-4 text-xs">
-                <!-- MIDI Device Status & Connection -->
                 <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex items-center justify-between">
                         <label class="font-bold text-slate-200">Web MIDI Devices (USB / Bluetooth)</label>
@@ -556,7 +597,6 @@
                     <p id="midi-status-label" class="text-[11px] text-slate-400">MIDI not connected. Click Connect to enable USB or Bluetooth MIDI foot controllers/keyboards.</p>
                 </div>
 
-                <!-- WebSocket Role -->
                 <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
                     <label class="font-bold text-slate-200 block">WebSocket Connection Role</label>
                     <select id="setting-ws-role" class="w-full bg-slate-900 border border-slate-800 rounded-lg py-1.5 px-2 text-amber-400 font-mono focus:outline-none">
@@ -570,7 +610,6 @@
                     <input type="text" id="setting-ws-url" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 font-mono text-xs" placeholder="ws://192.168.1.50:8080/ws">
                 </div>
 
-                <!-- Scaling Sliders -->
                 <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex items-center justify-between">
                         <label class="font-bold text-slate-200">Heading Scale Size</label>
@@ -598,7 +637,6 @@
     <script>
         let loadedSongs = [];
         let loadedSets = [];
-        let beatBuddySongs = [];
         let activeTab = 'songs';
         let selectedFolderFilter = 'ALL';
         let activeSong = null;
@@ -608,22 +646,8 @@
 
         let rootDirectoryHandle = null;
         let pdfBlobsMap = {};
+        let pendingImportItems = []; // For conflict resolution flow (.osb & .osbs)
 
-        let isAutoScrolling = false;
-        let autoScrollInterval = null;
-        let isUserManuallyScrolling = false;
-
-        let audioCtx = null;
-        let isMetronomeRunning = false;
-        let metronomeBpm = 120;
-        let metronomeTimer = null;
-
-        let isPadRunning = false;
-        let activePadOscillators = [];
-        let padGainNode = null;
-
-        let secondaryWindow = null;
-        let wsClient = null;
         let appSettings = { wsRole: "client", wsUrl: "", headingScale: 85, chordScale: 100 };
 
         const elements = {
@@ -634,8 +658,24 @@
             closeImportModal: document.getElementById('close-import-modal'),
             modalImportArchiveBtn: document.getElementById('modal-import-archive-btn'),
             modalImportFilesBtn: document.getElementById('modal-import-files-btn'),
+            modalExportOsbBtn: document.getElementById('modal-export-osb-btn'),
+            modalExportOsbsBtn: document.getElementById('modal-export-osbs-btn'),
             archiveFileInput: document.getElementById('archive-file-input'),
             individualFilesInput: document.getElementById('individual-files-input'),
+
+            // OSB Export Folder Modal
+            osbExportModal: document.getElementById('osb-export-modal'),
+            closeOsbExportModal: document.getElementById('close-osb-export-modal'),
+            osbExportCancelBtn: document.getElementById('osb-export-cancel-btn'),
+            osbExportConfirmBtn: document.getElementById('osb-export-confirm-btn'),
+            osbFoldersCheckboxList: document.getElementById('osb-folders-checkbox-list'),
+
+            // Conflict Modal
+            conflictModal: document.getElementById('conflict-modal'),
+            closeConflictModal: document.getElementById('close-conflict-modal'),
+            conflictCancelBtn: document.getElementById('conflict-cancel-btn'),
+            conflictProceedBtn: document.getElementById('conflict-proceed-btn'),
+            conflictItemsList: document.getElementById('conflict-items-list'),
 
             modalProgressContainer: document.getElementById('modal-progress-container'),
             modalActionsContainer: document.getElementById('modal-actions-container'),
@@ -821,25 +861,111 @@
             }
         });
 
-        // Folder Modal Controls
         elements.changeFolderBtn.addEventListener('click', () => {
             elements.reconnectFolderContainer.classList.add('hidden');
             elements.modal.classList.remove('hidden');
         });
         elements.closeFolderModal.addEventListener('click', () => elements.modal.classList.add('hidden'));
 
-        // Import Modal Controls
         elements.openImportModalBtn.addEventListener('click', () => elements.importModal.classList.remove('hidden'));
         elements.closeImportModal.addEventListener('click', () => elements.importModal.classList.add('hidden'));
 
         elements.modalImportArchiveBtn.addEventListener('click', () => elements.archiveFileInput.click());
         elements.modalImportFilesBtn.addEventListener('click', () => elements.individualFilesInput.click());
 
-        // Archive Importer (.osb / .osbs / .zip) - MERGES
+        // EXPORT .osb (Songs Backup of OpenSong/Songs/ with Folder Selection)
+        elements.modalExportOsbBtn.addEventListener('click', () => {
+            elements.importModal.classList.add('hidden');
+            const foldersSet = new Set();
+            loadedSongs.forEach(s => foldersSet.add(s.folderPath || 'MAIN'));
+            elements.osbFoldersCheckboxList.innerHTML = '';
+
+            Array.from(foldersSet).sort().forEach(folder => {
+                const div = document.createElement('label');
+                div.className = 'flex items-center space-x-3 py-2 px-1 cursor-pointer hover:bg-slate-800/40 rounded';
+                div.innerHTML = `<input type="checkbox" value="${folder}" checked class="accent-amber-500 w-4 h-4 rounded"><span>Songs/${folder}</span>`;
+                elements.osbFoldersCheckboxList.appendChild(div);
+            });
+            elements.osbExportModal.classList.remove('hidden');
+        });
+
+        elements.closeOsbExportModal.addEventListener('click', () => elements.osbExportModal.classList.add('hidden'));
+        elements.osbExportCancelBtn.addEventListener('click', () => elements.osbExportModal.classList.add('hidden'));
+
+        elements.osbExportConfirmBtn.addEventListener('click', async () => {
+            const selectedFolders = Array.from(elements.osbFoldersCheckboxList.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+            elements.osbExportModal.classList.add('hidden');
+            if (selectedFolders.length === 0) return;
+
+            const zip = new JSZip();
+            loadedSongs.forEach(song => {
+                const fPath = song.folderPath || 'MAIN';
+                if (selectedFolders.includes(fPath)) {
+                    const zipPath = `Songs/${fPath}/${song.filename || (song.title + '.xml')}`;
+                    const xmlContent = generateOpenSongXML(song);
+                    zip.file(zipPath, xmlContent);
+                }
+            });
+
+            const content = await zip.generateAsync({ type: "blob" });
+            saveAs(content, "OpenSong_Songs_Backup.osb");
+        });
+
+        // EXPORT .osbs (Sets Backup of OpenSong/Sets/)
+        elements.modalExportOsbsBtn.addEventListener('click', async () => {
+            elements.importModal.classList.add('hidden');
+            const zip = new JSZip();
+            loadedSets.forEach(setObj => {
+                const filename = setObj.filename || `${setObj.title}.ost`;
+                const xmlContent = generateOpenSongSetXML(setObj);
+                zip.file(`Sets/${filename}`, xmlContent);
+            });
+
+            const content = await zip.generateAsync({ type: "blob" });
+            saveAs(content, "OpenSong_Sets_Backup.osbs");
+        });
+
+        function generateOpenSongXML(song) {
+            return `<?xml version="1.0" encoding="UTF-8"?>
+<song>
+    <title>${escapeXml(song.title)}</title>
+    <author>${escapeXml(song.author || '')}</author>
+    <copyright>${escapeXml(song.copyright || '')}</copyright>
+    <presentation>${escapeXml(song.presentation || '')}</presentation>
+    <key>${escapeXml(song.key || 'C')}</key>
+    <tempo>${song.tempo || 120}</tempo>
+    <time_sig>${escapeXml(song.time_sig || '4/4')}</time_sig>
+    <notes>${escapeXml(song.notes || '')}</notes>
+    <lyrics>${escapeXml(song.lyrics || '')}</lyrics>
+</song>`;
+        }
+
+        function generateOpenSongSetXML(setObj) {
+            let slides = setObj.songTitles.map(t => `<slide_group name="${escapeXml(t)}"></slide_group>`).join('\n');
+            return `<?xml version="1.0" encoding="UTF-8"?>
+<set name="${escapeXml(setObj.title)}">
+    ${slides}
+</set>`;
+        }
+
+        function escapeXml(str) {
+            return String(str).replace(/[<>&'"]/g, function (c) {
+                switch (c) {
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    case '&': return '&amp;';
+                    case '\'': return '&apos;';
+                    case '"': return '&quot;';
+                }
+            });
+        }
+
+        // ARCHIVE IMPORT (.osb / .osbs / .zip) WITH CONFLICT DETECTION FOR BOTH SONGS AND SETS
         elements.archiveFileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files || []);
             if (files.length === 0) return;
             elements.importModal.classList.add('hidden');
+            pendingImportItems = [];
 
             for (const file of files) {
                 try {
@@ -848,6 +974,7 @@
                     for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
                         if (zipEntry.dir) continue;
                         const lowerName = filename.toLowerCase();
+
                         if (lowerName.includes('nonopensongsongs.db')) {
                             const dbBuf = await zipEntry.async("uint8array");
                             parseNonOpenSongSQLite(dbBuf);
@@ -855,63 +982,153 @@
                             const pdfBlob = await zipEntry.async("blob");
                             const pureName = filename.split('/').pop();
                             pdfBlobsMap[pureName] = URL.createObjectURL(pdfBlob);
-                            addOrUpdateSong({
-                                id: 'song_pdf_' + Math.random().toString(36).substring(2, 8),
-                                filename: pureName,
-                                folderPath: 'PDFs',
-                                title: pureName.replace(/\.[^/.]+$/, ""),
-                                isPdf: true,
-                                pdfUrl: pdfBlobsMap[pureName],
-                                key: 'C', tempo: 120, time_sig: '4/4'
+                            const exists = loadedSongs.some(s => s.filename.toLowerCase() === pureName.toLowerCase());
+                            pendingImportItems.push({
+                                type: 'song',
+                                itemObj: {
+                                    id: 'song_pdf_' + Math.random().toString(36).substring(2, 8),
+                                    filename: pureName,
+                                    folderPath: 'PDFs',
+                                    title: pureName.replace(/\.[^/.]+$/, ""),
+                                    isPdf: true,
+                                    pdfUrl: pdfBlobsMap[pureName],
+                                    key: 'C', tempo: 120, time_sig: '4/4'
+                                },
+                                labelTitle: pureName,
+                                category: 'PDF Song',
+                                isConflict: exists,
+                                selected: true
                             });
-                        } else if (lowerName.includes('sets/') || lowerName.endsWith('.osbs') || filename.endsWith('.ost')) {
+                        } else if (lowerName.includes('sets/') || lowerName.endsWith('.osbs') || lowerName.endsWith('.ost')) {
                             const text = await zipEntry.async("text");
                             const setObj = parseOpenSongSetXML(text, filename.split('/').pop());
-                            if (setObj && !loadedSets.some(s => s.title.toLowerCase() === setObj.title.toLowerCase())) {
-                                loadedSets.push(setObj);
+                            if (setObj) {
+                                const exists = loadedSets.some(s => s.title.toLowerCase() === setObj.title.toLowerCase());
+                                pendingImportItems.push({
+                                    type: 'set',
+                                    itemObj: setObj,
+                                    labelTitle: setObj.title,
+                                    category: 'OpenSong Set',
+                                    isConflict: exists,
+                                    selected: true
+                                });
                             }
-                        } else if (lowerName.includes('songs/') || lowerName.endsWith('.osb') || lowerName.endsWith('.xml') || (await textIncludesSong(zipEntry))) {
-                            const text = await zipEntry.async("text");
+                        } else {
                             let folder = 'MAIN';
                             const parts = filename.split('/');
                             const songsIdx = parts.findIndex(p => p.toLowerCase() === 'songs');
                             if (songsIdx !== -1 && parts.length > songsIdx + 2) {
                                 folder = parts.slice(songsIdx + 1, parts.length - 1).join('/');
+                            } else if (parts.length > 1) {
+                                folder = parts[0];
                             }
-                            const songObj = parseOpenSongXML(text, filename.split('/').pop(), folder);
-                            if (songObj) addOrUpdateSong(songObj);
+                            const songName = parts[parts.length - 1];
+                            const text = await zipEntry.async("text");
+                            const songObj = parseOpenSongXML(text, songName, folder);
+
+                            if (songObj) {
+                                const exists = loadedSongs.some(s => s.title.toLowerCase() === songObj.title.toLowerCase() && (s.folderPath || 'MAIN') === folder);
+                                pendingImportItems.push({
+                                    type: 'song',
+                                    itemObj: songObj,
+                                    labelTitle: `${songObj.title} (${folder})`,
+                                    category: 'Song',
+                                    isConflict: exists,
+                                    selected: true
+                                });
+                            }
                         }
                     }
                 } catch (err) { console.error(err); }
             }
+
+            const conflicts = pendingImportItems.filter(i => i.isConflict);
+            if (conflicts.length > 0 || pendingImportItems.length > 0) {
+                showConflictModal(pendingImportItems);
+            }
+        });
+
+        function showConflictModal(items) {
+            elements.conflictItemsList.innerHTML = '';
+            items.forEach((item, idx) => {
+                const div = document.createElement('label');
+                div.className = 'flex items-center justify-between py-2 px-1 cursor-pointer hover:bg-slate-800/40 rounded';
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3 truncate">
+                        <input type="checkbox" data-index="${idx}" ${item.selected ? 'checked' : ''} class="accent-amber-500 w-4 h-4 rounded">
+                        <div class="truncate"><strong class="text-slate-200">${item.labelTitle}</strong> <span class="text-slate-400 font-mono text-[10px]">[${item.category}]</span></div>
+                    </div>
+                    <span class="text-[10px] px-2 py-0.5 rounded ${item.isConflict ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300'}">${item.isConflict ? 'Exists (Overwrite)' : 'New'}</span>
+                `;
+                elements.conflictItemsList.appendChild(div);
+            });
+            elements.conflictModal.classList.remove('hidden');
+        }
+
+        elements.closeConflictModal.addEventListener('click', () => elements.conflictModal.classList.add('hidden'));
+        elements.conflictCancelBtn.addEventListener('click', () => {
+            elements.conflictModal.classList.add('hidden');
+            pendingImportItems = [];
+        });
+
+        elements.conflictProceedBtn.addEventListener('click', () => {
+            const checkboxes = elements.conflictItemsList.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                const idx = parseInt(cb.getAttribute('data-index'), 10);
+                pendingImportItems[idx].selected = cb.checked;
+            });
+            elements.conflictModal.classList.add('hidden');
+            executeImportBatch(pendingImportItems);
+            pendingImportItems = [];
+        });
+
+        function executeImportBatch(items) {
+            items.forEach(item => {
+                if (!item.selected) return;
+                if (item.type === 'song') {
+                    addOrUpdateSong(item.itemObj);
+                } else if (item.type === 'set') {
+                    const existingSetIdx = loadedSets.findIndex(s => s.title.toLowerCase() === item.itemObj.title.toLowerCase());
+                    if (existingSetIdx !== -1) {
+                        loadedSets[existingSetIdx] = item.itemObj;
+                    } else {
+                        loadedSets.push(item.itemObj);
+                    }
+                }
+            });
             updateTabCounts();
             updateFolderFilterDropdown();
             renderSidebarList();
-        });
-
-        async function textIncludesSong(entry) {
-            try { const t = await entry.async("text"); return t.includes('<song'); } catch (e) { return false; }
         }
 
-        // Individual Files Importer (.xml, .ost, .pdf, .db) - MERGES
+        // Individual Files Importer (.xml, .ost, .pdf, .db) - WITH OVERWRITE WARNING
         elements.individualFilesInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files || []);
             if (files.length === 0) return;
             elements.importModal.classList.add('hidden');
+            pendingImportItems = [];
 
             for (const file of files) {
                 const nameLower = file.name.toLowerCase();
                 if (nameLower.endsWith('.pdf')) {
                     const blobUrl = URL.createObjectURL(file);
                     pdfBlobsMap[file.name] = blobUrl;
-                    addOrUpdateSong({
-                        id: 'song_pdf_' + Math.random().toString(36).substring(2, 8),
-                        filename: file.name,
-                        folderPath: 'PDFs',
-                        title: file.name.replace(/\.[^/.]+$/, ""),
-                        isPdf: true,
-                        pdfUrl: blobUrl,
-                        key: 'C', tempo: 120, time_sig: '4/4'
+                    const exists = loadedSongs.some(s => s.filename.toLowerCase() === file.name.toLowerCase());
+                    pendingImportItems.push({
+                        type: 'song',
+                        itemObj: {
+                            id: 'song_pdf_' + Math.random().toString(36).substring(2, 8),
+                            filename: file.name,
+                            folderPath: 'PDFs',
+                            title: file.name.replace(/\.[^/.]+$/, ""),
+                            isPdf: true,
+                            pdfUrl: blobUrl,
+                            key: 'C'
+                        },
+                        labelTitle: file.name,
+                        category: 'PDF Song',
+                        isConflict: exists,
+                        selected: true
                     });
                 } else if (nameLower.includes('nonopensongsongs.db') || nameLower.endsWith('.db')) {
                     const buf = new Uint8Array(await file.arrayBuffer());
@@ -920,16 +1137,37 @@
                     const text = await file.text();
                     if (nameLower.endsWith('.ost') || text.includes('<set')) {
                         const setObj = parseOpenSongSetXML(text, file.name);
-                        if (setObj) loadedSets.push(setObj);
+                        if (setObj) {
+                            const exists = loadedSets.some(s => s.title.toLowerCase() === setObj.title.toLowerCase());
+                            pendingImportItems.push({
+                                type: 'set',
+                                itemObj: setObj,
+                                labelTitle: setObj.title,
+                                category: 'OpenSong Set',
+                                isConflict: exists,
+                                selected: true
+                            });
+                        }
                     } else {
                         const songObj = parseOpenSongXML(text, file.name, 'MAIN');
-                        if (songObj) addOrUpdateSong(songObj);
+                        if (songObj) {
+                            const exists = loadedSongs.some(s => s.title.toLowerCase() === songObj.title.toLowerCase() && (s.folderPath || 'MAIN') === 'MAIN');
+                            pendingImportItems.push({
+                                type: 'song',
+                                itemObj: songObj,
+                                labelTitle: songObj.title,
+                                category: 'Song',
+                                isConflict: exists,
+                                selected: true
+                            });
+                        }
                     }
                 }
             }
-            updateTabCounts();
-            updateFolderFilterDropdown();
-            renderSidebarList();
+
+            if (pendingImportItems.length > 0) {
+                showConflictModal(pendingImportItems);
+            }
         });
 
         function addOrUpdateSong(songObj) {
@@ -973,6 +1211,9 @@
                         }
                     });
                 }
+                updateTabCounts();
+                updateFolderFilterDropdown();
+                renderSidebarList();
             } catch (err) { console.error("SQLite parse error:", err); }
         }
 
