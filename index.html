@@ -144,7 +144,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.1s</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.1t</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -734,7 +734,10 @@
                 const banner = document.getElementById('reconnect-banner');
                 if (banner) {
                     banner.classList.remove('hidden');
-                    document.getElementById('reconnect-btn').onclick = () => handleReconnectClick(savedHandle);
+                    const reconnectBtn = document.getElementById('reconnect-btn');
+                    if (reconnectBtn) {
+                        reconnectBtn.onclick = () => handleReconnectClick(savedHandle);
+                    }
                 }
             }
             
@@ -743,7 +746,7 @@
                 if (hasStoredFolder) {
                     elements.reconnectFolderContainer.classList.remove('hidden');
                 } else {
-                    elements.modal.classList.add('hidden');
+                    elements.modal.classList.remove('hidden');
                 }
             } else {
                 elements.modal.classList.add('hidden');
@@ -1337,6 +1340,11 @@
             elements.modalProgressContainer.classList.remove('hidden');
             elements.modalActionsContainer.classList.add('hidden');
             elements.folderStatus.textContent = handle.name;
+            
+            // Clear previous lists before fresh scan
+            loadedSongs = [];
+            loadedSets = [];
+
             try {
                 for await (const entry of handle.values()) {
                     if (entry.kind === 'directory' && entry.name === 'Songs') {
@@ -1351,15 +1359,21 @@
                         }
                     }
                 }
-            } catch (e) { console.error(e); }
-
-            elements.modalProgressContainer.classList.add('hidden');
-            elements.modalActionsContainer.classList.remove('hidden');
-            elements.modal.classList.add('hidden');
-            updateTabCounts();
-            updateFolderFilterDropdown();
-            renderSidebarList();
-            showToast("Root directory loaded!");
+            } catch (e) {
+                console.error("Directory scan error:", e);
+                showToast("Error scanning directory.");
+            } finally {
+                // ALWAYS hide the spinner and modal, even if an error occurs
+                elements.modalProgressContainer.classList.add('hidden');
+                elements.modalActionsContainer.classList.remove('hidden');
+                elements.modal.classList.add('hidden');
+                document.getElementById('reconnect-banner').classList.add('hidden');
+                
+                updateTabCounts();
+                updateFolderFilterDropdown();
+                renderSidebarList();
+                showToast("Root directory loaded!");
+            }
         }
 
         async function scanSongDir(dirHandle, prefix) {
