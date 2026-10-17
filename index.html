@@ -1824,7 +1824,7 @@
                 } else {
                     div.innerHTML = `<div class="lyric-below">${line}</div>`;
                 }
-                sectionContainer.appendChild(div);
+                sectionContainer.appendChild(div)
             }
         }
 
@@ -1858,7 +1858,7 @@
                 let chunk = lyricLine.slice(c.index, nextChordIndex);
 
                 let nativeChord = c.text;
-                let capoChord = capoFret ? transposeChord(nativeChord, capoSteps) : nativeChord;
+                let capoChord = capoFret ? Chord(nativeChord, capoSteps) : nativeChord;
 
                 let topHtml = '';
                 if (mode === 'native' || !capoFret) {
