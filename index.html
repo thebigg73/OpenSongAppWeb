@@ -139,7 +139,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.3e</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.3f</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -474,8 +474,26 @@
                         </select>
                     </div>
                 </div>
+            
+                <hr class="border-slate-800">
+
+                <!-- Group 5: Stage Display / Cast Options -->
+                <div class="space-y-4">
+                    <h4 class="text-sm font-semibold text-amber-500 uppercase tracking-wider">Stage Display / Cast Options</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="flex items-center gap-2 pt-2">
+                            <input type="checkbox" id="setting-cast-show-chords" checked class="accent-amber-500 w-4 h-4 rounded cursor-pointer">
+                            <label for="setting-cast-show-chords" class="text-xs font-medium text-slate-300 cursor-pointer">Show Chords on Stage Cast</label>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Stage Cast Font Scale</label>
+                            <input type="range" id="setting-cast-font-scale" min="1" max="2.5" step="0.1" value="1.4" class="w-full accent-amber-500">
+                        </div>
+                    </div>
+                </div>
             </div>
 
+            
             <div class="flex items-center justify-end px-6 py-4 border-t border-slate-800 bg-slate-950/40 gap-3">
                 <button id="save-settings-btn" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">Save & Apply</button>
             </div>
@@ -2113,25 +2131,57 @@
             });
         }
 
+        // Global Stage Cast Settings
+        let castSettings = {
+            showChords: true,
+            fontScale: 1.4
+        };
+
+        // Transpose Handlers
         const transposeUpBtn = document.getElementById('transpose-up');
         const transposeDownBtn = document.getElementById('transpose-down');
-        
+        const saveKeyBtn = document.getElementById('save-key-btn'); // Add this button next to transpose controls if desired
+
         if (transposeUpBtn) {
-            transposeUpBtn.addEventListener('click', () => {
-                currentTransposeOffset = (currentTransposeOffset + 1) % 12;
-                document.getElementById('transpose-offset').textContent = currentTransposeOffset > 0 ? `+${currentTransposeOffset}` : currentTransposeOffset;
-                if (activeSong) renderSongSheet(activeSong);
-                showToast(`Transposed by +${currentTransposeOffset}`);
+            transposeUpBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!activeSong) return;
+                activeSong.transposeOffset = ((activeSong.transposeOffset || 0) + 1) % 12;
+                updateTransposeUI();
+                renderSongSheet(activeSong);
             });
         }
-        
+
         if (transposeDownBtn) {
-            transposeDownBtn.addEventListener('click', () => {
-                currentTransposeOffset = (currentTransposeOffset - 1 + 12) % 12;
-                document.getElementById('transpose-offset').textContent = currentTransposeOffset > 0 ? `+${currentTransposeOffset}` : currentTransposeOffset;
-                if (activeSong) renderSongSheet(activeSong);
-                showToast(`Transposed by -${Math.abs(currentTransposeOffset)}`);
+            transposeDownBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!activeSong) return;
+                activeSong.transposeOffset = ((activeSong.transposeOffset || 0) - 1 + 12) % 12;
+                updateTransposeUI();
+                renderSongSheet(activeSong);
             });
+        }
+
+        function updateTransposeUI() {
+            const offset = activeSong ? (activeSong.transposeOffset || 0) : 0;
+            const label = document.getElementById('transpose-offset');
+            if (label) {
+                label.textContent = offset > 0 ? `+${offset}` : `${offset}`;
+            }
+        }
+
+        // Permanently commit transposed key to song file
+        async function commitTransposedKey() {
+            if (!activeSong || !activeSong.transposeOffset) return;
+            const newKey = transposeChord(activeSong.key || 'C', activeSong.transposeOffset);
+            activeSong.key = newKey;
+            activeSong.transposeOffset = 0;
+            updateTransposeUI();
+            
+            addOrUpdateSong(activeSong);
+            renderSongSheet(activeSong);
+            const saved = await writeSongToDisk(activeSong);
+            showToast(saved ? `Key updated and saved as ${newKey}` : `Key updated to ${newKey}`);
         }
 
         const settingsBtn = document.getElementById('open-settings-btn');
@@ -2151,6 +2201,14 @@
                 const headingScale = document.getElementById('setting-heading-scale').value;
                 document.documentElement.style.setProperty('--chord-font-scale', chordScale + 'rem');
                 document.documentElement.style.setProperty('--heading-font-scale', headingScale + 'rem');
+                
+                // Read Cast display options from modal
+                castSettings.showChords = document.getElementById('setting-cast-show-chords').checked;
+                castSettings.fontScale = parseFloat(document.getElementById('setting-cast-font-scale').value) || 1.4;
+
+                // Sync live presentation window
+                if (activeSong) updateCastWindow(activeSong);
+
                 settingsModal.classList.add('hidden');
                 showToast("Settings saved successfully!");
             });
@@ -2167,9 +2225,21 @@
             }
         }
 
+        function updateCastWindow(song, activeSectionName = '') {
+            if (castWindow && !castWindow.closed) {
+                castWindow.postMessage({
+                    type: 'OPENSONG_CAST_UPDATE',
+                    song: song,
+                    sectionName: activeSectionName,
+                    settings: castSettings
+                }, '*');
+            }
+        }
+
         const castBtn = document.getElementById('cast-display-btn');
         if (castBtn) {
-            castBtn.addEventListener('click', () => {
+            castBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 showToast("Opening stage presentation window...");
                 castWindow = window.open('', '_blank', 'width=1024,height=768');
                 if (castWindow) {
@@ -2178,56 +2248,30 @@
 <html lang="en" class="h-full bg-slate-950 text-slate-100">
 <head>
     <meta charset="UTF-8">
-    <title>OpenSongApp Stage Cast</title>
+    <title>OpenSongApp Stage Display</title>
     <script src="https://cdn.tailwindcss.com"><\/script>
     <style>
+        .chord-lyric-pair-line { display: flex; flex-wrap: wrap; row-gap: 0.5rem; line-height: 1.4; max-width: 100%; word-break: break-word; }
+        .chord-lyric-pair { display: inline-flex; flex-direction: column; vertical-align: top; position: relative; }
+        .chord-above { font-weight: 700; color: #f59e0b; line-height: 1.1; white-space: pre; }
+        .lyric-below { color: #f1f5f9; white-space: pre; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     </style>
 </head>
-<body class="h-full flex flex-col overflow-hidden select-none bg-slate-950 text-slate-100 font-sans">
-    <header class="h-14 bg-slate-900 border-b border-slate-800 px-6 flex items-center justify-between shrink-0">
-        <div>
-            <h1 class="text-lg font-extrabold text-amber-400 truncate" id="cast-song-title">Stage Presentation</h1>
-            <p class="text-xs text-slate-400" id="cast-song-author"></p>
-        </div>
-        <div class="flex items-center gap-4 text-xs">
-            <label class="flex items-center gap-2 cursor-pointer text-slate-300 font-semibold">
-                <input type="checkbox" id="cast-show-chords" checked class="accent-amber-500 w-4 h-4 rounded"> Show Chords
-            </label>
-            <div class="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded-lg border border-slate-700">
-                <span class="text-slate-400">Font:</span>
-                <button onclick="adjustCastFont(-0.1)" class="px-1.5 py-0.5 bg-slate-700 hover:bg-slate-600 rounded text-slate-200 font-bold">-</button>
-                <button onclick="adjustCastFont(0.1)" class="px-1.5 py-0.5 bg-slate-700 hover:bg-slate-600 rounded text-slate-200 font-bold">+</button>
-            </div>
-        </div>
-    </header>
-
-    <main class="flex-1 overflow-y-auto p-8 flex justify-center">
-        <div id="cast-content-area" class="w-full max-w-3xl space-y-6" style="font-size: 1.25rem;">
-            <div class="text-center text-slate-500 my-auto">Waiting for active song or section selection...</div>
-        </div>
+<body class="h-full flex flex-col overflow-hidden select-none bg-slate-950 text-slate-100 font-sans p-8 justify-center items-center">
+    <main class="w-full max-w-4xl flex-1 overflow-y-auto space-y-6" id="cast-viewport">
+        <div id="cast-content" class="space-y-6"></div>
     </main>
 
     <script>
-        let currentSongData = null;
-        let showChords = true;
-        let currentScale = 1.25;
+        let currentSong = null;
+        let currentSettings = { showChords: true, fontScale: 1.4 };
 
-        document.getElementById('cast-show-chords').addEventListener('change', (e) => {
-            showChords = e.target.checked;
-            if (currentSongData) renderCastSong(currentSongData);
-        });
-
-        function adjustCastFont(delta) {
-            currentScale = Math.max(0.8, Math.min(2.5, currentScale + delta));
-            document.getElementById('cast-content-area').style.fontSize = currentScale + 'rem';
-        }
-
-        function formatSectionHeading(tag) {
+        function formatHeading(tag) {
             if (!tag) return '';
-            const clean = tag.replace(/[\\\\[\\\\]]/g, '').trim().toUpperCase();
+            const clean = tag.replace(/[\\[\\]]/g, '').trim().toUpperCase();
             if (clean.startsWith('V')) return clean.slice(1) ? 'Verse ' + clean.slice(1) : 'Verse';
             if (clean.startsWith('C')) return clean.slice(1) ? 'Chorus ' + clean.slice(1) : 'Chorus';
             if (clean.startsWith('B')) return clean.slice(1) ? 'Bridge ' + clean.slice(1) : 'Bridge';
@@ -2236,66 +2280,81 @@
             return clean;
         }
 
-        function renderCastSong(song, highlightSection = '') {
-            const container = document.getElementById('cast-content-area');
+        function renderCast(song, highlightSection, settings) {
+            const container = document.getElementById('cast-content');
             container.innerHTML = '';
-            if (!song || !song.lyrics) {
-                container.innerHTML = '<div class="text-center text-slate-500">No lyrics available.</div>';
-                return;
-            }
+            if (!song || !song.lyrics) return;
 
-            document.getElementById('cast-song-title').textContent = song.title;
-            document.getElementById('cast-song-author').textContent = song.author || '';
+            document.getElementById('cast-viewport').style.fontSize = settings.fontScale + 'rem';
 
             const lines = song.lyrics.split('\\n');
-            let sectionDiv = null;
-            let currentHeading = '';
+            let sectionContainer = null;
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 const trimmed = line.trim();
 
                 if (trimmed.startsWith('[')) {
-                    currentHeading = formatSectionHeading(trimmed);
-                    sectionDiv = document.createElement('div');
-                    sectionDiv.className = 'p-5 rounded-2xl bg-slate-900/80 border ' + (currentHeading === highlightSection ? 'border-amber-500 ring-2 ring-amber-500/50' : 'border-slate-800') + ' space-y-3';
-                    sectionDiv.innerHTML = '<h3 class="text-amber-400 font-extrabold text-sm uppercase tracking-wider">' + currentHeading + '</h3>';
-                    container.appendChild(sectionDiv);
+                    const prettyName = formatHeading(trimmed);
+                    sectionContainer = document.createElement('div');
+                    sectionContainer.className = 'p-6 rounded-2xl bg-slate-900/80 border ' + (prettyName === highlightSection ? 'border-amber-500 ring-4 ring-amber-500/30' : 'border-slate-800') + ' space-y-3';
+                    sectionContainer.innerHTML = '<h3 class="text-amber-400 font-extrabold text-lg uppercase tracking-wider mb-2">' + prettyName + '</h3>';
+                    container.appendChild(sectionContainer);
                     continue;
                 }
 
-                if (!sectionDiv) {
-                    sectionDiv = document.createElement('div');
-                    sectionDiv.className = 'p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3';
+                if (!sectionContainer) {
+                    sectionContainer = document.createElement('div');
+                    sectionContainer.className = 'p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3';
                     container.appendChild(sectionDiv);
                 }
 
-                const row = document.createElement('div');
+                const div = document.createElement('div');
                 if (line.startsWith('.')) {
-                    if (showChords) {
-                        const chordText = line.slice(1);
-                        const lyricText = (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) ? lines[i + 1] : '';
-                        if (lyricText) i++;
-                        row.innerHTML = '<div class="font-bold text-amber-400 text-base font-mono mb-0.5">' + chordText + '</div><div class="text-slate-100 whitespace-pre-wrap">' + lyricText + '</div>';
-                        sectionDiv.appendChild(row);
+                    if (settings.showChords) {
+                        const chordLine = line.slice(1);
+                        const nextLine = (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) ? lines[i + 1] : '';
+                        if (nextLine) i++;
+                        div.className = 'chord-lyric-pair-line';
+                        div.innerHTML = buildPairs(chordLine, nextLine);
                     } else {
                         if (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) {
                             i++;
-                            row.innerHTML = '<div class="text-slate-100 whitespace-pre-wrap">' + lines[i] + '</div>';
-                            sectionDiv.appendChild(row);
+                            div.innerHTML = '<div class="lyric-below">' + lines[i] + '</div>';
                         }
                     }
                 } else {
-                    row.innerHTML = '<div class="text-slate-100 whitespace-pre-wrap">' + line + '</div>';
-                    sectionDiv.appendChild(row);
+                    div.innerHTML = '<div class="lyric-below">' + line + '</div>';
                 }
+                sectionContainer.appendChild(div);
             }
         }
 
-        window.addEventListener('message', (event) => {
-            if (event.data && event.data.type === 'OPENSONG_CAST_UPDATE') {
-                currentSongData = event.data.song;
-                renderCastSong(currentSongData, event.data.sectionName || '');
+        function buildPairs(chordLine, lyricLine) {
+            if (!lyricLine) return '<div class="chord-above">' + chordLine + '</div>';
+            const chordRegex = /([A-G][b#]?[^\\s]*)/g;
+            let match, chordsMap = [];
+            while ((match = chordRegex.exec(chordLine.replace(/\\xA0/g, ' '))) !== null) {
+                chordsMap.push({ text: match[1], index: match.index });
+            }
+            if (chordsMap.length === 0) return '<div class="lyric-below">' + lyricLine + '</div>';
+            
+            let html = '';
+            if (chordsMap[0].index > 0) {
+                html += '<span class="chord-lyric-pair"><span style="width:0; overflow:visible; white-space:nowrap;"><div class="chord-above" style="visibility:hidden;">&nbsp;</div></span><span class="lyric-below">' + lyricLine.slice(0, chordsMap[0].index) + '</span></span>';
+            }
+            chordsMap.forEach((c, i) => {
+                let nextIdx = (i + 1 < chordsMap.length) ? chordsMap[i + 1].index : lyricLine.length;
+                html += '<span class="chord-lyric-pair"><span style="width:0; overflow:visible; white-space:nowrap; display:flex; flex-direction:column; transform:translateX(8px);"><div class="chord-above">' + c.text + '</div></span><span class="lyric-below">' + lyricLine.slice(c.index, nextIdx) + '</span></span>';
+            });
+            return html;
+        }
+
+        window.addEventListener('message', (e) => {
+            if (e.data && e.data.type === 'OPENSONG_CAST_UPDATE') {
+                currentSong = e.data.song;
+                currentSettings = e.data.settings || currentSettings;
+                renderCast(currentSong, e.data.sectionName || '', currentSettings);
             }
         });
     <\/script>
