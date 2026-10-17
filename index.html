@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- JSZip for .osb and .osbs backup extraction -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- sql.js for reading NonOpenSongSongs.db SQLite databases -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -133,6 +135,9 @@
                 <button id="new-set-btn" class="px-2 py-1 text-xs font-bold bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 rounded transition flex items-center gap-1">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Set
                 </button>
+                <button id="open-import-modal-btn" class="px-2 py-1 text-xs font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 rounded transition flex items-center gap-1" title="Import Archives / Files">
+                    <i data-lucide="upload" class="w-3.5 h-3.5"></i> Import
+                </button>
             </div>
 
             <div class="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700">
@@ -149,7 +154,7 @@
                 <i data-lucide="settings" class="w-5 h-5"></i>
             </button>
 
-            <button id="change-folder-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Change Storage Directory / Backup">
+            <button id="change-folder-btn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700" title="Change Storage Directory">
                 <i data-lucide="folder-open" class="w-5 h-5"></i>
             </button>
         </div>
@@ -201,7 +206,7 @@
                         <i data-lucide="music-4" class="w-12 h-12"></i>
                     </div>
                     <h3 class="text-lg font-bold text-slate-300 mb-1">No Item Selected</h3>
-                    <p class="text-sm text-slate-500 max-w-sm mb-4">Select a song or set from the sidebar, or click the folder icon above to load your OpenSong folder or backup zip.</p>
+                    <p class="text-sm text-slate-500 max-w-sm mb-4">Select a song or set from the sidebar, or click the folder icon above to load your OpenSong root folder.</p>
                 </div>
 
                 <!-- Floating Draggable Popups for Notes & ABC -->
@@ -269,6 +274,7 @@
                         <p id="sheet-author" class="text-sm text-slate-400 mt-1">--</p>
                     </div>
 
+                    <!-- Song Content Container (Text or PDF embed) -->
                     <div id="sheet-content" class="space-y-6"></div>
 
                     <footer id="sheet-footer" class="border-t border-slate-800/80 pt-4 text-xs text-slate-500 space-y-1">
@@ -343,22 +349,22 @@
         </main>
     </div>
 
-    <!-- Storage Selector / Backup Importer Modal -->
-    <div id="folder-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <!-- Storage Root Selector Modal -->
+    <div id="folder-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6">
             <div class="text-center space-y-2">
                 <div class="inline-flex p-3 bg-amber-500/10 text-amber-400 rounded-full mb-2">
                     <i data-lucide="folder-tree" class="w-8 h-8"></i>
                 </div>
-                <h3 class="text-xl font-bold text-white">Select OpenSong Storage or Backup</h3>
-                <p id="folder-modal-desc" class="text-sm text-slate-400 leading-relaxed">Choose your local OpenSong folder or import OpenSongApp zip backup archives (.osb / .osbs).</p>
+                <h3 class="text-xl font-bold text-white">Select OpenSong Root Folder</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">Choose your local OpenSong directory containing Songs, Sets, and Settings.</p>
             </div>
             <div id="modal-progress-container" class="hidden text-center py-6 space-y-4">
                 <div class="relative inline-flex items-center justify-center">
                     <div class="w-12 h-12 border-4 border-amber-500/20 border-t-amber-400 rounded-full animate-spin"></div>
                     <i data-lucide="music" class="w-5 h-5 text-amber-400 absolute"></i>
                 </div>
-                <h4 id="progress-status-title" class="text-base font-bold text-slate-100">Processing Archive...</h4>
+                <h4 class="text-base font-bold text-slate-100">Scanning Directory...</h4>
             </div>
             <div id="modal-actions-container" class="space-y-3">
                 <div id="reconnect-folder-container" class="hidden">
@@ -366,17 +372,37 @@
                         <i data-lucide="check-circle" class="w-5 h-5"></i><span>Restore Permission to Saved Folder</span>
                     </button>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button id="modal-select-folder-btn" class="py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition flex items-center justify-center space-x-2">
-                        <i data-lucide="folder-open" class="w-5 h-5"></i><span>Select Root Folder</span>
-                    </button>
-                    <button id="modal-import-backup-btn" class="py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition flex items-center justify-center space-x-2">
-                        <i data-lucide="file-archive" class="w-5 h-5"></i><span>Import .osb / .osbs</span>
-                    </button>
-                </div>
+                <button id="modal-select-folder-btn" class="w-full py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition flex items-center justify-center space-x-2">
+                    <i data-lucide="folder-open" class="w-5 h-5"></i><span>Select Root Folder</span>
+                </button>
             </div>
             <input type="file" id="fallback-folder-input" webkitdirectory directory multiple class="hidden">
-            <input type="file" id="backup-file-input" accept=".osb,.osbs,.zip,.csv" multiple class="hidden">
+        </div>
+    </div>
+
+    <!-- Separate Import Modal (.osb, .osbs, .xml, .ost, .pdf, .db) -->
+    <div id="import-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-2 text-emerald-400">
+                    <i data-lucide="upload" class="w-5 h-5"></i>
+                    <h3 class="font-bold text-lg text-slate-100">Import Archives or Files</h3>
+                </div>
+                <button id="close-import-modal" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">
+                Import OpenSongApp backup archives (<strong class="text-emerald-400">.osb / .osbs</strong>), individual song/set files (<strong class="text-emerald-400">.xml, .ost</strong>), PDFs (<strong class="text-emerald-400">.pdf</strong>), or <strong class="text-emerald-400">NonOpenSongSongs.db</strong>. Items will be merged into your library.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button id="modal-import-archive-btn" class="py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition flex items-center justify-center space-x-2">
+                    <i data-lucide="file-archive" class="w-5 h-5"></i><span>Import .osb/.osbs/Zip</span>
+                </button>
+                <button id="modal-import-files-btn" class="py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition flex items-center justify-center space-x-2">
+                    <i data-lucide="file-plus" class="w-5 h-5"></i><span>Import Songs/PDFs/DB</span>
+                </button>
+            </div>
+            <input type="file" id="archive-file-input" accept=".osb,.osbs,.zip" multiple class="hidden">
+            <input type="file" id="individual-files-input" accept=".xml,.ost,.pdf,.db,.csv" multiple class="hidden">
         </div>
     </div>
 
@@ -390,7 +416,7 @@
             
             <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0 gap-1 overflow-x-auto">
                 <button data-editors-tab="main" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg bg-amber-500 text-slate-950 transition">Main</button>
-                <button data-editors-tab="lyrics" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Lyrics</button>
+                <button data-editors-tab="lyrics" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Lyrics / PDF</button>
                 <button data-editors-tab="features" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Features</button>
                 <button data-editors-tab="tags" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Tags</button>
             </div>
@@ -411,26 +437,29 @@
                             </select>
                             <input type="text" id="edit-song-new-folder-input" placeholder="Enter new folder name..." class="hidden mt-2 w-full bg-slate-950 border border-amber-500/50 rounded-lg p-2 text-amber-300 font-mono">
                         </div>
-                        <div><label class="font-bold text-slate-300 block mb-1">Filename</label><input type="text" id="edit-song-filename-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono"></div>
+                        <div><label class="font-bold text-slate-300 block mb-1">Filename / PDF URL</label><input type="text" id="edit-song-filename-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono"></div>
                     </div>
                     <div><label class="font-bold text-slate-300 block mb-1">Sticky Notes / Popup Notes</label><textarea id="edit-song-notes-input" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></textarea></div>
                 </div>
 
-                <!-- 2. LYRICS TAB -->
+                <!-- 2. LYRICS / PDF TAB -->
                 <div id="editor-pane-lyrics" class="editor-pane hidden space-y-3 text-xs">
                     <div><label class="font-bold text-slate-300 block mb-1">Presentation Order e.g. V1 C V2 C</label><input type="text" id="edit-song-presentation-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono"></div>
                     <div>
                         <div class="flex justify-between items-center mb-1">
-                            <label class="font-bold text-slate-300">Lyrics & Chords (OpenSong Format)</label>
-                            <a href="https://abceditor.justchords.app/" target="_blank" class="text-amber-400 hover:underline flex items-center gap-1 font-mono text-[11px]"><i data-lucide="external-link" class="w-3 h-3"></i> ABC Editor Tool</a>
+                            <label class="font-bold text-slate-300">Lyrics & Chords (OpenSong Format) OR PDF File Upload</label>
                         </div>
-                        <textarea id="edit-song-lyrics-input" rows="10" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-slate-100" placeholder="[V1]&#10;.C     G&#10;Amazing grace..."></textarea>
+                        <textarea id="edit-song-lyrics-input" rows="8" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-slate-100" placeholder="[V1]&#10;.C     G&#10;Amazing grace..."></textarea>
+                    </div>
+                    <div>
+                        <label class="font-bold text-slate-300 block mb-1">Or Attach/Upload PDF file for this song</label>
+                        <input type="file" id="edit-song-pdf-file" accept=".pdf" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400 cursor-pointer">
                     </div>
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="font-bold text-slate-300">ABC Notation Score Popup</label>
                         </div>
-                        <textarea id="edit-song-abc-input" rows="4" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-amber-300" placeholder="X:1&#10;M:4/4&#10;K:C&#10;..."></textarea>
+                        <textarea id="edit-song-abc-input" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-amber-300" placeholder="X:1&#10;M:4/4&#10;K:C&#10;..."></textarea>
                     </div>
                 </div>
 
@@ -473,51 +502,11 @@
                             </select>
                         </div>
                     </div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div><label class="font-bold text-slate-300 block mb-1">Duration (Secs)</label><input type="number" id="edit-song-duration-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" value="180"></div>
-                        <div><label class="font-bold text-slate-300 block mb-1">Pre-delay (Secs)</label><input type="number" id="edit-song-predelay-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" value="10"></div>
-                        <div>
-                            <label class="font-bold text-slate-300 block mb-1">Preview Override</label>
-                            <select id="edit-song-previewoverride-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100">
-                                <option value="">Default</option><option value="force_on">Force On</option><option value="force_off">Force Off</option>
-                            </select>
-                        </div>
-                    </div>
-                    <!-- BeatBuddy & Drummer Pickers -->
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="font-bold text-slate-300 block mb-1">BeatBuddy Song</label>
-                            <select id="edit-song-bb-song" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-amber-400 font-mono text-xs">
-                                <option value="">-- None --</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="font-bold text-slate-300 block mb-1">BeatBuddy Drum Kit</label>
-                            <select id="edit-song-bb-kit" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 text-xs">
-                                <option value="Acoustic">Acoustic</option><option value="Percussion">Percussion</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <label class="font-bold text-slate-300">Drummer File</label>
-                                <a href="https://thebigg73.github.io/OpenSongAppDrummer/" target="_blank" class="text-amber-400 hover:underline font-mono text-[10px]">Drummer App</a>
-                            </div>
-                            <input type="text" id="edit-song-drummer-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" placeholder="e.g. RockBeat">
-                        </div>
-                        <div>
-                            <label class="font-bold text-slate-300 block mb-1">Drummer Kit</label>
-                            <select id="edit-song-drummerkit-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100">
-                                <option value="Acoustic">Acoustic</option><option value="Percussion">Percussion</option>
-                            </select>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- 4. TAGS TAB -->
                 <div id="editor-pane-tags" class="editor-pane hidden space-y-3 text-xs">
-                    <div><label class="font-bold text-slate-300 block mb-1">Themes (semicolon separated) e.g. Praise;Worship</label><input type="text" id="edit-song-theme-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
+                    <div><label class="font-bold text-slate-300 block mb-1">Themes (semicolon separated)</label><input type="text" id="edit-song-theme-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
                     <div><label class="font-bold text-slate-300 block mb-1">Also Known As (Aka)</label><input type="text" id="edit-song-aka-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
                     <div class="grid grid-cols-2 gap-2">
                         <div><label class="font-bold text-slate-300 block mb-1">CCLI Number</label><input type="text" id="edit-song-ccli-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
@@ -551,12 +540,22 @@
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div class="flex items-center space-x-2 text-amber-400">
                     <i data-lucide="settings" class="w-5 h-5"></i>
-                    <h3 class="font-bold text-lg text-slate-100">Preferences & Scaling Settings</h3>
+                    <h3 class="font-bold text-lg text-slate-100">Preferences & Web MIDI</h3>
                 </div>
                 <button id="close-settings-modal" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
 
             <div class="space-y-4 text-xs">
+                <!-- MIDI Device Status & Connection -->
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="font-bold text-slate-200">Web MIDI Devices (USB / Bluetooth)</label>
+                        <button id="midi-connect-btn" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-bold transition">Connect MIDI</button>
+                    </div>
+                    <p id="midi-status-label" class="text-[11px] text-slate-400">MIDI not connected. Click Connect to enable USB or Bluetooth MIDI foot controllers/keyboards.</p>
+                </div>
+
+                <!-- WebSocket Role -->
                 <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
                     <label class="font-bold text-slate-200 block">WebSocket Connection Role</label>
                     <select id="setting-ws-role" class="w-full bg-slate-900 border border-slate-800 rounded-lg py-1.5 px-2 text-amber-400 font-mono focus:outline-none">
@@ -607,6 +606,7 @@
         let transposeOffset = 0;
 
         let rootDirectoryHandle = null;
+        let pdfBlobsMap = {}; // filename -> blob URL
 
         let isAutoScrolling = false;
         let autoScrollInterval = null;
@@ -627,6 +627,14 @@
 
         const elements = {
             modal: document.getElementById('folder-modal'),
+            importModal: document.getElementById('import-modal'),
+            openImportModalBtn: document.getElementById('open-import-modal-btn'),
+            closeImportModal: document.getElementById('close-import-modal'),
+            modalImportArchiveBtn: document.getElementById('modal-import-archive-btn'),
+            modalImportFilesBtn: document.getElementById('modal-import-files-btn'),
+            archiveFileInput: document.getElementById('archive-file-input'),
+            individualFilesInput: document.getElementById('individual-files-input'),
+
             modalProgressContainer: document.getElementById('modal-progress-container'),
             modalActionsContainer: document.getElementById('modal-actions-container'),
             reconnectFolderContainer: document.getElementById('reconnect-folder-container'),
@@ -675,9 +683,7 @@
             openSettingsBtn: document.getElementById('open-settings-btn'),
             castDisplayBtn: document.getElementById('cast-display-btn'),
             modalSelectBtn: document.getElementById('modal-select-folder-btn'),
-            modalImportBackupBtn: document.getElementById('modal-import-backup-btn'),
             fallbackInput: document.getElementById('fallback-folder-input'),
-            backupFileInput: document.getElementById('backup-file-input'),
             newSongBtn: document.getElementById('new-song-btn'),
             newSetBtn: document.getElementById('new-set-btn'),
             editSongBtn: document.getElementById('edit-song-btn'),
@@ -712,6 +718,7 @@
             editSongNotesInput: document.getElementById('edit-song-notes-input'),
             editSongPresentationInput: document.getElementById('edit-song-presentation-input'),
             editSongLyricsInput: document.getElementById('edit-song-lyrics-input'),
+            editSongPdfFile: document.getElementById('edit-song-pdf-file'),
             editSongAbcInput: document.getElementById('edit-song-abc-input'),
             editSongKeyInput: document.getElementById('edit-song-key-input'),
             editSongOrigkeyInput: document.getElementById('edit-song-origkey-input'),
@@ -719,22 +726,17 @@
             editSongTempoInput: document.getElementById('edit-song-tempo-input'),
             editSongTimesigInput: document.getElementById('edit-song-timesig-input'),
             editSongPrefinstInput: document.getElementById('edit-song-prefinst-input'),
-            editSongDurationInput: document.getElementById('edit-song-duration-input'),
-            editSongPredelayInput: document.getElementById('edit-song-predelay-input'),
-            editSongPreviewoverrideInput: document.getElementById('edit-song-previewoverride-input'),
-            editSongBbSong: document.getElementById('edit-song-bb-song'),
-            editSongBbKit: document.getElementById('edit-song-bb-kit'),
-            editSongDrummerInput: document.getElementById('edit-song-drummer-input'),
-            editSongDrummerkitInput: document.getElementById('edit-song-drummerkit-input'),
             editSongThemeInput: document.getElementById('edit-song-theme-input'),
             editSongAkaInput: document.getElementById('edit-song-aka-input'),
             editSongCcliInput: document.getElementById('edit-song-ccli-input'),
             editSongHymnnumInput: document.getElementById('edit-song-hymnnum-input'),
             saveSongBtn: document.getElementById('save-song-btn'),
 
-            // Settings
+            // Settings & MIDI
             settingsModal: document.getElementById('settings-modal'),
             closeSettingsModal: document.getElementById('close-settings-modal'),
+            midiConnectBtn: document.getElementById('midi-connect-btn'),
+            midiStatusLabel: document.getElementById('midi-status-label'),
             settingWsRole: document.getElementById('setting-ws-role'),
             settingWsUrl: document.getElementById('setting-ws-url'),
             settingHeadingScaleSlider: document.getElementById('setting-heading-scale-slider'),
@@ -761,6 +763,7 @@
             }
         });
 
+        // IndexedDB handle storage
         const DB_NAME = 'OpenSongAppWebDB';
         const STORE_NAME = 'handles';
         function openIdb() {
@@ -816,17 +819,551 @@
             }
         });
 
-        elements.editSongLyricsInput.addEventListener('input', (e) => {
-            const val = e.target.value;
-            if ((val.includes('X:') || val.includes('M:4/4') || val.includes('K:')) && !val.includes(';#:')) {
-                const lines = val.split('\n');
-                let isAbcBlock = lines.some(l => l.startsWith('X:') || l.startsWith('M:') || l.startsWith('K:'));
-                if (isAbcBlock) {
-                    elements.editSongAbcInput.value = val;
-                    e.target.value = val.split('\n').filter(l => !l.startsWith('X:') && !l.startsWith('M:') && !l.startsWith('K:') && !l.startsWith('L:')).join('\n');
+        // Import Modal Controls
+        elements.openImportModalBtn.addEventListener('click', () => elements.importModal.classList.remove('hidden'));
+        elements.closeImportModal.addEventListener('click', () => elements.importModal.classList.add('hidden'));
+
+        elements.modalImportArchiveBtn.addEventListener('click', () => elements.archiveFileInput.click());
+        elements.modalImportFilesBtn.addEventListener('click', () => elements.individualFilesInput.click());
+
+        // Archive Importer (.osb / .osbs / .zip) - MERGES into loadedSongs/loadedSets
+        elements.archiveFileInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files || []);
+            if (files.length === 0) return;
+            elements.importModal.classList.add('hidden');
+
+            for (const file of files) {
+                try {
+                    const zip = new JSZip();
+                    const zipContent = await zip.loadAsync(file);
+                    for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
+                        if (zipEntry.dir) continue;
+                        const lowerName = filename.toLowerCase();
+                        if (lowerName.includes('nonopensongsongs.db')) {
+                            const dbBuf = await zipEntry.async("uint8array");
+                            parseNonOpenSongSQLite(dbBuf);
+                        } else if (lowerName.endsWith('.pdf')) {
+                            const pdfBlob = await zipEntry.async("blob");
+                            const pureName = filename.split('/').pop();
+                            pdfBlobsMap[pureName] = URL.createObjectURL(pdfBlob);
+                            // Add or update PDF song entry
+                            addOrUpdateSong({
+                                id: 'song_pdf_' + Math.random().toString(36).substring(2, 8),
+                                filename: pureName,
+                                folderPath: 'PDFs',
+                                title: pureName.replace(/\.[^/.]+$/, ""),
+                                isPdf: true,
+                                pdfUrl: pdfBlobsMap[pureName],
+                                key: 'C', tempo: 120, time_sig: '4/4'
+                            });
+                        } else if (lowerName.includes('sets/') || lowerName.endsWith('.osbs') || filename.endsWith('.ost')) {
+                            const text = await zipEntry.async("text");
+                            const setObj = parseOpenSongSetXML(text, filename.split('/').pop());
+                            if (setObj && !loadedSets.some(s => s.title.toLowerCase() === setObj.title.toLowerCase())) {
+                                loadedSets.push(setObj);
+                            }
+                        } else if (lowerName.includes('songs/') || lowerName.endsWith('.osb') || lowerName.endsWith('.xml') || textIncludesSong(zipEntry)) {
+                            const text = await zipEntry.async("text");
+                            let folder = 'MAIN';
+                            const parts = filename.split('/');
+                            const songsIdx = parts.findIndex(p => p.toLowerCase() === 'songs');
+                            if (songsIdx !== -1 && parts.length > songsIdx + 2) {
+                                folder = parts.slice(songsIdx + 1, parts.length - 1).join('/');
+                            }
+                            const songObj = parseOpenSongXML(text, filename.split('/').pop(), folder);
+                            if (songObj) addOrUpdateSong(songObj);
+                        }
+                    }
+                } catch (err) { console.error(err); }
+            }
+            updateTabCounts();
+            updateFolderFilterDropdown();
+            renderSidebarList();
+        });
+
+        async function textIncludesSong(entry) {
+            try { const t = await entry.async("text"); return t.includes('<song'); } catch (e) { return false; }
+        }
+
+        // Individual Files Importer (.xml, .ost, .pdf, .db) - MERGES
+        elements.individualFilesInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files || []);
+            if (files.length === 0) return;
+            elements.importModal.classList.add('hidden');
+
+            for (const file of files) {
+                const nameLower = file.name.toLowerCase();
+                if (nameLower.endsWith('.pdf')) {
+                    const blobUrl = URL.createObjectURL(file);
+                    pdfBlobsMap[file.name] = blobUrl;
+                    addOrUpdateSong({
+                        id: 'song_pdf_' + Math.random().toString(36).substring(2, 8),
+                        filename: file.name,
+                        folderPath: 'PDFs',
+                        title: file.name.replace(/\.[^/.]+$/, ""),
+                        isPdf: true,
+                        pdfUrl: blobUrl,
+                        key: 'C', tempo: 120, time_sig: '4/4'
+                    });
+                } else if (nameLower.includes('nonopensongsongs.db') || nameLower.endsWith('.db')) {
+                    const buf = new Uint8Array(await file.arrayBuffer());
+                    parseNonOpenSongSQLite(buf);
+                } else {
+                    const text = await file.text();
+                    if (nameLower.endsWith('.ost') || text.includes('<set')) {
+                        const setObj = parseOpenSongSetXML(text, file.name);
+                        if (setObj) loadedSets.push(setObj);
+                    } else {
+                        const songObj = parseOpenSongXML(text, file.name, 'MAIN');
+                        if (songObj) addOrUpdateSong(songObj);
+                    }
                 }
             }
+            updateTabCounts();
+            updateFolderFilterDropdown();
+            renderSidebarList();
         });
+
+        function addOrUpdateSong(songObj) {
+            const existingIdx = loadedSongs.findIndex(s => s.filename.toLowerCase() === songObj.filename.toLowerCase() && (s.folderPath || 'MAIN') === (songObj.folderPath || 'MAIN'));
+            if (existingIdx !== -1) {
+                loadedSongs[existingIdx] = { ...loadedSongs[existingIdx], ...songObj };
+            } else {
+                loadedSongs.push(songObj);
+            }
+        }
+
+        // SQLite parser using sql.js for NonOpenSongSongs.db
+        async function parseNonOpenSongSQLite(uint8ArrayData) {
+            try {
+                const SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
+                const db = new SQL.Database(uint8ArrayData);
+                const res = db.exec("SELECT * FROM songs");
+                if (res && res.length > 0) {
+                    const cols = res[0].columns;
+                    res[0].values.forEach(row => {
+                        const rowObj = {};
+                        cols.forEach((c, idx) => rowObj[c] = row[idx]);
+                        // Match with loaded songs or create entry for non-opensong/PDF
+                        const title = rowObj.title || rowObj.filename || "Untitled PDF";
+                        const existing = loadedSongs.find(s => s.title.toLowerCase() === title.toLowerCase());
+                        if (existing) {
+                            existing.key = rowObj.key || existing.key;
+                            existing.author = rowObj.author || existing.author;
+                            existing.tempo = rowObj.tempo || existing.tempo;
+                        } else {
+                            addOrUpdateSong({
+                                id: 'song_db_' + Math.random().toString(36).substring(2, 8),
+                                filename: rowObj.filename || `${title}.pdf`,
+                                folderPath: 'NonOpenSong',
+                                title: title,
+                                author: rowObj.author || '',
+                                key: rowObj.key || 'C',
+                                tempo: rowObj.tempo || 120,
+                                isPdf: true,
+                                pdfUrl: pdfBlobsMap[rowObj.filename] || ''
+                            });
+                        }
+                    });
+                }
+            } catch (err) { console.error("SQLite parse error:", err); }
+        }
+
+        elements.modalSelectBtn.addEventListener('click', async () => {
+            if ('showDirectoryPicker' in window) {
+                try {
+                    const handle = await window.showDirectoryPicker();
+                    rootDirectoryHandle = handle;
+                    await saveDirectoryHandle(handle);
+                    await processRootDirectory(handle);
+                } catch (err) {
+                    if (err.name !== 'AbortError') { elements.fallbackInput.click(); }
+                }
+            } else { elements.fallbackInput.click(); }
+        });
+
+        elements.fallbackInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files || []);
+            if (files.length === 0) return;
+            for (const file of files) {
+                const text = await file.text();
+                const path = file.webkitRelativePath || file.name;
+                const lower = path.toLowerCase();
+                const parts = path.split('/');
+                if (lower.endsWith('.pdf')) {
+                    const blobUrl = URL.createObjectURL(file);
+                    pdfBlobsMap[file.name] = blobUrl;
+                    addOrUpdateSong({
+                        id: 'song_pdf_' + Math.random().toString(36).substring(2, 8),
+                        filename: file.name,
+                        folderPath: 'PDFs',
+                        title: file.name.replace(/\.[^/.]+$/, ""),
+                        isPdf: true,
+                        pdfUrl: blobUrl,
+                        key: 'C'
+                    });
+                } else if (lower.includes('nonopensongsongs.db')) {
+                    parseNonOpenSongSQLite(new Uint8Array(await file.arrayBuffer()));
+                } else if (lower.includes('sets/')) {
+                    const s = parseOpenSongSetXML(text, file.name);
+                    if (s) loadedSets.push(s);
+                } else if (lower.includes('songs/') || file.name.endsWith('.xml') || file.name.endsWith('.ost') || text.includes('<song')) {
+                    let folder = 'MAIN';
+                    const songsIdx = parts.findIndex(p => p.toLowerCase() === 'songs');
+                    if (songsIdx !== -1 && parts.length > songsIdx + 2) {
+                        folder = parts.slice(songsIdx + 1, parts.length - 1).join('/');
+                    }
+                    const song = parseOpenSongXML(text, file.name, folder);
+                    if (song) addOrUpdateSong(song);
+                }
+            }
+            elements.folderStatus.textContent = "Root Folder Loaded";
+            elements.modal.classList.add('hidden');
+            updateTabCounts();
+            updateFolderFilterDropdown();
+            renderSidebarList();
+        });
+
+        async function processRootDirectory(handle) {
+            elements.modalProgressContainer.classList.remove('hidden');
+            elements.modalActionsContainer.classList.add('hidden');
+            elements.folderStatus.textContent = handle.name;
+            try {
+                for await (const entry of handle.values()) {
+                    if (entry.kind === 'directory' && entry.name === 'Songs') {
+                        await scanSongDir(entry, '');
+                    } else if (entry.kind === 'directory' && entry.name === 'Sets') {
+                        for await (const setFile of entry.values()) {
+                            if (setFile.kind === 'file') {
+                                const f = await setFile.getFile();
+                                const setObj = parseOpenSongSetXML(await f.text(), f.name);
+                                if (setObj) loadedSets.push(setObj);
+                            }
+                        }
+                    } else if (entry.kind === 'directory' && entry.name === 'Settings') {
+                        for await (const setFile of entry.values()) {
+                            if (setFile.kind === 'file' && setFile.name.toLowerCase().includes('nonopensongsongs.db')) {
+                                const f = await setFile.getFile();
+                                parseNonOpenSongSQLite(new Uint8Array(await f.arrayBuffer()));
+                            }
+                        }
+                    }
+                }
+            } catch (e) { console.error(e); }
+
+            elements.modalProgressContainer.classList.add('hidden');
+            elements.modalActionsContainer.classList.remove('hidden');
+            elements.modal.classList.add('hidden');
+            updateTabCounts();
+            updateFolderFilterDropdown();
+            renderSidebarList();
+        }
+
+        async function scanSongDir(dirHandle, prefix) {
+            for await (const entry of dirHandle.values()) {
+                if (entry.kind === 'file') {
+                    const f = await entry.getFile();
+                    const lowerName = f.name.toLowerCase();
+                    if (lowerName.endsWith('.pdf')) {
+                        const blobUrl = URL.createObjectURL(f);
+                        pdfBlobsMap[f.name] = blobUrl;
+                        addOrUpdateSong({
+                            id: 'song_pdf_' + Math.random().toString(36).substring(2, 8),
+                            filename: f.name,
+                            folderPath: prefix || 'PDFs',
+                            title: f.name.replace(/\.[^/.]+$/, ""),
+                            isPdf: true,
+                            pdfUrl: blobUrl,
+                            key: 'C'
+                        });
+                    } else {
+                        const song = parseOpenSongXML(await f.text(), f.name, prefix || 'MAIN');
+                        if (song) addOrUpdateSong(song);
+                    }
+                } else if (entry.kind === 'directory') {
+                    const subFolderName = prefix ? `${prefix}/${entry.name}` : entry.name;
+                    await scanSongDir(entry, subFolderName);
+                }
+            }
+        }
+
+        function parseOpenSongXML(xmlString, filename, folderPath) {
+            try {
+                const doc = new DOMParser().parseFromString(xmlString, "text/xml");
+                if (doc.querySelector("parsererror")) return null;
+                const song = doc.querySelector("song");
+                if (!song) return null;
+                const gt = (tag) => { const el = song.querySelector(tag); return el ? el.textContent.trim() : ''; };
+                return {
+                    id: 'song_' + Math.random().toString(36).substring(2, 8),
+                    filename, folderPath: folderPath || 'MAIN',
+                    title: gt("title") || filename,
+                    author: gt("author"),
+                    copyright: gt("copyright"),
+                    presentation: gt("presentation"),
+                    key: gt("key") || 'C',
+                    tempo: gt("tempo") || 120,
+                    time_sig: gt("time_sig") || gt("time_signature") || '4/4',
+                    duration: parseInt(gt("duration"), 10) || 180,
+                    notes: gt("notes"),
+                    abc_notation: gt("abc_notation"),
+                    lyrics: gt("lyrics")
+                };
+            } catch (e) { return null; }
+        }
+
+        function parseOpenSongSetXML(xmlString, filename) {
+            try {
+                const doc = new DOMParser().parseFromString(xmlString, "text/xml");
+                const setNode = doc.querySelector("set");
+                if (!setNode) return null;
+                const songTitles = [];
+                doc.querySelectorAll("slide_group").forEach(g => {
+                    const name = g.getAttribute("name");
+                    if (name) songTitles.push(name);
+                });
+                return { id: 'set_' + Math.random().toString(36).substring(2, 8), filename, title: setNode.getAttribute("name") || filename, songTitles };
+            } catch (e) { return null; }
+        }
+
+        // Web MIDI API Integration (Bluetooth / USB MIDI)
+        elements.midiConnectBtn.addEventListener('click', async () => {
+            if (!navigator.requestMIDIAccess) {
+                elements.midiStatusLabel.textContent = "Web MIDI API is not supported in this browser.";
+                return;
+            }
+            try {
+                const midiAccess = await navigator.requestMIDIAccess();
+                elements.midiStatusLabel.textContent = "MIDI Connected successfully! Listening for devices...";
+                
+                midiAccess.inputs.forEach(input => {
+                    input.onmidimessage = handleMidiMessage;
+                });
+                midiAccess.onstatechange = (e) => {
+                    if (e.port.type === 'input' && e.port.state === 'connected') {
+                        e.port.onmidimessage = handleMidiMessage;
+                        elements.midiStatusLabel.textContent = `Connected MIDI input: ${e.port.name}`;
+                    }
+                };
+            } catch (err) {
+                elements.midiStatusLabel.textContent = `MIDI Permission denied or error: ${err.message}`;
+            }
+        });
+
+        function handleMidiMessage(event) {
+            const [status, data1, data2] = event.data;
+            const command = status >> 4;
+            // Note on (9) or Control Change (B) for foot switch page/song turning
+            if (command === 9 && data2 > 0) {
+                // e.g., Program change or Note triggers next/previous song in active set
+                if (activeSet && activeSetSongIndex !== -1) {
+                    if (data1 === 60 && activeSetSongIndex + 1 < activeSet.songTitles.length) { // Middle C -> Next
+                        const nextTitle = activeSet.songTitles[activeSetSongIndex + 1];
+                        const matched = loadedSongs.find(s => s.title.toLowerCase() === nextTitle.toLowerCase());
+                        if (matched) renderSongSheet(matched, activeSet, activeSetSongIndex + 1);
+                    } else if (data1 === 59 && activeSetSongIndex > 0) { // B -> Prev
+                        const prevTitle = activeSet.songTitles[activeSetSongIndex - 1];
+                        const matched = loadedSongs.find(s => s.title.toLowerCase() === prevTitle.toLowerCase());
+                        if (matched) renderSongSheet(matched, activeSet, activeSetSongIndex - 1);
+                    }
+                }
+            }
+        }
+
+        elements.newSongBtn.addEventListener('click', () => {
+            elements.editSongTitleInput.value = '';
+            elements.editSongAuthorInput.value = '';
+            elements.editSongCopyrightInput.value = '';
+            elements.editSongFolderSelect.value = 'MAIN';
+            elements.editSongFilenameInput.value = 'NewSong.xml';
+            elements.editSongLyricsInput.value = '[V1]\n.C     G\nLyrics here...';
+            activeSong = null;
+            elements.songEditorModal.classList.remove('hidden');
+        });
+
+        elements.editSongBtn.addEventListener('click', () => {
+            if (!activeSong) return;
+            elements.editSongTitleInput.value = activeSong.title;
+            elements.editSongAuthorInput.value = activeSong.author || '';
+            elements.editSongCopyrightInput.value = activeSong.copyright || '';
+            elements.editSongFolderSelect.value = activeSong.folderPath || 'MAIN';
+            elements.editSongFilenameInput.value = activeSong.filename;
+            elements.editSongLyricsInput.value = activeSong.lyrics || '';
+            elements.songEditorModal.classList.remove('hidden');
+        });
+
+        elements.closeSongEditor.addEventListener('click', () => elements.songEditorModal.classList.add('hidden'));
+
+        elements.saveSongBtn.addEventListener('click', () => {
+            let folder = elements.editSongFolderSelect.value;
+            if (folder === 'NEW_FOLDER') folder = elements.editSongNewFolderInput.value.trim() || 'MAIN';
+
+            const newSongData = {
+                id: activeSong ? activeSong.id : 'song_' + Math.random().toString(36).substring(2, 8),
+                filename: elements.editSongFilenameInput.value || 'song.xml',
+                folderPath: folder,
+                title: elements.editSongTitleInput.value || 'Untitled',
+                author: elements.editSongAuthorInput.value,
+                copyright: elements.editSongCopyrightInput.value,
+                key: elements.editSongKeyInput.value,
+                tempo: elements.editSongTempoInput.value,
+                lyrics: elements.editSongLyricsInput.value,
+                isPdf: activeSong ? activeSong.isPdf : false,
+                pdfUrl: activeSong ? activeSong.pdfUrl : null
+            };
+
+            addOrUpdateSong(newSongData);
+            elements.songEditorModal.classList.add('hidden');
+            updateTabCounts();
+            updateFolderFilterDropdown();
+            renderSidebarList();
+            renderSongSheet(newSongData);
+        });
+
+        function renderSongSheet(song, fromSetContext = null, songIndexInSet = -1) {
+            activeSong = song;
+            elements.emptyState.classList.add('hidden');
+            elements.setViewSheet.classList.add('hidden');
+            elements.songSheet.classList.remove('hidden');
+
+            if (fromSetContext) {
+                activeSet = fromSetContext;
+                activeSetSongIndex = songIndexInSet;
+                elements.bannerSetTitle.textContent = activeSet.title;
+                elements.setSongIndexLabel.textContent = `${activeSetSongIndex + 1} / ${activeSet.songTitles.length}`;
+                elements.setNavBanner.classList.remove('hidden');
+            } else if (!activeSet) {
+                elements.setNavBanner.classList.add('hidden');
+            }
+
+            elements.sheetTitle.textContent = song.title;
+            elements.sheetAuthor.textContent = song.author || '';
+            elements.sheetFolderPath.textContent = song.folderPath || 'MAIN';
+            elements.sheetKeyBadge.textContent = `Key: ${song.key || 'C'}`;
+            elements.currentSongTitle.textContent = song.title;
+            elements.currentSongAuthor.textContent = song.author || '';
+            elements.metaKey.textContent = song.key || 'C';
+            elements.metaTempo.textContent = song.tempo || '--';
+
+            // Check if PDF song
+            if (song.isPdf && song.pdfUrl) {
+                elements.sheetContent.innerHTML = `<div class="w-full h-[75vh] bg-slate-900 border border-slate-800 rounded-xl overflow-hidden"><embed src="${song.pdfUrl}" type="application/pdf" width="100%" height="100%"/></div>`;
+            } else {
+                renderSongLyrics(song.lyrics);
+            }
+        }
+
+        function renderSongLyrics(rawLyrics) {
+            elements.sheetContent.innerHTML = '';
+            if (!rawLyrics) return;
+            const lines = rawLyrics.split('\n');
+            let sectionContainer = null;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmed = line.trim();
+                if (trimmed.startsWith('[')) {
+                    sectionContainer = document.createElement('div');
+                    sectionContainer.className = 'p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3';
+                    sectionContainer.innerHTML = `<h4 class="section-heading text-amber-400">${trimmed}</h4>`;
+                    elements.sheetContent.appendChild(sectionContainer);
+                    continue;
+                }
+                if (!sectionContainer) {
+                    sectionContainer = document.createElement('div');
+                    sectionContainer.className = 'p-4 rounded-xl bg-slate-900/40 border border-slate-800 space-y-3';
+                    elements.sheetContent.appendChild(sectionContainer);
+                }
+                const div = document.createElement('div');
+                div.className = 'lyric-below py-0.5 whitespace-pre-wrap';
+                div.textContent = line;
+                sectionContainer.appendChild(div);
+            }
+        }
+
+        function renderSetSheet(setObj) {
+            activeSet = setObj;
+            activeSong = null;
+            elements.emptyState.classList.add('hidden');
+            elements.songSheet.classList.add('hidden');
+            elements.setViewSheet.classList.remove('hidden');
+            elements.setTitle.textContent = setObj.title;
+            elements.setCountInfo.textContent = `${setObj.songTitles.length} songs in set`;
+            elements.setSongsContainer.innerHTML = '';
+
+            setObj.songTitles.forEach((songName, idx) => {
+                const matched = loadedSongs.find(s => s.title.toLowerCase() === songName.toLowerCase());
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border transition flex items-center justify-between cursor-pointer ${matched ? 'bg-slate-900/80 border-slate-800 hover:border-indigo-500/50' : 'opacity-60'}`;
+                card.innerHTML = `<div class="flex items-center space-x-3"><span class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-300 font-mono text-xs font-bold flex items-center justify-center">${idx + 1}</span><div><h4 class="text-sm font-bold text-slate-100">${songName}</h4></div></div>`;
+                if (matched) card.addEventListener('click', () => renderSongSheet(matched, setObj, idx));
+                elements.setSongsContainer.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function switchSidebarTab(tab) {
+            activeTab = tab;
+            elements.tabSongsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === 'songs' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800'}`;
+            elements.tabSetsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === 'sets' ? 'bg-indigo-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800'}`;
+            elements.activeTabLabel.textContent = tab === 'songs' ? "Showing All Songs" : "Showing All Sets";
+            renderSidebarList(elements.songSearch.value.toLowerCase());
+        }
+
+        function updateTabCounts() {
+            elements.tabSongsCount.textContent = `(${loadedSongs.length})`;
+            elements.tabSetsCount.textContent = `(${loadedSets.length})`;
+        }
+
+        function updateFolderFilterDropdown() {
+            const foldersSet = new Set();
+            loadedSongs.forEach(s => foldersSet.add(s.folderPath || 'MAIN'));
+            const currentVal = elements.folderFilterSelect.value;
+            elements.folderFilterSelect.innerHTML = '<option value="ALL">ALL FOLDERS</option>';
+            Array.from(foldersSet).sort().forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f;
+                opt.textContent = f;
+                elements.folderFilterSelect.appendChild(opt);
+            });
+            elements.folderFilterSelect.value = foldersSet.has(currentVal) ? currentVal : 'ALL';
+        }
+
+        elements.folderFilterSelect.addEventListener('change', (e) => {
+            selectedFolderFilter = e.target.value;
+            renderSidebarList(elements.songSearch.value.toLowerCase());
+        });
+
+        function renderSidebarList(query = '') {
+            elements.songList.innerHTML = '';
+            if (activeTab === 'songs') {
+                loadedSongs.sort((a, b) => a.title.localeCompare(b.title));
+                const filtered = loadedSongs.filter(song => {
+                    const matchesQuery = song.title.toLowerCase().includes(query) || (song.author && song.author.toLowerCase().includes(query));
+                    const matchesFolder = selectedFolderFilter === 'ALL' || (song.folderPath || 'MAIN') === selectedFolderFilter;
+                    return matchesQuery && matchesFolder;
+                });
+                filtered.forEach(song => {
+                    const li = document.createElement('li');
+                    const isActive = activeSong && activeSong.id === song.id;
+                    li.className = `p-3 rounded-xl cursor-pointer transition flex items-center justify-between border ${isActive ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 font-bold' : 'hover:bg-slate-800/60 text-slate-300 border-transparent'}`;
+                    li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${song.title} ${song.isPdf ? '<span class="text-[10px] bg-sky-500/20 text-sky-300 px-1 rounded ml-1">PDF</span>' : ''}</div><div class="text-xs text-slate-500 font-normal">${song.author || 'Unknown'} <span class="text-[10px] text-amber-500/80 font-mono">(${song.folderPath || 'MAIN'})</span></div></div><span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800">${song.key || '?'}</span>`;
+                    li.addEventListener('click', () => { activeSet = null; renderSongSheet(song); });
+                    elements.songList.appendChild(li);
+                });
+            } else {
+                loadedSets.sort((a, b) => a.title.localeCompare(b.title));
+                loadedSets.filter(s => s.title.toLowerCase().includes(query)).forEach(setObj => {
+                    const li = document.createElement('li');
+                    const isActive = activeSet && activeSet.id === setObj.id;
+                    li.className = `p-3 rounded-xl cursor-pointer transition flex items-center justify-between border ${isActive ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400 font-bold' : 'hover:bg-slate-800/60 text-slate-300 border-transparent'}`;
+                    li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${setObj.title}</div><div class="text-xs text-slate-500 font-normal">${setObj.songTitles.length} songs</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>`;
+                    li.addEventListener('click', () => renderSetSheet(setObj));
+                    elements.songList.appendChild(li);
+                });
+            }
+            lucide.createIcons();
+        }
 
         function setupDraggablePopups() {
             makeDraggable(elements.stickyNotePopup, document.getElementById('sticky-drag-handle'));
@@ -856,765 +1393,6 @@
                 document.onmouseup = null;
                 document.onmousemove = null;
             }
-        }
-
-        elements.folderFilterSelect.addEventListener('change', (e) => {
-            selectedFolderFilter = e.target.value;
-            renderSidebarList(elements.songSearch.value.toLowerCase());
-        });
-
-        function updateFolderFilterDropdown() {
-            const foldersSet = new Set();
-            loadedSongs.forEach(s => foldersSet.add(s.folderPath || 'MAIN'));
-            const currentVal = elements.folderFilterSelect.value;
-            elements.folderFilterSelect.innerHTML = '<option value="ALL">ALL FOLDERS</option>';
-            Array.from(foldersSet).sort().forEach(f => {
-                const opt = document.createElement('option');
-                opt.value = f;
-                opt.textContent = f;
-                elements.folderFilterSelect.appendChild(opt);
-            });
-            elements.folderFilterSelect.value = foldersSet.has(currentVal) ? currentVal : 'ALL';
-
-            const editFolderSelect = elements.editSongFolderSelect;
-            editFolderSelect.innerHTML = '';
-            Array.from(foldersSet).sort().forEach(f => {
-                const opt = document.createElement('option');
-                opt.value = f;
-                opt.textContent = f;
-                editFolderSelect.appendChild(opt);
-            });
-            const newOpt = document.createElement('option');
-            newOpt.value = 'NEW_FOLDER';
-            newOpt.textContent = '+ Create New Folder...';
-            editFolderSelect.appendChild(newOpt);
-        }
-
-        elements.editSongFolderSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'NEW_FOLDER') {
-                elements.editSongNewFolderInput.classList.remove('hidden');
-                elements.editSongNewFolderInput.focus();
-            } else {
-                elements.editSongNewFolderInput.classList.add('hidden');
-            }
-        });
-
-        document.querySelectorAll('.editor-tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const targetTab = e.currentTarget.getAttribute('data-editors-tab');
-                document.querySelectorAll('.editor-tab-btn').forEach(b => {
-                    b.classList.remove('bg-amber-500', 'text-slate-950');
-                    b.classList.add('text-slate-400');
-                });
-                e.currentTarget.classList.add('bg-amber-500', 'text-slate-950');
-                e.currentTarget.classList.remove('text-slate-400');
-                document.querySelectorAll('.editor-pane').forEach(p => p.classList.add('hidden'));
-                document.getElementById(`editor-pane-${targetTab}`).classList.remove('hidden');
-            });
-        });
-
-        elements.changeFolderBtn.addEventListener('click', () => {
-            elements.reconnectFolderContainer.classList.add('hidden');
-            elements.modal.classList.remove('hidden');
-        });
-
-        elements.modalImportBackupBtn.addEventListener('click', () => elements.backupFileInput.click());
-        elements.backupFileInput.addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files || []);
-            if (files.length === 0) return;
-            elements.modalProgressContainer.classList.remove('hidden');
-            elements.modalActionsContainer.classList.add('hidden');
-
-            for (const file of files) {
-                try {
-                    if (file.name.endsWith('.csv') || file.name.toLowerCase().includes('beatbuddy')) {
-                        parseBeatBuddyCSV(await file.text());
-                        continue;
-                    }
-                    const zip = new JSZip();
-                    const zipContent = await zip.loadAsync(file);
-                    for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
-                        if (zipEntry.dir) continue;
-                        const text = await zipEntry.async("text");
-                        const lowerName = filename.toLowerCase();
-                        if (lowerName.includes('mybeatbuddyproject.csv') || lowerName.endsWith('.csv')) {
-                            parseBeatBuddyCSV(text);
-                        } else if (lowerName.includes('sets/') || lowerName.endsWith('.osbs') || text.includes('<set')) {
-                            const setObj = parseOpenSongSetXML(text, filename.split('/').pop());
-                            if (setObj) loadedSets.push(setObj);
-                        } else if (lowerName.includes('songs/') || lowerName.endsWith('.osb') || lowerName.endsWith('.xml') || lowerName.endsWith('.ost') || text.includes('<song')) {
-                            let folder = 'MAIN';
-                            const parts = filename.split('/');
-                            const songsIdx = parts.findIndex(p => p.toLowerCase() === 'songs');
-                            if (songsIdx !== -1 && parts.length > songsIdx + 2) {
-                                folder = parts.slice(songsIdx + 1, parts.length - 1).join('/');
-                            }
-                            const songObj = parseOpenSongXML(text, filename.split('/').pop(), folder);
-                            if (songObj) loadedSongs.push(songObj);
-                        }
-                    }
-                } catch (err) { console.error(err); }
-            }
-            elements.modalProgressContainer.classList.add('hidden');
-            elements.modalActionsContainer.classList.remove('hidden');
-            elements.modal.classList.add('hidden');
-            updateTabCounts();
-            updateFolderFilterDropdown();
-            populateBeatBuddyDropdown();
-            renderSidebarList();
-            if (loadedSongs.length > 0) renderSongSheet(loadedSongs[0]);
-        });
-
-        elements.modalSelectBtn.addEventListener('click', async () => {
-            if ('showDirectoryPicker' in window) {
-                try {
-                    const handle = await window.showDirectoryPicker();
-                    rootDirectoryHandle = handle;
-                    await saveDirectoryHandle(handle);
-                    await processRootDirectory(handle);
-                } catch (err) {
-                    // If user cancelled, do nothing. If not supported or error, fallback to file input.
-                    if (err.name !== 'AbortError') {
-                        elements.fallbackInput.click();
-                    }
-                }
-            } else { 
-                elements.fallbackInput.click(); 
-            }
-        });
-
-        elements.fallbackInput.addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files || []);
-            if (files.length === 0) return;
-            loadedSongs = [];
-            loadedSets = [];
-            for (const file of files) {
-                const text = await file.text();
-                const path = file.webkitRelativePath || file.name;
-                const lower = path.toLowerCase();
-                const parts = path.split('/');
-                if (lower.includes('mybeatbuddyproject.csv') || file.name.endsWith('.csv')) {
-                    parseBeatBuddyCSV(text);
-                } else if (lower.includes('sets/')) {
-                    const s = parseOpenSongSetXML(text, file.name);
-                    if (s) loadedSets.push(s);
-                } else if (lower.includes('songs/') || file.name.endsWith('.xml') || file.name.endsWith('.ost') || text.includes('<song')) {
-                    let folder = 'MAIN';
-                    const songsIdx = parts.findIndex(p => p.toLowerCase() === 'songs');
-                    if (songsIdx !== -1 && parts.length > songsIdx + 2) {
-                        folder = parts.slice(songsIdx + 1, parts.length - 1).join('/');
-                    }
-                    const song = parseOpenSongXML(text, file.name, folder);
-                    if (song) loadedSongs.push(song);
-                }
-            }
-            elements.folderStatus.textContent = "Custom Folder Loaded";
-            elements.modal.classList.add('hidden');
-            updateTabCounts();
-            updateFolderFilterDropdown();
-            populateBeatBuddyDropdown();
-            renderSidebarList();
-            if (loadedSongs.length > 0) renderSongSheet(loadedSongs[0]);
-        });
-
-        async function processRootDirectory(handle) {
-            elements.modalProgressContainer.classList.remove('hidden');
-            elements.modalActionsContainer.classList.add('hidden');
-            elements.folderStatus.textContent = handle.name;
-            loadedSongs = [];
-            loadedSets = [];
-            try {
-                for await (const entry of handle.values()) {
-                    if (entry.kind === 'directory' && entry.name === 'Songs') {
-                        await scanSongDir(entry, '');
-                    } else if (entry.kind === 'directory' && entry.name === 'Sets') {
-                        for await (const setFile of entry.values()) {
-                            if (setFile.kind === 'file') {
-                                const f = await setFile.getFile();
-                                const setObj = parseOpenSongSetXML(await f.text(), f.name);
-                                if (setObj) loadedSets.push(setObj);
-                            }
-                        }
-                    } else if (entry.kind === 'directory' && entry.name === 'Settings') {
-                        for await (const setFile of entry.values()) {
-                            if (setFile.kind === 'file' && setFile.name.toLowerCase().includes('beatbuddy')) {
-                                const f = await setFile.getFile();
-                                parseBeatBuddyCSV(await f.text());
-                            }
-                        }
-                    }
-                }
-            } catch (e) { console.error(e); }
-
-            elements.modalProgressContainer.classList.add('hidden');
-            elements.modalActionsContainer.classList.remove('hidden');
-            elements.modal.classList.add('hidden');
-            updateTabCounts();
-            updateFolderFilterDropdown();
-            populateBeatBuddyDropdown();
-            renderSidebarList();
-            if (loadedSongs.length > 0) renderSongSheet(loadedSongs[0]);
-        }
-
-        async function scanSongDir(dirHandle, prefix) {
-            for await (const entry of dirHandle.values()) {
-                if (entry.kind === 'file') {
-                    const f = await entry.getFile();
-                    if (f.name.toLowerCase().includes('beatbuddy')) {
-                        parseBeatBuddyCSV(await f.text());
-                    } else {
-                        const song = parseOpenSongXML(await f.text(), f.name, prefix || 'MAIN');
-                        if (song) loadedSongs.push(song);
-                    }
-                } else if (entry.kind === 'directory') {
-                    const subFolderName = prefix ? `${prefix}/${entry.name}` : entry.name;
-                    await scanSongDir(entry, subFolderName);
-                }
-            }
-        }
-
-        function parseBeatBuddyCSV(csvText) {
-            const lines = csvText.split('\n');
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
-                const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                if (cols.length >= 3) {
-                    const songName = cols[2].replace(/^"|"$/g, '').trim();
-                    if (songName && !beatBuddySongs.includes(songName)) {
-                        beatBuddySongs.push(songName);
-                    }
-                }
-            }
-            beatBuddySongs.sort();
-            populateBeatBuddyDropdown();
-        }
-
-        function populateBeatBuddyDropdown() {
-            const sel = elements.editSongBbSong;
-            sel.innerHTML = '<option value="">-- None --</option>';
-            beatBuddySongs.forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.textContent = name;
-                sel.appendChild(opt);
-            });
-        }
-
-        function parseOpenSongXML(xmlString, filename, folderPath) {
-            try {
-                const doc = new DOMParser().parseFromString(xmlString, "text/xml");
-                if (doc.querySelector("parsererror")) return null;
-                const song = doc.querySelector("song");
-                if (!song) return null;
-                const gt = (tag) => { const el = song.querySelector(tag); return el ? el.textContent.trim() : ''; };
-                return {
-                    id: 'song_' + Math.random().toString(36).substring(2, 8),
-                    filename, folderPath: folderPath || 'MAIN',
-                    uuid: gt("uuid") || 'uuid_' + Math.random().toString(36).substring(2, 10),
-                    last_modified: gt("last_modified") || new Date().toISOString(),
-                    title: gt("title") || filename,
-                    author: gt("author"),
-                    copyright: gt("copyright"),
-                    presentation: gt("presentation"),
-                    hymn_number: gt("hymn_number"),
-                    capo: gt("capo"),
-                    tempo: gt("tempo"),
-                    time_sig: gt("time_sig") || gt("time_signature"),
-                    duration: parseInt(gt("duration"), 10) || 180,
-                    predelay: parseInt(gt("predelay"), 10) || 10,
-                    ccli: gt("ccli"),
-                    theme: gt("theme"),
-                    user1: gt("user1"), user2: gt("user2"), user3: gt("user3"),
-                    drummer: gt("drummer"),
-                    drummerkit: gt("drummerkit") || 'Acoustic',
-                    key: gt("key") || 'C',
-                    keyoriginal: gt("keyoriginal") || gt("originalkey"),
-                    preferedinstrument: gt("preferedinstrument") || 'g',
-                    previewoverride: gt("previewoverride"),
-                    beatbuddysong: gt("beatbuddysong"),
-                    beatbuddykit: gt("beatbuddykit") || 'Acoustic',
-                    aka: gt("aka"),
-                    midi: gt("midi"),
-                    notes: gt("notes"),
-                    abc_notation: gt("abc_notation"),
-                    lyrics: gt("lyrics")
-                };
-            } catch (e) { return null; }
-        }
-
-        function parseOpenSongSetXML(xmlString, filename) {
-            try {
-                const doc = new DOMParser().parseFromString(xmlString, "text/xml");
-                const setNode = doc.querySelector("set");
-                if (!setNode) return null;
-                const songTitles = [];
-                doc.querySelectorAll("slide_group").forEach(g => {
-                    const name = g.getAttribute("name");
-                    if (name) songTitles.push(name);
-                });
-                return { id: 'set_' + Math.random().toString(36).substring(2, 8), filename, title: setNode.getAttribute("name") || filename, songTitles };
-            } catch (e) { return null; }
-        }
-
-        elements.newSongBtn.addEventListener('click', () => {
-            elements.editSongTitleInput.value = '';
-            elements.editSongAuthorInput.value = '';
-            elements.editSongCopyrightInput.value = '';
-            elements.editSongFolderSelect.value = 'MAIN';
-            elements.editSongNewFolderInput.classList.add('hidden');
-            elements.editSongFilenameInput.value = 'NewSong.xml';
-            elements.editSongPresentationInput.value = '';
-            elements.editSongKeyInput.value = 'C';
-            elements.editSongOrigkeyInput.value = 'C';
-            elements.editSongCapoInput.value = '';
-            elements.editSongTempoInput.value = '120';
-            elements.editSongTimesigInput.value = '4/4';
-            elements.editSongPrefinstInput.value = 'g';
-            elements.editSongDurationInput.value = '180';
-            elements.editSongPredelayInput.value = '10';
-            elements.editSongPreviewoverrideInput.value = '';
-            elements.editSongBbSong.value = '';
-            elements.editSongBbKit.value = 'Acoustic';
-            elements.editSongDrummerInput.value = '';
-            elements.editSongDrummerkitInput.value = 'Acoustic';
-            elements.editSongThemeInput.value = '';
-            elements.editSongAkaInput.value = '';
-            elements.editSongCcliInput.value = '';
-            elements.editSongHymnnumInput.value = '';
-            elements.editSongNotesInput.value = '';
-            elements.editSongAbcInput.value = '';
-            elements.editSongLyricsInput.value = '[V1]\n.C     G\nLyrics here...';
-            activeSong = null;
-            elements.songEditorModal.classList.remove('hidden');
-        });
-
-        elements.editSongBtn.addEventListener('click', () => {
-            if (!activeSong) return;
-            elements.editSongTitleInput.value = activeSong.title;
-            elements.editSongAuthorInput.value = activeSong.author || '';
-            elements.editSongCopyrightInput.value = activeSong.copyright || '';
-            elements.editSongFolderSelect.value = activeSong.folderPath || 'MAIN';
-            elements.editSongNewFolderInput.classList.add('hidden');
-            elements.editSongFilenameInput.value = activeSong.filename;
-            elements.editSongPresentationInput.value = activeSong.presentation || '';
-            elements.editSongKeyInput.value = activeSong.key || 'C';
-            elements.editSongOrigkeyInput.value = activeSong.keyoriginal || 'C';
-            elements.editSongCapoInput.value = activeSong.capo || '';
-            elements.editSongTempoInput.value = activeSong.tempo || '120';
-            elements.editSongTimesigInput.value = activeSong.time_sig || '4/4';
-            elements.editSongPrefinstInput.value = activeSong.preferedinstrument || 'g';
-            elements.editSongDurationInput.value = activeSong.duration || 180;
-            elements.editSongPredelayInput.value = activeSong.predelay || 10;
-            elements.editSongPreviewoverrideInput.value = activeSong.previewoverride || '';
-            elements.editSongBbSong.value = activeSong.beatbuddysong || '';
-            elements.editSongBbKit.value = activeSong.beatbuddykit || 'Acoustic';
-            elements.editSongDrummerInput.value = activeSong.drummer || '';
-            elements.editSongDrummerkitInput.value = activeSong.drummerkit || 'Acoustic';
-            elements.editSongThemeInput.value = activeSong.theme || '';
-            elements.editSongAkaInput.value = activeSong.aka || '';
-            elements.editSongCcliInput.value = activeSong.ccli || '';
-            elements.editSongHymnnumInput.value = activeSong.hymn_number || '';
-            elements.editSongNotesInput.value = activeSong.notes || '';
-            elements.editSongAbcInput.value = activeSong.abc_notation || '';
-            elements.editSongLyricsInput.value = activeSong.lyrics || '';
-            elements.songEditorModal.classList.remove('hidden');
-        });
-
-        elements.closeSongEditor.addEventListener('click', () => elements.songEditorModal.classList.add('hidden'));
-
-        elements.saveSongBtn.addEventListener('click', () => {
-            let folder = elements.editSongFolderSelect.value;
-            if (folder === 'NEW_FOLDER') {
-                folder = elements.editSongNewFolderInput.value.trim() || 'MAIN';
-            }
-            const newSongData = {
-                id: activeSong ? activeSong.id : 'song_' + Math.random().toString(36).substring(2, 8),
-                filename: elements.editSongFilenameInput.value || 'song.xml',
-                folderPath: folder,
-                uuid: activeSong ? activeSong.uuid : ('uuid_' + Math.random().toString(36).substring(2, 10)),
-                last_modified: new Date().toISOString(),
-                title: elements.editSongTitleInput.value || 'Untitled',
-                author: elements.editSongAuthorInput.value,
-                copyright: elements.editSongCopyrightInput.value,
-                presentation: elements.editSongPresentationInput.value,
-                key: elements.editSongKeyInput.value,
-                keyoriginal: elements.editSongOrigkeyInput.value,
-                capo: elements.editSongCapoInput.value,
-                tempo: elements.editSongTempoInput.value,
-                time_sig: elements.editSongTimesigInput.value,
-                preferedinstrument: elements.editSongPrefinstInput.value,
-                duration: parseInt(elements.editSongDurationInput.value, 10) || 180,
-                predelay: parseInt(elements.editSongPredelayInput.value, 10) || 10,
-                previewoverride: elements.editSongPreviewoverrideInput.value,
-                beatbuddysong: elements.editSongBbSong.value,
-                beatbuddykit: elements.editSongBbKit.value,
-                drummer: elements.editSongDrummerInput.value,
-                drummerkit: elements.editSongDrummerkitInput.value,
-                theme: elements.editSongThemeInput.value,
-                aka: elements.editSongAkaInput.value,
-                ccli: elements.editSongCcliInput.value,
-                hymn_number: elements.editSongHymnnumInput.value,
-                notes: elements.editSongNotesInput.value,
-                abc_notation: elements.editSongAbcInput.value,
-                lyrics: elements.editSongLyricsInput.value
-            };
-
-            if (activeSong) {
-                const idx = loadedSongs.findIndex(s => s.id === activeSong.id);
-                if (idx !== -1) loadedSongs[idx] = newSongData;
-            } else {
-                loadedSongs.push(newSongData);
-            }
-            elements.songEditorModal.classList.add('hidden');
-            updateTabCounts();
-            updateFolderFilterDropdown();
-            renderSidebarList();
-            renderSongSheet(newSongData);
-        });
-
-        function sendSongIdentifierMessage(actionType, song) {
-            if (!wsClient || wsClient.readyState !== WebSocket.OPEN) return;
-            const payload = {
-                folder: song ? song.folderPath : "MAIN",
-                filename: song ? song.filename : "",
-                action: actionType
-            };
-            wsClient.send(JSON.stringify(payload));
-        }
-
-        function formatSectionHeader(code) {
-            const clean = code.trim().toUpperCase();
-            if (clean === 'V' || clean === 'VERSE') return 'Verse';
-            if (clean.startsWith('V')) return `Verse ${clean.substring(1)}`;
-            if (clean === 'C' || clean === 'CHORUS') return 'Chorus';
-            if (clean.startsWith('C')) return `Chorus ${clean.substring(1)}`;
-            if (clean === 'B' || clean === 'BRIDGE') return 'Bridge';
-            if (clean.startsWith('B')) return `Bridge ${clean.substring(1)}`;
-            if (clean === 'T' || clean === 'TAG') return 'Tag';
-            if (clean === 'P' || clean === 'PRECHORUS') return 'Pre-Chorus';
-            if (clean === 'I' || clean === 'INTRO') return 'Intro';
-            if (clean === 'O' || clean === 'OUTRO') return 'Outro';
-            return code;
-        }
-
-        function renderSongSheet(song, fromSetContext = null, songIndexInSet = -1) {
-            activeSong = song;
-            elements.emptyState.classList.add('hidden');
-            elements.setViewSheet.classList.add('hidden');
-            elements.songSheet.classList.remove('hidden');
-
-            if (fromSetContext) {
-                activeSet = fromSetContext;
-                activeSetSongIndex = songIndexInSet;
-                elements.bannerSetTitle.textContent = activeSet.title;
-                elements.setSongIndexLabel.textContent = `${activeSetSongIndex + 1} / ${activeSet.songTitles.length}`;
-                elements.setNavBanner.classList.remove('hidden');
-            } else if (!activeSet) {
-                elements.setNavBanner.classList.add('hidden');
-            }
-
-            elements.sheetTitle.textContent = song.title;
-            elements.sheetAuthor.textContent = song.author || '';
-            elements.sheetFolderPath.textContent = song.folderPath || 'MAIN';
-            elements.sheetKeyBadge.textContent = `Key: ${song.key || 'C'}`;
-            elements.currentSongTitle.textContent = song.title;
-            elements.currentSongAuthor.textContent = song.author || '';
-            elements.metaKey.textContent = song.key || 'C';
-            elements.metaTempo.textContent = song.tempo || '--';
-            elements.metaSig.textContent = song.time_sig || '--';
-            elements.songDurationLabel.textContent = `${Math.floor((song.duration || 180) / 60)}m ${(song.duration || 180) % 60}s`;
-            elements.songPredelayLabel.textContent = `${song.predelay || 10}s`;
-
-            if (song.notes && song.notes.trim()) {
-                elements.openNotesPopupBtn.classList.remove('hidden');
-                elements.stickyNoteText.textContent = song.notes;
-            } else {
-                elements.openNotesPopupBtn.classList.add('hidden');
-                elements.stickyNotePopup.classList.add('hidden');
-            }
-
-            if (song.abc_notation && song.abc_notation.trim()) {
-                elements.openAbcPopupBtn.classList.remove('hidden');
-                elements.abcPopupContent.textContent = song.abc_notation;
-            } else {
-                elements.openAbcPopupBtn.classList.add('hidden');
-                elements.abcPopup.classList.add('hidden');
-            }
-
-            renderSongLyrics(song.lyrics);
-            sendSongIdentifierMessage("cue", song);
-        }
-
-        elements.openNotesPopupBtn.addEventListener('click', () => {
-            elements.stickyNotePopup.classList.toggle('hidden');
-        });
-        elements.openAbcPopupBtn.addEventListener('click', () => {
-            elements.abcPopup.classList.toggle('hidden');
-        });
-
-        function renderSongLyrics(rawLyrics) {
-            elements.sheetContent.innerHTML = '';
-            if (!rawLyrics) return;
-            const lines = rawLyrics.split('\n');
-            let sectionContainer = null;
-
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                const trimmed = line.trim();
-                if (trimmed.startsWith(';')) {
-                    if (!sectionContainer) {
-                        sectionContainer = document.createElement('div');
-                        sectionContainer.className = 'p-4 rounded-xl bg-slate-900/40 border border-slate-800 space-y-2';
-                        elements.sheetContent.appendChild(sectionContainer);
-                    }
-                    const commDiv = document.createElement('div');
-                    commDiv.className = 'comment-line';
-                    commDiv.textContent = trimmed.substring(1).trim();
-                    sectionContainer.appendChild(commDiv);
-                    continue;
-                }
-                if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-                    const rawCode = trimmed.slice(1, -1);
-                    const formattedHeading = formatSectionHeader(rawCode);
-                    sectionContainer = document.createElement('div');
-                    const isChorus = rawCode.toLowerCase().startsWith('c');
-                    sectionContainer.className = `p-4 rounded-xl border ${isChorus ? 'bg-slate-900/85 border-amber-500/30 text-amber-400' : 'bg-slate-900/40 border-slate-800 text-slate-400'} space-y-3`;
-                    sectionContainer.innerHTML = `<h4 class="section-heading flex items-center gap-2"><span class="w-2 h-2 rounded-full ${isChorus ? 'bg-amber-400' : 'bg-slate-600'}"></span>${formattedHeading}</h4>`;
-                    elements.sheetContent.appendChild(sectionContainer);
-                    continue;
-                }
-                if (!sectionContainer) {
-                    sectionContainer = document.createElement('div');
-                    sectionContainer.className = 'p-4 rounded-xl bg-slate-900/40 border border-slate-800 space-y-3';
-                    elements.sheetContent.appendChild(sectionContainer);
-                }
-                if (line.startsWith('.')) {
-                    const chordLine = line.substring(1);
-                    const lyricLine = (i + 1 < lines.length && !lines[i+1].startsWith('.') && !lines[i+1].startsWith('[')) ? lines[i+1] : '';
-                    if (lyricLine) i++;
-
-                    const pairLine = document.createElement('div');
-                    pairLine.className = 'chord-lyric-pair-line';
-                    parseChordLyricTokens(chordLine, lyricLine).forEach(tok => {
-                        const box = document.createElement('div');
-                        box.className = 'chord-lyric-pair';
-                        box.innerHTML = `<span class="chord-above">${tok.chord || ''}</span><span class="lyric-below">${tok.lyric || '\u00A0'}</span>`;
-                        pairLine.appendChild(box);
-                    });
-                    sectionContainer.appendChild(pairLine);
-                } else if (trimmed.length > 0) {
-                    const div = document.createElement('div');
-                    div.className = 'lyric-below opacity-90 py-0.5 whitespace-pre-wrap';
-                    div.textContent = line;
-                    sectionContainer.appendChild(div);
-                }
-            }
-        }
-
-        function parseChordLyricTokens(chordLine, lyricLine) {
-            const chords = [];
-            let m;
-            const regex = /\S+/g;
-            while ((m = regex.exec(chordLine)) !== null) chords.push({ name: m[0], index: m.index });
-            if (chords.length === 0) return [{ chord: '', lyric: lyricLine }];
-
-            const tokens = [];
-            let lastIdx = 0;
-            chords.forEach((c, idx) => {
-                if (idx === 0 && c.index > 0) {
-                    tokens.push({ chord: '', lyric: lyricLine.substring(0, c.index) });
-                    lastIdx = c.index;
-                }
-                const nextC = chords[idx + 1];
-                const endIdx = nextC ? nextC.index : Math.max(lyricLine.length, c.index + c.name.length);
-                tokens.push({ chord: c.name, lyric: lyricLine.substring(lastIdx, endIdx) });
-                lastIdx = endIdx;
-            });
-            if (lastIdx < lyricLine.length) tokens.push({ chord: '', lyric: lyricLine.substring(lastIdx) });
-            return tokens;
-        }
-
-        function renderSetSheet(setObj) {
-            activeSet = setObj;
-            activeSong = null;
-            elements.emptyState.classList.add('hidden');
-            elements.songSheet.classList.add('hidden');
-            elements.setViewSheet.classList.remove('hidden');
-            elements.setTitle.textContent = setObj.title;
-            elements.setCountInfo.textContent = `${setObj.songTitles.length} songs in set`;
-            elements.setSongsContainer.innerHTML = '';
-
-            setObj.songTitles.forEach((songName, idx) => {
-                const matched = loadedSongs.find(s => s.title.toLowerCase() === songName.toLowerCase());
-                const card = document.createElement('div');
-                card.className = `p-4 rounded-xl border transition flex items-center justify-between cursor-pointer ${matched ? 'bg-slate-900/80 border-slate-800 hover:border-indigo-500/50' : 'opacity-60'}`;
-                card.innerHTML = `<div class="flex items-center space-x-3"><span class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-300 font-mono text-xs font-bold flex items-center justify-center">${idx + 1}</span><div><h4 class="text-sm font-bold text-slate-100">${songName}</h4></div></div>`;
-                if (matched) card.addEventListener('click', () => renderSongSheet(matched, setObj, idx));
-                elements.setSongsContainer.appendChild(card);
-            });
-            lucide.createIcons();
-        }
-
-        elements.metronomeToggleBtn.addEventListener('click', () => {
-            if (isMetronomeRunning) {
-                clearInterval(metronomeTimer);
-                isMetronomeRunning = false;
-                elements.metronomeToggleBtn.innerHTML = '<i data-lucide="play" class="w-4 h-4"></i>';
-                elements.metronomeFlash.className = 'w-3 h-3 rounded-full bg-slate-600 transition-colors';
-            } else {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                isMetronomeRunning = true;
-                elements.metronomeToggleBtn.innerHTML = '<i data-lucide="square" class="w-4 h-4"></i>';
-                const interval = (60 / metronomeBpm) * 1000;
-                metronomeTimer = setInterval(() => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.05);
-                    elements.metronomeFlash.className = 'w-3 h-3 rounded-full bg-amber-400 transition-colors shadow-lg shadow-amber-400/50';
-                    setTimeout(() => elements.metronomeFlash.className = 'w-3 h-3 rounded-full bg-slate-600 transition-colors', 100);
-                }, interval);
-            }
-            lucide.createIcons();
-        });
-
-        elements.metronomeSlider.addEventListener('input', (e) => {
-            metronomeBpm = parseInt(e.target.value, 10);
-            elements.metronomeBpmVal.textContent = `${metronomeBpm} BPM`;
-        });
-
-        elements.autoscrollToggleBtn.addEventListener('click', () => {
-            if (isAutoScrolling) {
-                clearInterval(autoScrollInterval);
-                isAutoScrolling = false;
-                elements.autoscrollStatusVal.textContent = "Paused";
-                elements.autoscrollToggleBtn.innerHTML = '<i data-lucide="play" class="w-4 h-4"></i>';
-            } else {
-                if (isUserManuallyScrolling) isUserManuallyScrolling = false;
-                isAutoScrolling = true;
-                elements.autoscrollStatusVal.textContent = "Scrolling";
-                elements.autoscrollToggleBtn.innerHTML = '<i data-lucide="square" class="w-4 h-4"></i>';
-                const container = elements.mainScrollContainer;
-                autoScrollInterval = setInterval(() => {
-                    if (!isUserManuallyScrolling) {
-                        container.scrollTop += 1;
-                    }
-                }, 40);
-            }
-            lucide.createIcons();
-        });
-
-        elements.padToggleBtn.addEventListener('click', () => {
-            if (isPadRunning) {
-                activePadOscillators.forEach(o => o.stop());
-                activePadOscillators = [];
-                isPadRunning = false;
-                elements.padToggleBtn.innerHTML = '<i data-lucide="power" class="w-4 h-4"></i>';
-            } else {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                isPadRunning = true;
-                elements.padToggleBtn.innerHTML = '<i data-lucide="square" class="w-4 h-4"></i>';
-                padGainNode = audioCtx.createGain();
-                padGainNode.gain.setValueAtTime(0.01, audioCtx.currentTime);
-                padGainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 3.0);
-                padGainNode.connect(audioCtx.destination);
-
-                const freqs = [130.81, 196.00, 261.63, 329.63];
-                freqs.forEach(f => {
-                    const osc = audioCtx.createOscillator();
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(f, audioCtx.currentTime);
-                    const filter = audioCtx.createBiquadFilter();
-                    filter.type = 'lowpass';
-                    filter.frequency.setValueAtTime(400, audioCtx.currentTime);
-                    osc.connect(filter);
-                    filter.connect(padGainNode);
-                    osc.start();
-                    activePadOscillators.push(osc);
-                });
-            }
-            lucide.createIcons();
-        });
-
-        elements.castDisplayBtn.addEventListener('click', () => {
-            secondaryWindow = window.open('', 'OpenSongStageCast', 'width=1024,height=768');
-            secondaryWindow.document.write(`
-                <!DOCTYPE html>
-                <html class="h-full bg-slate-950 text-slate-100">
-                <head><title>OpenSongApp Web - Stage Display</title><script src="https://cdn.tailwindcss.com"><\/script></head>
-                <body class="h-full flex items-center justify-center p-8 bg-slate-950 font-sans">
-                    <div id="cast-content" class="text-3xl font-bold text-amber-400 text-center max-w-4xl space-y-4">Click any song to project.</div>
-                </body>
-                </html>
-            `);
-        });
-
-        function initWebSocket(url, role) {
-            if (!url) return;
-            try {
-                if (wsClient) wsClient.close();
-                wsClient = new WebSocket(url);
-                wsClient.onopen = () => console.log(`WebSocket connected as ${role}`);
-                wsClient.onmessage = (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        if (data.action === 'cue' && data.filename) {
-                            const target = loadedSongs.find(s => s.filename.toLowerCase() === data.filename.toLowerCase());
-                            if (target) renderSongSheet(target);
-                        }
-                    } catch (e) { console.error(e); }
-                };
-            } catch (e) { console.error(e); }
-        }
-
-        function switchSidebarTab(tab) {
-            activeTab = tab;
-            elements.tabSongsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === 'songs' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800'}`;
-            elements.tabSetsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === 'sets' ? 'bg-indigo-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800'}`;
-            elements.activeTabLabel.textContent = tab === 'songs' ? "Showing All Songs" : "Showing All Sets";
-            renderSidebarList(elements.songSearch.value.toLowerCase());
-        }
-
-        function updateTabCounts() {
-            elements.tabSongsCount.textContent = `(${loadedSongs.length})`;
-            elements.tabSetsCount.textContent = `(${loadedSets.length})`;
-        }
-
-        function renderSidebarList(query = '') {
-            elements.songList.innerHTML = '';
-            if (activeTab === 'songs') {
-                loadedSongs.sort((a, b) => a.title.localeCompare(b.title));
-                const filtered = loadedSongs.filter(song => {
-                    const matchesQuery = song.title.toLowerCase().includes(query) || (song.author && song.author.toLowerCase().includes(query));
-                    const matchesFolder = selectedFolderFilter === 'ALL' || (song.folderPath || 'MAIN') === selectedFolderFilter;
-                    return matchesQuery && matchesFolder;
-                });
-                filtered.forEach(song => {
-                    const li = document.createElement('li');
-                    const isActive = activeSong && activeSong.id === song.id;
-                    li.className = `p-3 rounded-xl cursor-pointer transition flex items-center justify-between border ${isActive ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 font-bold' : 'hover:bg-slate-800/60 text-slate-300 border-transparent'}`;
-                    li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${song.title}</div><div class="text-xs text-slate-500 font-normal">${song.author || 'Unknown'} <span class="text-[10px] text-amber-500/80 font-mono">(${song.folderPath || 'MAIN'})</span></div></div><span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800">${song.key || '?'}</span>`;
-                    li.addEventListener('click', () => { activeSet = null; renderSongSheet(song); });
-                    elements.songList.appendChild(li);
-                });
-            } else {
-                loadedSets.sort((a, b) => a.title.localeCompare(b.title));
-                loadedSets.filter(s => s.title.toLowerCase().includes(query)).forEach(setObj => {
-                    const li = document.createElement('li');
-                    const isActive = activeSet && activeSet.id === setObj.id;
-                    li.className = `p-3 rounded-xl cursor-pointer transition flex items-center justify-between border ${isActive ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400 font-bold' : 'hover:bg-slate-800/60 text-slate-300 border-transparent'}`;
-                    li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${setObj.title}</div><div class="text-xs text-slate-500 font-normal">${setObj.songTitles.length} songs</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>`;
-                    li.addEventListener('click', () => renderSetSheet(setObj));
-                    elements.songList.appendChild(li);
-                });
-            }
-            lucide.createIcons();
         }
 
         function setupEventListeners() {
@@ -1666,8 +1444,6 @@
 
                 document.documentElement.style.setProperty('--heading-font-scale', `${appSettings.headingScale}%`);
                 document.documentElement.style.setProperty('--chord-font-scale', `${appSettings.chordScale}%`);
-
-                initWebSocket(appSettings.wsUrl, appSettings.wsRole);
             });
         }
     </script>
