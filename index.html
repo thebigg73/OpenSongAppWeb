@@ -128,7 +128,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0f</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0g</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1805,16 +1805,16 @@
                 showToast("Opening stage presentation window...");
                 const win = window.open('', '_blank', 'width=1024,height=768');
                 if (win) {
-                    win.document.write(`
+                    win.document.write("
                         <html>
                         <head><title>OpenSongApp Stage Cast</title>
-                        <script src="https://cdn.tailwindcss.com"></script></head>
-                        <body class="bg-slate-950 text-white flex flex-col items-center justify-center h-screen p-8 text-center">
-                            <h1 class="text-4xl font-extrabold text-amber-400 mb-4" id="cast-title">Stage Presentation View</h1>
-                            <div class="text-2xl text-slate-300 max-w-3xl whitespace-pre-wrap leading-relaxed" id="cast-content">${activeSong ? activeSong.title : 'Waiting for active song...'}</div>
+                        <script src=\"https://cdn.tailwindcss.com\"><\/script></head>
+                        <body class=\"\bg-slate-950 tet-white flex flex-col items-center justify-center h-screen p-8 text-center\">
+                            <h1 class=\"text-4xl font-extrabold text-amber-400 mb-4\" id=\"cast-title\">Stage Presentation View</h1>
+                            <div class=\"text-2xl text-slate-300 max-w-3xl whitespace-pre-wrap leading-relaxed\" id=\"cast-content\">${activeSong ? activeSong.title : 'Waiting for active song...'}<\/div>
                         </body>
                         </html>
-                    `);
+                    ");
                 }
             });
         }
