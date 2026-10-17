@@ -128,7 +128,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0d</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0e</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -524,17 +524,27 @@
                 <button id="close-song-editor" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             
+            <!-- Tabs Navigation -->
             <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0 gap-1 overflow-x-auto">
-                <button data-editors-tab="main" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg bg-amber-500 text-slate-950 transition">Main</button>
-                <button data-editors-tab="lyrics" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Lyrics / PDF</button>
-                <button data-editors-tab="features" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Features</button>
+                <button data-editors-tab="lyrics" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg bg-amber-500 text-slate-950 transition">Lyrics</button>
+                <button data-editors-tab="main" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Main</button>
+                <button data-editors-tab="features" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Song features</button>
+                <button data-editors-tab="tags" class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Tags</button>
             </div>
 
             <div class="flex-1 overflow-y-auto space-y-4 pr-1">
-                <div id="editor-pane-main" class="editor-pane space-y-3 text-xs">
+                <!-- Tab 1: Lyrics -->
+                <div id="editor-pane-lyrics" class="editor-pane space-y-3 text-xs">
+                    <div><label class="font-bold text-slate-300 block mb-1">Presentation Order e.g. V1 C V2 C</label><input type="text" id="edit-song-presentation-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono"></div>
+                    <div>
+                        <label class="font-bold text-slate-300 block mb-1">Lyrics & Chords (OpenSong Format)</label>
+                        <textarea id="edit-song-lyrics-input" rows="10" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-slate-100" placeholder="[V1]&#10;.C     G&#10;Amazing grace..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Main -->
+                <div id="editor-pane-main" class="editor-pane hidden space-y-3 text-xs">
                     <div><label class="font-bold text-slate-300 block mb-1">Title *</label><input type="text" id="edit-song-title-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
-                    <div><label class="font-bold text-slate-300 block mb-1">Author / Artist</label><input type="text" id="edit-song-author-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
-                    <div><label class="font-bold text-slate-300 block mb-1">Copyright</label><input type="text" id="edit-song-copyright-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="font-bold text-slate-300 block mb-1">Folder</label>
@@ -546,20 +556,12 @@
                         </div>
                         <div><label class="font-bold text-slate-300 block mb-1">Filename (No Extension)</label><input type="text" id="edit-song-filename-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono"></div>
                     </div>
-                    <div><label class="font-bold text-slate-300 block mb-1">Sticky Notes / Popup Notes</label><textarea id="edit-song-notes-input" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></textarea></div>
                 </div>
 
-                <div id="editor-pane-lyrics" class="editor-pane hidden space-y-3 text-xs">
-                    <div><label class="font-bold text-slate-300 block mb-1">Presentation Order e.g. V1 C V2 C</label><input type="text" id="edit-song-presentation-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono"></div>
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="font-bold text-slate-300">Lyrics & Chords (OpenSong Format)</label>
-                        </div>
-                        <textarea id="edit-song-lyrics-input" rows="8" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-slate-100" placeholder="[V1]&#10;.C     G&#10;Amazing grace..."></textarea>
-                    </div>
-                </div>
-
+                <!-- Tab 3: Song Features -->
                 <div id="editor-pane-features" class="editor-pane hidden space-y-3 text-xs">
+                    <div><label class="font-bold text-slate-300 block mb-1">Author / Artist</label><input type="text" id="edit-song-author-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
+                    <div><label class="font-bold text-slate-300 block mb-1">Copyright</label><input type="text" id="edit-song-copyright-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></div>
                     <div class="grid grid-cols-3 gap-2">
                         <div>
                             <label class="font-bold text-slate-300 block mb-1">Key</label>
@@ -578,6 +580,14 @@
                             <input type="number" id="edit-song-tempo-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" value="120">
                         </div>
                     </div>
+                    <div><label class="font-bold text-slate-300 block mb-1">Time Signature</label><input type="text" id="edit-song-timesig-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono" value="4/4"></div>
+                    <div><label class="font-bold text-slate-300 block mb-1">Sticky Notes / Popup Notes</label><textarea id="edit-song-notes-input" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></textarea></div>
+                </div>
+
+                <!-- Tab 4: Tags -->
+                <div id="editor-pane-tags" class="editor-pane hidden space-y-3 text-xs">
+                    <div><label class="font-bold text-slate-300 block mb-1">Themes</label><input type="text" id="edit-song-themes-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" placeholder="e.g. Worship, Grace"></div>
+                    <div><label class="font-bold text-slate-300 block mb-1">BeatBuddy / Drummer</label><input type="text" id="edit-song-beatbuddy-input" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" placeholder="e.g. Rock 4/4"></div>
                 </div>
             </div>
 
@@ -1684,6 +1694,23 @@
 
             elements.floatingMainBtn.addEventListener('click', () => elements.floatingMenu.classList.toggle('hidden'));
             elements.closeFloatingMenu.addEventListener('click', () => elements.floatingMenu.classList.add('hidden'));
+
+            // Editor Tab Switching Logic
+        document.querySelectorAll('.editor-tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const targetTab = e.currentTarget.getAttribute('data-editors-tab');
+                document.querySelectorAll('.editor-tab-btn').forEach(b => {
+                    b.classList.remove('bg-amber-500', 'text-slate-950');
+                    b.classList.add('text-slate-400', 'hover:text-white');
+                });
+                e.currentTarget.classList.remove('text-slate-400', 'hover:text-white');
+                e.currentTarget.classList.add('bg-amber-500', 'text-slate-950');
+                
+                document.querySelectorAll('.editor-pane').forEach(pane => pane.classList.add('hidden'));
+                const activePane = document.getElementById(`editor-pane-${targetTab}`);
+                if (activePane) activePane.classList.remove('hidden');
+            });
+        });
         }
     </script>
 </body>
