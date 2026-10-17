@@ -639,6 +639,7 @@
             tabSetsCount: document.getElementById('tab-sets-count'),
             songList: document.getElementById('song-list'),
             songSearch: document.getElementById('song-search-input'),
+            clearSearch: document.getElementById('clear-search'),
             folderFilterSelect: document.getElementById('folder-filter-select'),
             activeTabLabel: document.getElementById('active-tab-label'),
             rescanBtn: document.getElementById('rescan-btn'),
@@ -682,6 +683,23 @@
             editSongBtn: document.getElementById('edit-song-btn'),
             editSetBtn: document.getElementById('edit-set-btn'),
 
+            // Floating Tools
+            floatingMenu: document.getElementById('floating-menu'),
+            closeFloatingMenu: document.getElementById('close-floating-menu'),
+            floatingMainBtn: document.getElementById('floating-main-btn'),
+            metronomeFlash: document.getElementById('metronome-flash'),
+            metronomeBpmVal: document.getElementById('metronome-bpm-val'),
+            metronomeSlider: document.getElementById('metronome-slider'),
+            metronomeToggleBtn: document.getElementById('metronome-toggle-btn'),
+            autoscrollStatusVal: document.getElementById('autoscroll-status-val'),
+            songDurationLabel: document.getElementById('song-duration-label'),
+            songPredelayLabel: document.getElementById('song-predelay-label'),
+            autoscrollSlider: document.getElementById('autoscroll-slider'),
+            autoscrollToggleBtn: document.getElementById('autoscroll-toggle-btn'),
+            padKeyVal: document.getElementById('pad-key-val'),
+            padKeySelect: document.getElementById('pad-key-select'),
+            padToggleBtn: document.getElementById('pad-toggle-btn'),
+
             // Editor
             songEditorModal: document.getElementById('song-editor-modal'),
             closeSongEditor: document.getElementById('close-song-editor'),
@@ -722,7 +740,7 @@
             settingHeadingScaleSlider: document.getElementById('setting-heading-scale-slider'),
             settingHeadingScaleLabel: document.getElementById('setting-heading-scale-label'),
             settingChordScaleSlider: document.getElementById('setting-chord-scale-slider'),
-            settingChordScaleLabel: document.getElementById('setting-chord-scale-slider'),
+            settingChordScaleLabel: document.getElementById('setting-chord-scale-label'),
             saveSettingsBtn: document.getElementById('save-settings-btn')
         };
 
@@ -955,6 +973,7 @@
                     await saveDirectoryHandle(handle);
                     await processRootDirectory(handle);
                 } catch (err) {
+                    // If user cancelled, do nothing. If not supported or error, fallback to file input.
                     if (err.name !== 'AbortError') {
                         elements.fallbackInput.click();
                     }
@@ -1601,7 +1620,22 @@
         function setupEventListeners() {
             elements.tabSongsBtn.addEventListener('click', () => switchSidebarTab('songs'));
             elements.tabSetsBtn.addEventListener('click', () => switchSidebarTab('sets'));
-            elements.songSearch.addEventListener('input', (e) => renderSidebarList(e.target.value.toLowerCase()));
+            elements.songSearch.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (elements.clearSearch) {
+                    if (val) elements.clearSearch.classList.remove('hidden');
+                    else elements.clearSearch.classList.add('hidden');
+                }
+                renderSidebarList(val.toLowerCase());
+            });
+            if (elements.clearSearch) {
+                elements.clearSearch.addEventListener('click', () => {
+                    elements.songSearch.value = '';
+                    elements.clearSearch.classList.add('hidden');
+                    renderSidebarList('');
+                });
+            }
+
             elements.floatingMainBtn.addEventListener('click', () => elements.floatingMenu.classList.toggle('hidden'));
             elements.closeFloatingMenu.addEventListener('click', () => elements.floatingMenu.classList.add('hidden'));
 
