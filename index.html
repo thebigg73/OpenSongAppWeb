@@ -133,7 +133,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.0</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.1</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1912,8 +1912,9 @@
         }
 
         // Simple IndexedDB wrapper for storing FileSystemDirectoryHandle
+        // Corrected IndexedDB wrapper for storing FileSystemDirectoryHandle
         const dbPromise = new Promise((resolve, reject) => {
-            const request = indexedDB.OpenDB("OpenSongAppDB", 1);
+            const request = indexedDB.open("OpenSongAppDB", 1);
             request.onupgradeneeded = (e) => {
                 e.target.result.createObjectStore("handles");
             };
@@ -1922,20 +1923,28 @@
         });
 
         async function saveDirHandle(handle) {
-            const db = await dbPromise;
-            const tx = db.transaction("handles", "readwrite");
-            tx.objectStore("handles").put(handle, "rootFolder");
-            return tx.complete;
+            try {
+                const db = await dbPromise;
+                const tx = db.transaction("handles", "readwrite");
+                tx.objectStore("handles").put(handle, "rootFolder");
+                return tx.complete;
+            } catch (err) {
+                console.error("Failed to save handle:", err);
+            }
         }
 
         async function getSavedDirHandle() {
-            const db = await dbPromise;
-            return new Promise((resolve) => {
-                const tx = db.transaction("handles", "readonly");
-                const req = tx.objectStore("handles").get("rootFolder");
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => resolve(null);
-            });
+            try {
+                const db = await dbPromise;
+                return new Promise((resolve) => {
+                    const tx = db.transaction("handles", "readonly");
+                    const req = tx.objectStore("handles").get("rootFolder");
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => resolve(null);
+                });
+            } catch (err) {
+                return null;
+            }
         }
 
         // Check for saved handle on app startup
@@ -1963,6 +1972,26 @@
                         showToast("Could not reconnect folder. Please reselect.");
                     }
                 };
+            }
+        }
+
+        // Called when the user clicks the "Reconnect Folder" button in the banner
+        async function handleReconnectClick(savedHandle) {
+            try {
+                const opts = { mode: 'readwrite' };
+                if ((await savedHandle.queryPermission(opts)) !== 'granted') {
+                    if ((await savedHandle.requestPermission(opts)) !== 'granted') {
+                        showToast("Permission denied.");
+                        return;
+                    }
+                }
+                rootDirectoryHandle = savedHandle;
+                await processRootDirectory(savedHandle);
+                showToast("Folder reconnected successfully!");
+                document.getElementById('reconnect-banner').classList.add('hidden');
+            } catch (err) {
+                console.error("Reconnect failed:", err);
+                showToast("Could not reconnect folder. Please reselect.");
             }
         }
     </script>
