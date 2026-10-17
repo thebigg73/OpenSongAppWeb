@@ -1092,22 +1092,28 @@
         });
 
         async function executeImportBatch(items) {
-            for (const item of items) {
-                if (!item.selected) continue;
+            const selectedItems = items.filter(i => i.selected);
+            if (selectedItems.length === 0) return;
+            showToast(`Importing ${selectedItems.length} items to library & disk...`);
+            
+            let count = 0;
+            for (const item of selectedItems) {
                 if (item.type === 'song') {
                     addOrUpdateSong(item.itemObj);
                     await writeSongToDisk(item.itemObj);
+                    count++;
                 } else if (item.type === 'set') {
                     const existingSetIdx = loadedSets.findIndex(s => s.title.toLowerCase() === item.itemObj.title.toLowerCase());
                     if (existingSetIdx !== -1) loadedSets[existingSetIdx] = item.itemObj;
                     else loadedSets.push(item.itemObj);
                     await writeSetToDisk(item.itemObj);
+                    count++;
                 }
             }
             updateTabCounts();
             updateFolderFilterDropdown();
             renderSidebarList();
-            showToast("Import completed and saved to disk!");
+            showToast(`Successfully imported and saved ${count} items!`);
         }
 
         elements.individualFilesInput.addEventListener('change', async (e) => {
@@ -1504,6 +1510,34 @@
             });
         }
 
+        function formatSectionHeading(tag) {
+            const inner = tag.replace(/^\[\vert{}\]$/g, '').trim();
+            const upper = inner.toUpperCase();
+            if (upper.startsWith('V')) {
+                const num = upper.slice(1);
+                return num ? `Verse ${num}` : 'Verse';
+            } else if (upper.startsWith('C')) {
+                const num = upper.slice(1);
+                return num ? `Chorus ${num}` : 'Chorus';
+            } else if (upper.startsWith('B')) {
+                const num = upper.slice(1);
+                return num ? `Bridge ${num}` : 'Bridge';
+            } else if (upper.startsWith('T')) {
+                const num = upper.slice(1);
+                return num ? `Tag ${num}` : 'Tag';
+            } else if (upper.startsWith('P')) {
+                const num = upper.slice(1);
+                return num ? `Pre-Chorus ${num}` : 'Pre-Chorus';
+            } else if (upper.startsWith('I')) {
+                const num = upper.slice(1);
+                return num ? `Intro ${num}` : 'Intro';
+            } else if (upper.startsWith('O')) {
+                const num = upper.slice(1);
+                return num ? `Outro ${num}` : 'Outro';
+            }
+            return inner;
+        }
+        
         function renderSongLyrics(rawLyrics, capoFret) {
             elements.sheetContent.innerHTML = '';
             if (!rawLyrics) return;
@@ -1516,7 +1550,8 @@
                 if (trimmed.startsWith('[')) {
                     sectionContainer = document.createElement('div');
                     sectionContainer.className = 'p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3';
-                    sectionContainer.innerHTML = `<h4 class="section-heading text-amber-400">${trimmed}</h4>`;
+                    const prettyName = formatSectionHeading(trimmed);
+                    sectionContainer.innerHTML = `<h4 class="section-heading text-amber-400">${prettyName}</h4>`;
                     elements.sheetContent.appendChild(sectionContainer);
                     continue;
                 }
