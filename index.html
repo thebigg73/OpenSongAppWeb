@@ -369,7 +369,7 @@
                 </button>
             </div>
             <input type="file" id="fallback-folder-input" webkitdirectory directory multiple class="hidden">
-            <input type="file" id="backup-file-input" accept=".osb,.osbs,.zip" multiple class="hidden">
+            <input type="file" id="backup-file-input" accept=".osb,.osbs,.zip,.csv" multiple class="hidden">
         </div>
     </div>
 
@@ -421,7 +421,7 @@
                     </div>
                     <div>
                         <div class="flex justify-between items-center mb-1">
-                            <label class="font-bold text-slate-300">ABC Notation Score Popup (or paste online ABC link above)</label>
+                            <label class="font-bold text-slate-300">ABC Notation Score Popup</label>
                         </div>
                         <textarea id="edit-song-abc-input" rows="4" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-amber-300" placeholder="X:1&#10;M:4/4&#10;K:C&#10;..."></textarea>
                     </div>
@@ -710,7 +710,7 @@
             settingHeadingScaleSlider: document.getElementById('setting-heading-scale-slider'),
             settingHeadingScaleLabel: document.getElementById('setting-heading-scale-label'),
             settingChordScaleSlider: document.getElementById('setting-chord-scale-slider'),
-            settingChordScaleLabel: document.getElementById('setting-chord-scale-slider'),
+            settingChordScaleLabel: document.getElementById('setting-chord-scale-label'),
             saveSettingsBtn: document.getElementById('save-settings-btn')
         };
 
@@ -721,23 +721,18 @@
             elements.modal.classList.remove('hidden');
         });
 
-        // ABC Notation auto-detection on paste / input in lyrics
         elements.editSongLyricsInput.addEventListener('input', (e) => {
             const val = e.target.value;
-            // Detect raw ABC block like X:1 or M:4/4 or K:C at start of pasted text
             if ((val.includes('X:') || val.includes('M:4/4') || val.includes('K:')) && !val.includes(';#:')) {
                 const lines = val.split('\n');
                 let isAbcBlock = lines.some(l => l.startsWith('X:') || l.startsWith('M:') || l.startsWith('K:'));
                 if (isAbcBlock) {
-                    const formattedAbc = lines.map(l => l.trim()).filter(l => l).join('\\n');
-                    // Check if user pasted it into lyrics, automatically format into abc box or comment
                     elements.editSongAbcInput.value = val;
                     e.target.value = val.split('\n').filter(l => !l.startsWith('X:') && !l.startsWith('M:') && !l.startsWith('K:') && !l.startsWith('L:')).join('\n');
                 }
             }
         });
 
-        // Draggable popup utility
         function setupDraggablePopups() {
             makeDraggable(elements.stickyNotePopup, document.getElementById('sticky-drag-handle'));
             makeDraggable(elements.abcPopup, document.getElementById('abc-drag-handle'));
@@ -825,7 +820,6 @@
 
         elements.changeFolderBtn.addEventListener('click', () => elements.modal.classList.remove('hidden'));
 
-        // Import Backup / Zip / CSV
         elements.modalImportBackupBtn.addEventListener('click', () => elements.backupFileInput.click());
         elements.backupFileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files || []);
@@ -1044,7 +1038,6 @@
             } catch (e) { return null; }
         }
 
-        // Song & Set Editors
         elements.newSongBtn.addEventListener('click', () => {
             elements.editSongTitleInput.value = '';
             elements.editSongAuthorInput.value = '';
@@ -1161,7 +1154,6 @@
             renderSongSheet(newSongData);
         });
 
-        // WebSocket integration
         function sendSongIdentifierMessage(actionType, song) {
             if (!wsClient || wsClient.readyState !== WebSocket.OPEN) return;
             const payload = {
@@ -1172,7 +1164,6 @@
             wsClient.send(JSON.stringify(payload));
         }
 
-        // Section header mapping
         function formatSectionHeader(code) {
             const clean = code.trim().toUpperCase();
             if (clean === 'V' || clean === 'VERSE') return 'Verse';
@@ -1216,7 +1207,6 @@
             elements.songDurationLabel.textContent = `${Math.floor((song.duration || 180) / 60)}m ${(song.duration || 180) % 60}s`;
             elements.songPredelayLabel.textContent = `${song.predelay || 10}s`;
 
-            // Sticky note popup button & content
             if (song.notes && song.notes.trim()) {
                 elements.openNotesPopupBtn.classList.remove('hidden');
                 elements.stickyNoteText.textContent = song.notes;
@@ -1225,7 +1215,6 @@
                 elements.stickyNotePopup.classList.add('hidden');
             }
 
-            // ABC score popup button & content
             if (song.abc_notation && song.abc_notation.trim()) {
                 elements.openAbcPopupBtn.classList.remove('hidden');
                 elements.abcPopupContent.textContent = song.abc_notation;
@@ -1348,7 +1337,6 @@
             lucide.createIcons();
         }
 
-        // Metronome Audio
         elements.metronomeToggleBtn.addEventListener('click', () => {
             if (isMetronomeRunning) {
                 clearInterval(metronomeTimer);
@@ -1382,7 +1370,6 @@
             elements.metronomeBpmVal.textContent = `${metronomeBpm} BPM`;
         });
 
-        // Auto-Scroll
         elements.autoscrollToggleBtn.addEventListener('click', () => {
             if (isAutoScrolling) {
                 clearInterval(autoScrollInterval);
@@ -1404,7 +1391,6 @@
             lucide.createIcons();
         });
 
-        // Synth Pad Player
         elements.padToggleBtn.addEventListener('click', () => {
             if (isPadRunning) {
                 activePadOscillators.forEach(o => o.stop());
@@ -1437,13 +1423,12 @@
             lucide.createIcons();
         });
 
-        // Secondary Screen Casting
         elements.castDisplayBtn.addEventListener('click', () => {
             secondaryWindow = window.open('', 'OpenSongStageCast', 'width=1024,height=768');
             secondaryWindow.document.write(`
                 <!DOCTYPE html>
                 <html class="h-full bg-slate-950 text-slate-100">
-                <head><title>OpenSongApp Web - Stage Display</title><script src="https://cdn.tailwindcss.com"><script></head>
+                <head><title>OpenSongApp Web - Stage Display</title><script src="https://cdn.tailwindcss.com"></script></head>
                 <body class="h-full flex items-center justify-center p-8 bg-slate-950 font-sans">
                     <div id="cast-content" class="text-3xl font-bold text-amber-400 text-center max-w-4xl space-y-4">Click any song to project.</div>
                 </body>
@@ -1451,7 +1436,6 @@
             `);
         });
 
-        // WebSocket
         function initWebSocket(url, role) {
             if (!url) return;
             try {
@@ -1518,6 +1502,8 @@
             elements.tabSongsBtn.addEventListener('click', () => switchSidebarTab('songs'));
             elements.tabSetsBtn.addEventListener('click', () => switchSidebarTab('sets'));
             elements.songSearch.addEventListener('input', (e) => renderSidebarList(e.target.value.toLowerCase()));
+            elements.floatingMainBtn.addEventListener('click', () => elements.floatingMenu.classList.toggle('hidden'));
+            elements.closeFloatingMenu.addEventListener('click', () => elements.floatingMenu.classList.add('hidden'));
 
             elements.openSettingsBtn.addEventListener('click', () => {
                 elements.settingWsRole.value = appSettings.wsRole;
