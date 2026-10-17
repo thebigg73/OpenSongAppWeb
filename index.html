@@ -120,6 +120,17 @@
         <span id="toast-message">Notification message</span>
     </div>
 
+    <!-- Reconnect Folder Banner (Subtle Banner on Startup) -->
+    <div id="reconnect-banner" class="hidden bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-sm text-amber-300 z-30 shrink-0">
+        <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+            <span>Previously connected folder found. Click to restore access:</span>
+        </div>
+        <button id="reconnect-btn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1 rounded-lg text-xs transition-colors">
+            Reconnect Folder
+        </button>
+    </div>
+
     <!-- Top Navigation Bar -->
     <header class="h-16 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between z-20 shrink-0">
         <div class="flex items-center space-x-3">
@@ -133,22 +144,11 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.1</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.1s</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
             </div>
-        </div>
-        
-        <!-- Reconnect Folder Banner -->
-        <div id="reconnect-banner" class="hidden bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-sm text-amber-300">
-            <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
-                <span>Previously connected folder found. Click to restore access:</span>
-            </div>
-            <button id="reconnect-btn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1 rounded-lg text-xs transition-colors">
-                Reconnect Folder
-            </button>
         </div>
 
         <div id="header-song-info" class="hidden md:flex items-center space-x-4 bg-slate-950/60 px-4 py-1.5 rounded-xl border border-slate-800">
@@ -164,7 +164,7 @@
             </div>
         </div>
 
-        <!-- Top Control Bar Container -->
+        <!-- Top Control Bar Container (Scrollable on narrow screens) -->
         <div class="flex items-center gap-2 overflow-x-auto py-2 shrink-0 no-scrollbar">
             <div class="hidden sm:flex items-center gap-1 bg-slate-800/80 p-1 rounded-lg border border-slate-700">
                 <button id="new-song-btn" class="px-2 py-1 text-xs font-bold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 rounded transition flex items-center gap-1">
@@ -728,14 +728,22 @@
             lucide.createIcons();
             setupEventListeners();
 
-            checkSavedFolder();
+            // Check saved folder handle on startup and show subtle banner if present
+            const savedHandle = await getStoredDirectoryHandle();
+            if (savedHandle) {
+                const banner = document.getElementById('reconnect-banner');
+                if (banner) {
+                    banner.classList.remove('hidden');
+                    document.getElementById('reconnect-btn').onclick = () => handleReconnectClick(savedHandle);
+                }
+            }
             
             if ('showDirectoryPicker' in window) {
                 const hasStoredFolder = await checkStoredDirectoryHandle();
                 if (hasStoredFolder) {
                     elements.reconnectFolderContainer.classList.remove('hidden');
                 } else {
-                    elements.modal.classList.remove('hidden');
+                    elements.modal.classList.add('hidden');
                 }
             } else {
                 elements.modal.classList.add('hidden');
@@ -771,10 +779,14 @@
             });
         }
         async function saveDirectoryHandle(handle) {
-            const db = await openIdb();
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            tx.objectStore(STORE_NAME).put(handle, 'rootFolder');
-            return tx.complete;
+            try {
+                const db = await openIdb();
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put(handle, 'rootFolder');
+                return tx.complete;
+            } catch (err) {
+                console.error("Failed to save handle:", err);
+            }
         }
         async function getStoredDirectoryHandle() {
             try {
@@ -814,6 +826,26 @@
                 elements.reconnectFolderContainer.classList.add('hidden');
             }
         });
+
+        // Called when user clicks the subtle reconnect banner button
+        async function handleReconnectClick(savedHandle) {
+            try {
+                const opts = { mode: 'readwrite' };
+                if ((await savedHandle.queryPermission(opts)) !== 'granted') {
+                    if ((await savedHandle.requestPermission(opts)) !== 'granted') {
+                        showToast("Permission denied.");
+                        return;
+                    }
+                }
+                rootDirectoryHandle = savedHandle;
+                await processRootDirectory(savedHandle);
+                showToast("Folder reconnected successfully!");
+                document.getElementById('reconnect-banner').classList.add('hidden');
+            } catch (err) {
+                console.error("Reconnect failed:", err);
+                showToast("Could not reconnect folder. Please reselect.");
+            }
+        }
 
         elements.changeFolderBtn.addEventListener('click', () => {
             elements.reconnectFolderContainer.classList.add('hidden');
@@ -1428,7 +1460,6 @@
                     const name = g.getAttribute("name");
                     if (name) songTitles.push(name);
                 });
-                // Strip .osts extension if present
                 const cleanFilename = filename.endsWith('.osts') ? filename.slice(0, -5) : (filename.endsWith('.ost') ? filename.slice(0, -4) : filename);
                 return { id: 'set_' + Math.random().toString(36).substring(2, 8), filename: cleanFilename, title: setNode.getAttribute("name") || cleanFilename, songTitles };
             } catch (e) { return null; }
@@ -1616,7 +1647,6 @@
 
         function formatSectionHeading(tag) {
             if (!tag) return '';
-            // Strip out all brackets and whitespace
             const clean = tag.replace(/[\[\]]/g, '').trim().toUpperCase();
             
             if (clean.startsWith('V')) {
@@ -1645,7 +1675,6 @@
         }
 
         function renderSongLyrics(rawLyrics, capoFret) {
-            console.log("renderSongLyrics CALLED. Raw lyrics length:", rawLyrics ? rawLyrics.length : 0);
             elements.sheetContent.innerHTML = '';
             if (!rawLyrics) return;
             const lines = rawLyrics.split('\n');
@@ -1657,11 +1686,9 @@
                 const trimmed = line.trim();
                 
                 if (trimmed.startsWith('[')) {
-                    console.log("Found section tag:", trimmed);
                     sectionContainer = document.createElement('div');
                     sectionContainer.className = 'p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2';
                     const prettyName = formatSectionHeading(trimmed);
-                    console.log("Formatted section heading to:", prettyName);
                     sectionContainer.innerHTML = `<h4 class="section-heading text-amber-400 font-extrabold text-sm tracking-wide mb-2">${prettyName}</h4>`;
                     elements.sheetContent.appendChild(sectionContainer);
                     continue;
@@ -1690,6 +1717,7 @@
             }
         }
 
+        // Precise Proportional Font Mapping for Chords & Lyrics
         function buildChordLyricPairs(chordLine, lyricLine, capoFret, capoSteps, mode) {
             if (!lyricLine) {
                 return `<div class="chord-above" style="white-space: pre;">${chordLine}</div>`;
@@ -1712,7 +1740,6 @@
                 let chunkEnd = c.index;
                 let chunk = lyricLine.slice(chunkStart, chunkEnd);
                 
-                // If chord index is further than lyric length, pad with spaces
                 if (chunkEnd > lyricLine.length) {
                     chunk = '';
                 }
@@ -1842,21 +1869,21 @@
             elements.closeFloatingMenu.addEventListener('click', () => elements.floatingMenu.classList.add('hidden'));
 
             // Editor Tab Switching Logic
-        document.querySelectorAll('.editor-tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const targetTab = e.currentTarget.getAttribute('data-editors-tab');
-                document.querySelectorAll('.editor-tab-btn').forEach(b => {
-                    b.classList.remove('bg-amber-500', 'text-slate-950');
-                    b.classList.add('text-slate-400', 'hover:text-white');
+            document.querySelectorAll('.editor-tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetTab = e.currentTarget.getAttribute('data-editors-tab');
+                    document.querySelectorAll('.editor-tab-btn').forEach(b => {
+                        b.classList.remove('bg-amber-500', 'text-slate-950');
+                        b.classList.add('text-slate-400', 'hover:text-white');
+                    });
+                    e.currentTarget.classList.remove('text-slate-400', 'hover:text-white');
+                    e.currentTarget.classList.add('bg-amber-500', 'text-slate-950');
+                    
+                    document.querySelectorAll('.editor-pane').forEach(pane => pane.classList.add('hidden'));
+                    const activePane = document.getElementById(`editor-pane-${targetTab}`);
+                    if (activePane) activePane.classList.remove('hidden');
                 });
-                e.currentTarget.classList.remove('text-slate-400', 'hover:text-white');
-                e.currentTarget.classList.add('bg-amber-500', 'text-slate-950');
-                
-                document.querySelectorAll('.editor-pane').forEach(pane => pane.classList.add('hidden'));
-                const activePane = document.getElementById(`editor-pane-${targetTab}`);
-                if (activePane) activePane.classList.remove('hidden');
             });
-        });
         }
 
         // Transpose Buttons
@@ -1903,96 +1930,13 @@
                 }
             });
         }
+
         // Settings Button
         const settingsBtn = document.getElementById('open-settings-btn');
         if (settingsBtn) {
             settingsBtn.addEventListener('click', () => {
                 showToast("Settings: Local storage directory is connected.");
             });
-        }
-
-        // Simple IndexedDB wrapper for storing FileSystemDirectoryHandle
-        // Corrected IndexedDB wrapper for storing FileSystemDirectoryHandle
-        const dbPromise = new Promise((resolve, reject) => {
-            const request = indexedDB.open("OpenSongAppDB", 1);
-            request.onupgradeneeded = (e) => {
-                e.target.result.createObjectStore("handles");
-            };
-            request.onsuccess = (e) => resolve(e.target.result);
-            request.onerror = (e) => reject(e.target.error);
-        });
-
-        async function saveDirHandle(handle) {
-            try {
-                const db = await dbPromise;
-                const tx = db.transaction("handles", "readwrite");
-                tx.objectStore("handles").put(handle, "rootFolder");
-                return tx.complete;
-            } catch (err) {
-                console.error("Failed to save handle:", err);
-            }
-        }
-
-        async function getSavedDirHandle() {
-            try {
-                const db = await dbPromise;
-                return new Promise((resolve) => {
-                    const tx = db.transaction("handles", "readonly");
-                    const req = tx.objectStore("handles").get("rootFolder");
-                    req.onsuccess = () => resolve(req.result);
-                    req.onerror = () => resolve(null);
-                });
-            } catch (err) {
-                return null;
-            }
-        }
-
-        // Check for saved handle on app startup
-        async function checkSavedFolder() {
-            const handle = await getSavedDirHandle();
-            if (handle) {
-                const banner = document.getElementById('reconnect-banner');
-                if (banner) banner.classList.remove('hidden');
-
-                document.getElementById('reconnect-btn').onclick = async () => {
-                    try {
-                        const opts = { mode: 'readwrite' };
-                        if ((await handle.queryPermission(opts)) !== 'granted') {
-                            if ((await handle.requestPermission(opts)) !== 'granted') {
-                                showToast("Permission denied.");
-                                return;
-                            }
-                        }
-                        showToast("Folder reconnected successfully!");
-                        banner.classList.add('hidden');
-                        // Load your songs using the restored handle here
-                        loadSongsFromDirectory(handle);
-                    } catch (err) {
-                        console.error("Reconnect failed:", err);
-                        showToast("Could not reconnect folder. Please reselect.");
-                    }
-                };
-            }
-        }
-
-        // Called when the user clicks the "Reconnect Folder" button in the banner
-        async function handleReconnectClick(savedHandle) {
-            try {
-                const opts = { mode: 'readwrite' };
-                if ((await savedHandle.queryPermission(opts)) !== 'granted') {
-                    if ((await savedHandle.requestPermission(opts)) !== 'granted') {
-                        showToast("Permission denied.");
-                        return;
-                    }
-                }
-                rootDirectoryHandle = savedHandle;
-                await processRootDirectory(savedHandle);
-                showToast("Folder reconnected successfully!");
-                document.getElementById('reconnect-banner').classList.add('hidden');
-            } catch (err) {
-                console.error("Reconnect failed:", err);
-                showToast("Could not reconnect folder. Please reselect.");
-            }
         }
     </script>
 </body>
