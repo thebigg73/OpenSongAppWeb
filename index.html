@@ -2,7 +2,7 @@
 <html lang="en" class="h-full bg-slate-950 text-slate-100">
     <head>
         <script>
-            const version = "1.0c";
+            const version = "1.0d";
         </script>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1347,7 +1347,6 @@
                 changeFolderBtn: document.getElementById("change-folder-btn"),
                 modalSelectBtn: document.getElementById("modal-select-folder-btn"),
                 fallbackInput: document.getElementById("fallback-folder-input"),
-                newSongBtn: document.getElementById("modal-new-song-btn"),
                 editSongBtn: document.getElementById("edit-song-btn"),
 
                 floatingMenu: document.getElementById("floating-menu"),
@@ -2017,26 +2016,26 @@
                 return song;
             }
 
-            elements.newSongBtn.addEventListener("click", () => {
-                elements.editSongTitleInput.value = "";
-                elements.editSongAuthorInput.value = "";
-                elements.editSongCopyrightInput.value = "";
-                elements.editSongFilenameInput.value = "";
-                elements.editSongPresentationInput.value = "";
-                elements.editSongKeyInput.value = "C";
-                elements.editSongCapoInput.value = "";
-                elements.editSongTempoInput.value = "120";
-                elements.editSongTimesigInput.value = "4/4";
-                elements.editSongNotesInput.value = "";
-                elements.editSongThemesInput.value = "";
-                elements.editSongBeatbuddyInput.value = "";
-                elements.editSongNewFolderInput.value = "";
-                elements.editSongNewFolderInput.classList.add("hidden");
-                updateFolderFilterDropdown();
-                elements.editSongLyricsInput.value = "[V1]\n.C     G\nLyrics here...";
-                activeSong = null;
-                elements.songEditorModal.classList.remove("hidden");
-            });
+            function openNewSongEditor() {
+    elements.editSongTitleInput.value = "";
+    elements.editSongAuthorInput.value = "";
+    elements.editSongCopyrightInput.value = "";
+    elements.editSongFilenameInput.value = "";
+    elements.editSongPresentationInput.value = "";
+    elements.editSongKeyInput.value = "C";
+    elements.editSongCapoInput.value = "";
+    elements.editSongTempoInput.value = "120";
+    elements.editSongTimesigInput.value = "4/4";
+    elements.editSongNotesInput.value = "";
+    elements.editSongThemesInput.value = "";
+    elements.editSongBeatbuddyInput.value = "";
+    elements.editSongNewFolderInput.value = "";
+    elements.editSongNewFolderInput.classList.add("hidden");
+    updateFolderFilterDropdown();
+    elements.editSongLyricsInput.value = "[V1]\n.C     G\nLyrics here...";
+    activeSong = null;
+    elements.songEditorModal.classList.remove("hidden");
+}
 
             elements.editSongBtn.addEventListener("click", async () => {
                 if (!activeSong) return;
@@ -3210,11 +3209,14 @@
                         sidebarModalTitle.textContent = "Song Actions";
                         const options = [
                             {
-                                label: "Create new song",
-                                icon: "file-plus",
-                                color: "text-amber-400",
-                                action: () => { closeSidebarModal(); elements.newSongBtn.click(); }
-                            },
+    label: "Create new song",
+    icon: "file-plus",
+    color: "text-amber-400",
+    action: () => {
+        closeSidebarModal();
+        openNewSongEditor(); // Directly calls your setup logic and opens the editor modal
+    }
+},
                             {
                                 label: "Import song",
                                 icon: "file-input",
