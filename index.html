@@ -140,7 +140,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4i</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4j</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1200,12 +1200,42 @@
             const total = songFileHandles.length;
             const statusEl = document.getElementById('folder-status-text');
 
+            // Get existing paths from SQLite so we can skip them (resume support)
+            const cachedPaths = new Set();
             if (sqliteDb) {
+                try {
+                    const res = sqliteDb.exec("SELECT filename, folderPath FROM songs");
+                    if (res && res.length > 0) {
+                        res[0].values.forEach(row => cachedPaths.add(`${row[1]}___${row[0]}`));
+                    }
+                } catch (e) { console.warn("Error reading cached paths:", e); }
                 sqliteDb.run("BEGIN TRANSACTION;");
             }
 
             for (let i = 0; i < songFileHandles.length; i++) {
                 const item = songFileHandles[i];
+                const cacheKey = `${item.folder}___${item.handle.name}`;
+
+                // If already in SQLite cache, mark as loaded in memory and skip file read!
+                if (cachedPaths.has(cacheKey)) {
+                    const song = loadedSongs.find(s => s.filename === item.handle.name && s.folderPath === item.folder);
+                    if (song) {
+                        song.isLoaded = true;
+                        // Fetch lyrics directly from sqlite for completeness
+                        try {
+                            const stmt = sqliteDb.prepare("SELECT title, author, key, capo, tempo, lyrics, modified, uuid FROM songs WHERE filename=? AND folderPath=?");
+                            stmt.bind([item.handle.name, item.folder]);
+                            if (stmt.step()) {
+                                const row = stmt.get();
+                                Object.assign(song, { title: row[0], author: row[1], key: row[2], capo: row[3], tempo: row[4], lyrics: row[5], modified: row[6], uuid: row[7], isLoaded: true });
+                            }
+                            stmt.free();
+                        } catch (e) {}
+                    }
+                    processed++;
+                    continue;
+                }
+
                 try {
                     const f = await item.handle.getFile();
                     if (item.type === 'pdf') {
@@ -1226,7 +1256,6 @@
                             if (idx !== -1) {
                                 loadedSongs[idx] = { ...loadedSongs[idx], ...parsedSong, fileHandle: item.handle, isLoaded: true };
                             }
-                            // Insert into SQLite cache
                             if (sqliteDb) {
                                 const stmt = sqliteDb.prepare("INSERT OR REPLACE INTO songs (filename, folderPath, title, author, key, capo, tempo, lyrics, modified, uuid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                                 stmt.run([
@@ -1234,7 +1263,7 @@
                                     parsedSong.folderPath,
                                     parsedSong.title,
                                     parsedSong.author || '',
-                                    parsedSong.key || 'C',
+                                    parsedSong.key || '',
                                     parsedSong.capo || '',
                                     parseInt(parsedSong.tempo) || 120,
                                     parsedSong.lyrics || '',
@@ -1265,7 +1294,7 @@
             }
 
             if (statusEl) statusEl.textContent = rootDirectoryHandle ? rootDirectoryHandle.name : "Root Directory Loaded";
-            showToast(`Indexing complete: ${total} songs cached in SQLite!`);
+            showToast(`Indexing & resume complete: ${total} songs verified!`);
         }
 
         async function parseNonOpenSongSQLite(uint8ArrayData) {
@@ -1281,7 +1310,7 @@
                         const title = rowObj.title || rowObj.filename || "Untitled PDF";
                         const songObj = {
                             id: 'song_db_' + Math.random().toString(36).substring(2, 8),
-                            filename: rowObj.filename || title, folderPath: 'NonOpenSong', title: title, author: rowObj.author || '', key: rowObj.key || 'C', capo: rowObj.capo || '', isPdf: true, pdfUrl: pdfBlobsMap[rowObj.filename] || '', uuid: generateUUID(), modified: new Date().toISOString()
+                            filename: rowObj.filename || title, folderPath: 'NonOpenSong', title: title, author: rowObj.author || '', key: rowObj.key || '', capo: rowObj.capo || '', isPdf: true, pdfUrl: pdfBlobsMap[rowObj.filename] || '', uuid: generateUUID(), modified: new Date().toISOString()
                         };
                         addOrUpdateSong(songObj);
                         await writeSongToDisk(songObj);
@@ -1321,7 +1350,7 @@
                 if (lower.endsWith('.pdf')) {
                     const blobUrl = URL.createObjectURL(file);
                     pdfBlobsMap[file.name] = blobUrl;
-                    const songObj = { id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: file.name, folderPath: 'PDFs', title: file.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: 'C', uuid: generateUUID(), modified: new Date().toISOString() };
+                    const songObj = { id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: file.name, folderPath: 'PDFs', title: file.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: '', uuid: generateUUID(), modified: new Date().toISOString() };
                     addOrUpdateSong(songObj);
                 } else if (lower.includes('sets/') || lower.endsWith('.osts')) {
                     const s = parseOpenSongSetXML(text, file.name);
@@ -1741,6 +1770,21 @@
             return html;
         }
 
+        function updateFloatingCapoButtonState() {
+            if (!activeSong || !activeSong.capo) {
+                elements.floatingCapoBtn.classList.add('hidden');
+                return;
+            }
+            elements.floatingCapoBtn.classList.remove('hidden');
+            if (capoDisplayMode === 'native') {
+                elements.floatingCapoLabel.textContent = `Capo ${activeSong.capo} (Native)`;
+            } else if (capoDisplayMode === 'capo') {
+                elements.floatingCapoLabel.textContent = `Capo ${activeSong.capo} (Capo Chords)`;
+            } else {
+                elements.floatingCapoLabel.textContent = `Capo ${activeSong.capo} (Both Lines)`;
+            }
+        }
+        
         function switchSidebarTab(tab) {
             activeTab = tab;
             elements.tabSongsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === 'songs' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800'}`;
