@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<html lang="en" class="h-full bg-[var(--bg-primary)] text-[var(--text-color)]">
     <head>
         <script>
             const version = "1.0g";
@@ -14,6 +14,26 @@
         <!-- Tailwind CSS Play CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
+            function applyTheme(theme) {
+                if (theme === "system") {
+                    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+                    document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+                } else {
+                    document.documentElement.setAttribute("data-theme", theme);
+                }
+            }
+
+            // Read saved preference or default to 'system'
+            const savedTheme = localStorage.getItem("app-theme") || "system";
+            applyTheme(savedTheme);
+
+            // Listen for system theme changes dynamically if on 'system' mode
+            window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+                if ((localStorage.getItem("app-theme") || "system") === "system") {
+                    applyTheme("system");
+                }
+            });
+
             tailwind.config = {
                 darkMode: "class",
                 theme: {
@@ -41,6 +61,59 @@
         <!-- Lucide Icons -->
         <script src="https://unpkg.com/lucide@latest"></script>
         <style>
+            /* Default / Dark Theme (Matches Android Dark Palette) */
+            :root, [data-theme="dark"] {
+                --bg-primary: #141b22;
+                --bg-primary-variant: #1A222C;
+                --bg-surface: #183441;
+                --bg-surface-variant: #203640;
+
+                --color-secondary: #294959;
+                --color-secondary-variant: #365c6e;
+                --color-secondary-fixed: #3C667A;
+
+                --text-color: #f1faff;
+                --chord-color: #ffff00;
+                --capo-color: #ff0000;
+                --text-hint: #adb6bf;
+                --color-error: #AA0000;
+
+                --border-color: #203640;
+            }
+
+            /* Light Theme (Matches Android Light Palette) */
+            [data-theme="light"] {
+                --bg-primary: #FFFFFF;
+                --bg-primary-variant: #FAFAFF;
+                --bg-surface: #fafaff;
+                --bg-surface-variant: #E2D9DA;
+
+                --color-secondary: #C8E4EF;
+                --color-secondary-variant: #B0C5CA;
+                --color-secondary-fixed: #94AAB1;
+
+                --text-color: #141b22;
+                --chord-color: #0000ff;
+                --capo-color: #ff0000;
+                --text-hint: #8e969f;
+                --color-error: #F46262;
+
+                --border-color: #E2D9DA;
+            }
+
+            /* Core Element Overrides */
+            body {
+              background-color: var(--bg-primary);
+              color: var(--text-color);
+              transition: background-color 0.2s ease, color 0.2s ease;
+            }
+
+            .app-surface { background-color: var(--bg-surface); }
+            .app-surface-variant { background-color: var(--bg-surface-variant); }
+            .app-card { background-color: var(--bg-primary-variant); border-color: var(--border-color); }
+            .app-accent-btn { background-color: var(--color-secondary); color: var(--text-color); }
+            .app-accent-btn:hover { background-color: var(--color-secondary-variant); }
+            .app-hint-text { color: var(--text-hint); }
 
             .chord-lyric-pair-line {
                 display: flex;
@@ -62,7 +135,7 @@
 
             .chord-above {
                 font-weight: 700;
-                color: #f59e0b;
+                var(--chord-color, #ffff00);
                 line-height: 1.0;
                 user-select: none;
                 white-space: pre;
@@ -71,7 +144,7 @@
 
             .chord-capo-above {
                 font-weight: 700;
-                color: #a855f7;
+                var(--capo-color, #0000ff);
                 line-height: 1.0;
                 user-select: none;
                 white-space: pre;
@@ -117,21 +190,26 @@
             .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         </style>
     </head>
-    <body class="h-full flex flex-col font-sans antialiased bg-slate-950 text-slate-100 overflow-hidden select-none">
+    <body
+        class="h-full flex flex-col font-sans antialiased bg-[var(--bg-primary)] text-[var(--text-color)] overflow-hidden select-none">
         <!-- Toast Notification Widget -->
         <div
             id="toast-notification"
-            class="fixed top-20 right-6 z-50 transform translate-y-[-150%] opacity-0 bg-slate-900 border border-amber-500/50 text-amber-300 px-4 py-2.5 rounded-xl shadow-2xl flex items-center space-x-2 text-xs font-bold">
-            <i data-lucide="bell" class="w-4 h-4"></i>
+            class="fixed top-20 right-6 z-50 transform translate-y-[-150%] opacity-0 bg-[var(--bg-primary-variant)] border border-[var(--border-color)] text-[var(--text-color)] px-4 py-2.5 rounded-xl shadow-2xl flex items-center space-x-2 text-xs font-bold">
+            <i data-lucide="bell" class="w-4 h-4 text-[var(--text-color)]"></i>
             <span id="toast-message">Notification message</span>
         </div>
 
         <!-- Reconnect Folder Banner -->
         <div
             id="reconnect-banner"
-            class="hidden bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-sm text-amber-300 z-30 shrink-0">
+            class="hidden bg-[var(--bg-surface-variant)] border-b border-[var(--border-color)] px-4 py-2 flex items-center justify-between text-sm text-[var(--text-color)] z-30 shrink-0">
             <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                    class="w-4 h-4 shrink-0 text-[var(--text-hint)]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
@@ -142,23 +220,23 @@
             </div>
             <button
                 id="reconnect-btn"
-                class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1 rounded-lg text-xs transition-colors">
+                class="bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] font-bold px-3 py-1 rounded-lg text-xs transition-colors border border-[var(--border-color)]">
                 Reconnect Folder
             </button>
         </div>
 
         <!-- Top Navigation Bar -->
         <header
-            class="h-16 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between z-20 shrink-0">
+            class="h-16 bg-[var(--bg-primary-variant)] border-b border-[var(--border-color)] bg-[var(--bg-primary-variant)]bg-[var(--bg-primary-variant)] px-4 flex items-center justify-between z-20 shrink-0">
             <div class="flex items-center space-x-3">
                 <button
                     id="toggle-sidebar-btn"
-                    class="p-2 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition"
+                    class="p-2 hover:bg-[var(--bg-surface-variant)] rounded-lg text-[var(--text-hint)] hover:text-[var(--text-color)] transition"
                     title="Toggle Sidebar">
                     <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
                 <div class="flex items-center space-x-2">
-                    <div class="p-2 bg-amber-500/10 text-amber-500 rounded-lg">
+                    <div class="p-2 bg-[var(--color-secondary)]/20 text-[var(--text-color)] rounded-lg">
                         <i data-lucide="music" class="w-6 h-6"></i>
                     </div>
                 </div>
@@ -166,52 +244,56 @@
 
             <div
                 id="header-song-info"
-                class="hidden md:flex items-center space-x-4 bg-slate-950/60 px-4 py-1.5 rounded-xl border border-slate-800">
+                class="hidden md:flex items-center space-x-4 bg-[var(--bg-primary)]/60 px-4 py-1.5 rounded-xl border border-[var(--border-color)]">
                 <div class="text-center">
-                    <div id="current-song-title" class="font-bold text-sm text-slate-100">Select a song or set</div>
-                    <div id="current-song-author" class="text-xs text-slate-400">--</div>
+                    <div id="current-song-title" class="font-bold text-sm text-[var(--text-color)]">
+                        Select a song or set
+                    </div>
+                    <div id="current-song-author" class="text-xs text-[var(--text-hint)]">--</div>
                 </div>
-                <div class="h-6 w-px bg-slate-800"></div>
+                <div class="h-6 w-px bg-[var(--border-color)]"></div>
                 <div class="flex items-center space-x-3 text-xs font-medium">
-                    <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                    <span
+                        class="px-2 py-0.5 rounded bg-[var(--color-secondary)]/20 text-[var(--text-color)] border border-[var(--color-secondary)]/40"
                         >Key: <strong id="meta-key">--</strong></span
                     >
-                    <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300"
+                    <span
+                        class="px-2 py-0.5 rounded bg-[var(--bg-surface-variant)] text-[var(--text-hint)] border border-[var(--border-color)]"
                         >BPM: <strong id="meta-tempo">--</strong></span
                     >
-                    <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300"
+                    <span
+                        class="px-2 py-0.5 rounded bg-[var(--bg-surface-variant)] text-[var(--text-hint)] border border-[var(--border-color)]"
                         >Time: <strong id="meta-sig">--</strong></span
                     >
                 </div>
             </div>
 
             <!-- Top Control Bar Container -->
-            <!-- Updated Top Control Bar (New/Save Set moved to sidebar) -->
             <div class="flex items-center gap-2 overflow-x-auto py-2 shrink-0 no-scrollbar">
                 <button
                     id="cast-display-btn"
-                    class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700"
+                    class="p-2 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-hint)] hover:text-[var(--text-color)] rounded-lg transition border border-[var(--border-color)]"
                     title="Open Stage Secondary Display Window">
                     <i data-lucide="monitor-play" class="w-5 h-5"></i>
                 </button>
 
                 <button
                     id="fullscreen-toggle-btn"
-                    class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700"
+                    class="p-2 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-hint)] hover:text-[var(--text-color)] rounded-lg transition border border-[var(--border-color)]"
                     title="Fullscreen toggle">
                     <i data-lucide="maximize" class="w-5 h-5"></i>
                 </button>
 
                 <button
                     id="open-settings-btn"
-                    class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700"
+                    class="p-2 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-hint)] hover:text-[var(--text-color)] rounded-lg transition border border-[var(--border-color)]"
                     title="Application Settings">
                     <i data-lucide="settings" class="w-5 h-5"></i>
                 </button>
 
                 <button
                     id="change-folder-btn"
-                    class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700"
+                    class="p-2 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-hint)] hover:text-[var(--text-color)] rounded-lg transition border border-[var(--border-color)]"
                     title="Change Storage Directory">
                     <i data-lucide="folder-open" class="w-5 h-5"></i>
                 </button>
@@ -223,71 +305,76 @@
             <!-- Left Drawer / Songs & Sets Sidebar -->
             <div
                 id="sidebar-backdrop"
-                class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-10 hidden lg:hidden transition-opacity"></div>
+                class="fixed inset-0 bg-[var(--bg-primary)]/80 backdrop-blur-sm z-10 hidden lg:hidden transition-opacity"></div>
             <aside
                 id="sidebar"
-                class="w-80 bg-slate-900/95 backdrop-blur-md border-r border-slate-800 flex flex-col transition-all duration-300 absolute lg:relative inset-y-0 left-0 z-10 -translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none">
-                <div class="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+                class="w-80 bg-[var(--bg-primary-variant)] backdrop-blur-md border-r border-[var(--border-color)] bg-[var(--bg-primary-variant)]bg-[var(--bg-primary-variant)] flex flex-col transition-all duration-300 absolute lg:relative inset-y-0 left-0 z-10 -translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none">
+                <div
+                    class="p-3 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-primary)]/50">
                     <div class="flex flex-col">
                         <div class="flex items-center gap-2">
-                            <i data-lucide="music" class="w-4 h-4 text-amber-400"></i>
-                            <span class="font-extrabold text-slate-200 text-sm tracking-wide">OpenSongApp Web</span>
+                            <i data-lucide="music" class="w-4 h-4 text-[var(--text-color)]"></i>
+                            <span class="font-extrabold text-[var(--text-color)] text-sm tracking-wide"
+                                >OpenSongApp Web</span
+                            >
                         </div>
                         <div
                             id="folder-status-text"
-                            class="text-[10px] font-mono text-slate-400 pl-6 -mt-0.5 truncate max-w-[190px]">
+                            class="text-[10px] font-mono text-[var(--text-hint)] pl-6 -mt-0.5 truncate max-w-[190px]">
                             OpenSong
                         </div>
                     </div>
                     <span
                         id="app-version-badge"
-                        class="text-[10px] font-mono px-1.5 py-0.5 bg-slate-800 text-slate-400 border border-slate-700 rounded">
+                        class="text-[10px] font-mono px-1.5 py-0.5 bg-[var(--bg-surface-variant)] text-[var(--text-hint)] border border-[var(--border-color)] rounded">
                     </span>
                 </div>
                 <div
                     id="sidebar-header-action"
-                    class="p-2 bg-slate-950 border-b border-slate-800 flex rounded-lg m-2 gap-1">
+                    class="p-2 bg-[var(--bg-primary)] border-b border-[var(--border-color)] flex rounded-lg m-2 gap-1">
                     <button
                         id="tab-songs-btn"
-                        class="flex-1 py-1.5 text-xs font-bold rounded-md bg-amber-500 text-slate-950 flex items-center justify-center gap-1.5 transition">
+                        class="flex-1 py-1.5 text-xs font-bold rounded-md bg-[var(--color-secondary)] text-[var(--text-color)] flex items-center justify-center gap-1.5 transition">
                         <i data-lucide="music-2" class="w-3.5 h-3.5"></i> Songs
                         <span id="tab-songs-count" class="opacity-75 font-normal">(0)</span>
                     </button>
                     <button
                         id="tab-sets-btn"
-                        class="flex-1 py-1.5 text-xs font-bold rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 flex items-center justify-center gap-1.5 transition">
+                        class="flex-1 py-1.5 text-xs font-bold rounded-md text-[var(--text-hint)] hover:text-[var(--text-color)] hover:bg-[var(--bg-surface-variant)]/60 flex items-center justify-center gap-1.5 transition">
                         <i data-lucide="layers" class="w-3.5 h-3.5"></i> Sets
                         <span id="tab-sets-count" class="opacity-75 font-normal">(0)</span>
                     </button>
                 </div>
-                <div class="px-3 pb-2 border-b border-slate-800 flex flex-col gap-2">
+                <div class="px-3 pb-2 border-b border-[var(--border-color)] flex flex-col gap-2">
                     <div id="song-search-container" class="relative">
-                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-500"></i>
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-[var(--text-hint)]"></i>
                         <input
                             type="text"
                             id="song-search-input"
                             placeholder="Search by title, author, or key..."
-                            class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition" />
+                            class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg pl-9 pr-8 py-2 text-sm text-[var(--text-color)] placeholder-[var(--text-hint)] focus:outline-none focus:border-[var(--color-secondary)] transition" />
                         <button
                             id="clear-search"
-                            class="hidden absolute right-2.5 top-2.5 text-slate-500 hover:text-slate-300">
+                            class="hidden absolute right-2.5 top-2.5 text-[var(--text-hint)] hover:text-[var(--text-color)]">
                             <i data-lucide="x" class="w-4 h-4"></i>
                         </button>
                     </div>
                     <!-- Folder / Category Filter Dropdown -->
                     <div class="flex items-center gap-2">
-                        <span id="filter-label" class="text-[11px] text-slate-400 font-semibold uppercase"
+                        <span id="filter-label" class="text-[11px] text-[var(--text-hint)] font-semibold uppercase"
                             >Folder:</span
                         >
                         <select
                             id="folder-filter-select"
-                            class="flex-1 bg-slate-950 border border-slate-800 rounded-lg text-xs py-1 px-2 text-amber-400 font-mono focus:outline-none">
+                            class="flex-1 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg text-xs py-1 px-2 text-[var(--text-color)] font-mono focus:outline-none">
                             <option value="ALL">ALL FOLDERS</option>
                         </select>
                     </div>
-                    <div class="flex justify-between items-center px-1 text-xs text-slate-400">
+                    <div class="flex justify-between items-center px-1 text-xs text-[var(--text-hint)]">
                         <span id="active-tab-label">Showing All Songs</span>
-                        <button id="rescan-btn" class="text-amber-400 hover:underline flex items-center gap-1">
+                        <button
+                            id="rescan-btn"
+                            class="text-[var(--text-color)] hover:underline flex items-center gap-1 font-medium">
                             <i data-lucide="refresh-cw" class="w-3 h-3"></i> Refresh
                         </button>
                     </div>
@@ -297,7 +384,7 @@
                 <!-- FAB Button anchored to the bottom-right of the Sidebar Menu -->
                 <button
                     id="fab-actions-btn"
-                    class="absolute bottom-6 right-6 z-30 w-12 h-12 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-full shadow-2xl flex items-center justify-center transition transform hover:scale-105"
+                    class="absolute bottom-6 right-6 z-30 w-12 h-12 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] rounded-full shadow-2xl flex items-center justify-center transition transform hover:scale-105"
                     title="Add New">
                     <i data-lucide="plus" class="w-6 h-6"></i>
                 </button>
@@ -306,16 +393,16 @@
             <!-- Main Viewport Container -->
             <main
                 id="main-scroll-container"
-                class="flex-1 bg-slate-950 overflow-y-auto p-0 flex flex-col relative scroll-smooth">
+                class="flex-1 bg-[var(--bg-primary)] overflow-y-auto p-0 flex flex-col relative scroll-smooth">
                 <div id="song-display-area" class="w-full max-w-none min-h-full flex flex-col relative">
                     <div
                         id="empty-state"
-                        class="my-auto flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-slate-800 rounded-2xl bg-slate-900/30">
-                        <div class="p-4 bg-slate-900 text-slate-500 rounded-full mb-4">
+                        class="my-auto flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-[var(--border-color)] bg-[var(--bg-primary-variant)]/30 rounded-2xl">
+                        <div class="p-4 bg-[var(--bg-surface-variant)] text-[var(--text-hint)] rounded-full mb-4">
                             <i data-lucide="music-4" class="w-12 h-12"></i>
                         </div>
-                        <h3 class="text-lg font-bold text-slate-300 mb-1">No Item Selected</h3>
-                        <p class="text-sm text-slate-500 max-w-sm mb-4">
+                        <h3 class="text-lg font-bold text-[var(--text-color)] mb-1">No Item Selected</h3>
+                        <p class="text-sm text-[var(--text-hint)] max-w-sm mb-4">
                             Select a song or set from the sidebar, or click the folder icon above to load your OpenSong
                             root folder.
                         </p>
@@ -324,14 +411,19 @@
                     <!-- Floating Draggable Popups for Notes & ABC -->
                     <div
                         id="sticky-note-popup"
-                        class="hidden draggable-popup bg-amber-500/10 border border-amber-500/40 backdrop-blur-md rounded-xl p-4 shadow-2xl max-w-xs text-xs text-amber-200">
+                        class="hidden draggable-popup bg-[var(--color-secondary)]/10 border border-[var(--color-secondary)]/40 backdrop-blur-md rounded-xl p-4 shadow-2xl max-w-xs text-xs text-[var(--text-color)]">
                         <div
-                            class="flex justify-between items-center font-bold mb-1 border-b border-amber-500/30 pb-1 cursor-grab"
+                            class="flex justify-between items-center font-bold mb-1 border-b border-[var(--color-secondary)]/30 pb-1 cursor-grab"
                             id="sticky-drag-handle">
-                            <span><i data-lucide="sticky-note" class="w-3.5 h-3.5 inline mr-1"></i> Sticky Note</span>
+                            <span
+                                ><i
+                                    data-lucide="sticky-note"
+                                    class="w-3.5 h-3.5 inline mr-1 text-[var(--text-color)]"></i>
+                                Sticky Note</span
+                            >
                             <button
                                 onclick="document.getElementById('sticky-note-popup').classList.add('hidden')"
-                                class="hover:text-white">
+                                class="text-[var(--text-hint)] hover:text-[var(--text-color)] transition">
                                 <i data-lucide="x" class="w-3 h-3"></i>
                             </button>
                         </div>
@@ -340,53 +432,56 @@
 
                     <div
                         id="abc-popup"
-                        class="hidden draggable-popup bg-slate-900/95 border border-indigo-500/40 backdrop-blur-md rounded-xl p-4 shadow-2xl max-w-md text-xs text-slate-100">
+                        class="hidden draggable-popup bg-[var(--bg-primary-variant)]/95 border border-[var(--border-color)] backdrop-blur-md rounded-xl p-4 shadow-2xl max-w-md text-xs text-[var(--text-color)]">
                         <div
-                            class="flex justify-between items-center font-bold mb-2 border-b border-slate-800 pb-1 cursor-grab"
+                            class="flex justify-between items-center font-bold mb-2 border-b border-[var(--border-color)] pb-1 cursor-grab"
                             id="abc-drag-handle">
-                            <span class="text-indigo-400"
+                            <span class="text-[var(--text-color)]"
                                 ><i data-lucide="music" class="w-3.5 h-3.5 inline mr-1"></i> ABC Notation Score</span
                             >
                             <button
                                 onclick="document.getElementById('abc-popup').classList.add('hidden')"
-                                class="hover:text-white">
+                                class="text-[var(--text-hint)] hover:text-[var(--text-color)] transition">
                                 <i data-lucide="x" class="w-3 h-3"></i>
                             </button>
                         </div>
                         <pre
                             id="abc-popup-content"
-                            class="font-mono text-[11px] bg-slate-950 p-2 rounded border border-slate-800 overflow-x-auto text-amber-300"></pre>
+                            class="font-mono text-[11px] bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)] overflow-x-auto text-[var(--text-color)]"></pre>
                     </div>
 
                     <!-- Floating Capo Button Widget -->
                     <button
                         id="floating-capo-btn"
-                        class="hidden fixed bottom-24 right-6 z-30 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs rounded-2xl shadow-2xl transition hover:scale-105 active:scale-95 flex items-center gap-2 border border-purple-400/40">
+                        class="hidden fixed bottom-24 right-6 z-30 px-4 py-2.5 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] font-extrabold text-xs rounded-2xl shadow-2xl transition hover:scale-105 active:scale-95 flex items-center gap-2 border border-[var(--color-secondary)]/40">
                         <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
                         <span id="floating-capo-label">Capo 2 (Native)</span>
                     </button>
 
                     <article id="set-view-sheet" class="hidden space-y-6 pb-20">
-                        <div class="border-b border-slate-800 pb-4 flex flex-wrap items-center justify-between gap-2">
+                        <div
+                            class="border-b border-[var(--border-color)] pb-4 flex flex-wrap items-center justify-between gap-2">
                             <div>
                                 <div class="flex items-center gap-2">
                                     <span
-                                        class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold"
+                                        class="px-2 py-0.5 rounded bg-[var(--color-secondary)]/20 text-[var(--text-color)] border border-[var(--color-secondary)]/40 text-xs font-bold"
                                         >OpenSong Set</span
                                     >
-                                    <h2 id="set-title" class="text-2xl font-extrabold text-indigo-400">--</h2>
+                                    <h2 id="set-title" class="text-2xl font-extrabold text-[var(--text-color)]">--</h2>
                                 </div>
-                                <p id="set-count-info" class="text-sm text-slate-400 mt-1">0 Songs in this set</p>
+                                <p id="set-count-info" class="text-sm text-[var(--text-hint)] mt-1">
+                                    0 Songs in this set
+                                </p>
                             </div>
                             <div class="flex items-center gap-2">
                                 <button
                                     id="share-set-btn"
-                                    class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
+                                    class="px-3 py-1.5 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
                                     <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Share / Export Set
                                 </button>
                                 <button
                                     id="edit-set-btn"
-                                    class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
+                                    class="px-3 py-1.5 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] border border-[var(--border-color)] rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
                                     <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Set
                                 </button>
                             </div>
@@ -396,80 +491,82 @@
 
                     <article
                         id="song-sheet"
-                        class="hidden flex-1 flex flex-col h-full w-full overflow-y-auto p-4 bg-slate-950">
+                        class="hidden flex-1 flex flex-col h-full w-full overflow-y-auto p-4 bg-[var(--bg-primary)]">
                         <div
                             id="set-navigation-banner"
-                            class="hidden bg-indigo-950/40 border border-indigo-800/60 rounded-xl p-3 flex items-center justify-between mb-4">
+                            class="hidden bg-[var(--bg-surface-variant)] border border-[var(--border-color)] rounded-xl p-3 flex items-center justify-between mb-4">
                             <button
                                 id="back-to-set-btn"
-                                class="text-xs text-indigo-300 hover:text-indigo-100 flex items-center gap-1 font-semibold">
+                                class="text-xs text-[var(--text-color)] hover:text-[var(--text-hint)] flex items-center gap-1 font-semibold">
                                 <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Set:
                                 <span id="banner-set-title" class="underline">--</span>
                             </button>
                             <div class="flex items-center gap-1">
                                 <button
                                     id="prev-set-song-btn"
-                                    class="p-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300">
+                                    class="p-1 bg-[var(--color-secondary)]/20 hover:bg-[var(--color-secondary)]/40 rounded text-[var(--text-color)] transition">
                                     <i data-lucide="chevron-left" class="w-4 h-4"></i>
                                 </button>
-                                <span id="set-song-index-label" class="text-xs font-mono text-slate-400 px-2"
+                                <span id="set-song-index-label" class="text-xs font-mono text-[var(--text-hint)] px-2"
                                     >1 / 5</span
                                 >
                                 <button
                                     id="next-set-song-btn"
-                                    class="p-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300">
+                                    class="p-1 bg-[var(--color-secondary)]/20 hover:bg-[var(--color-secondary)]/40 rounded text-[var(--text-color)] transition">
                                     <i data-lucide="chevron-right" class="w-4 h-4"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="border-b border-slate-800 pb-4 mb-4">
+                        <div class="border-b border-[var(--border-color)] pb-4 mb-4">
                             <div class="flex flex-wrap items-baseline justify-between gap-2">
-                                <h2 id="sheet-title" class="text-3xl font-extrabold text-amber-400 tracking-tight">
+                                <h2
+                                    id="sheet-title"
+                                    class="text-3xl font-extrabold text-[var(--text-color)] tracking-tight">
                                     --
                                 </h2>
                                 <div class="flex items-center gap-2">
                                     <span
                                         id="sheet-folder-path"
-                                        class="px-2 py-0.5 text-xs rounded bg-slate-800 text-slate-400 truncate max-w-[200px]"
+                                        class="px-2 py-0.5 text-xs rounded bg-[var(--bg-surface-variant)] text-[var(--text-hint)] border border-[var(--border-color)] truncate max-w-[200px]"
                                         >MAIN</span
                                     >
                                     <span
                                         id="sheet-key-badge"
-                                        class="px-2.5 py-1 text-xs font-bold rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                        class="px-2.5 py-1 text-xs font-bold rounded-md bg-[var(--bg-surface-variant)] text-[var(--chord-color)] border border-[var(--border-color)]"
                                         >Key: C</span
                                     >
                                     <span
                                         id="sheet-capo-badge"
-                                        class="hidden px-2.5 py-1 text-xs font-bold rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                                        class="hidden px-2.5 py-1 text-xs font-bold rounded-md bg-[var(--bg-surface-variant)] text-[var(--capo-color)] border border-[var(--border-color)]"
                                         >Capo: 2</span
                                     >
                                     <button
                                         id="open-notes-popup-btn"
-                                        class="hidden p-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition"
+                                        class="hidden p-1.5 bg-[var(--color-secondary)]/20 hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] rounded-lg text-xs font-bold flex items-center gap-1 transition"
                                         title="Show Sticky Notes">
                                         <i data-lucide="sticky-note" class="w-3.5 h-3.5"></i>
                                     </button>
                                     <button
                                         id="open-abc-popup-btn"
-                                        class="hidden p-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-lg text-xs font-bold flex items-center gap-1 transition"
+                                        class="hidden p-1.5 bg-[var(--color-secondary)]/20 hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] rounded-lg text-xs font-bold flex items-center gap-1 transition"
                                         title="Show ABC Notation">
                                         <i data-lucide="music" class="w-3.5 h-3.5"></i>
                                     </button>
                                     <button
                                         id="share-song-btn"
-                                        class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
+                                        class="px-3 py-1.5 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
                                         <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Share Song
                                     </button>
                                     <button
                                         id="edit-song-btn"
-                                        class="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition"
+                                        class="p-1.5 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] border border-[var(--border-color)] rounded-lg text-xs font-bold flex items-center gap-1 transition"
                                         title="Edit Song">
                                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                     </button>
                                 </div>
                             </div>
-                            <p id="sheet-author" class="text-sm text-slate-400 mt-1">--</p>
+                            <p id="sheet-author" class="text-sm text-[var(--text-hint)] mt-1">--</p>
                         </div>
 
                         <!-- Expanded full-width content container -->
@@ -477,7 +574,7 @@
 
                         <footer
                             id="sheet-footer"
-                            class="border-t border-slate-800/80 pt-4 text-xs text-slate-500 space-y-1 mt-auto">
+                            class="border-t border-[var(--border-color)] pt-4 text-xs text-[var(--text-hint)] space-y-1 mt-auto">
                             <div id="sheet-copyright"></div>
                             <div id="sheet-ccli"></div>
                         </footer>
@@ -488,28 +585,30 @@
                 <div id="floating-toolbar" class="fixed bottom-6 right-6 z-30 flex flex-col items-end gap-2">
                     <div
                         id="floating-menu"
-                        class="hidden flex flex-col bg-slate-900/95 backdrop-blur-lg border border-slate-800 rounded-2xl p-4 shadow-2xl space-y-3 w-80 mb-2 transition-all duration-200 max-h-[75vh] overflow-y-auto">
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        class="hidden flex flex-col bg-[var(--bg-primary-variant)]/95 backdrop-blur-lg border border-[var(--border-color)] rounded-2xl p-4 shadow-2xl space-y-3 w-80 mb-2 transition-all duration-200 max-h-[75vh] overflow-y-auto">
+                        <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-2">
                             <span
-                                class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                                class="text-xs font-bold text-[var(--text-color)] uppercase tracking-wider flex items-center gap-1.5">
                                 <i data-lucide="sliders" class="w-4 h-4"></i> Stage Performance Tools
                             </span>
                             <button
                                 id="close-floating-menu"
-                                class="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">
+                                class="p-1 text-[var(--text-hint)] hover:text-[var(--text-color)] rounded-lg hover:bg-[var(--bg-surface-variant)] transition">
                                 <i data-lucide="x" class="w-4 h-4"></i>
                             </button>
                         </div>
 
-                        <div class="space-y-2 border-b border-slate-800 pb-3">
+                        <div class="space-y-2 border-b border-[var(--border-color)] pb-3">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
                                     <div
                                         id="metronome-flash"
-                                        class="w-3 h-3 rounded-full bg-slate-600 transition-colors"></div>
-                                    <span class="text-xs font-bold text-slate-200">Metronome</span>
+                                        class="w-3 h-3 rounded-full bg-[var(--text-hint)] transition-colors"></div>
+                                    <span class="text-xs font-bold text-[var(--text-color)]">Metronome</span>
                                 </div>
-                                <span id="metronome-bpm-val" class="text-xs font-mono font-bold text-amber-400"
+                                <span
+                                    id="metronome-bpm-val"
+                                    class="text-xs font-mono font-bold text-[var(--text-color)]"
                                     >120 BPM</span
                                 >
                             </div>
@@ -520,30 +619,34 @@
                                     min="40"
                                     max="240"
                                     value="120"
-                                    class="w-full accent-amber-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer" />
+                                    class="w-full accent-[var(--color-secondary)] h-1.5 bg-[var(--bg-primary)] rounded-lg cursor-pointer" />
                                 <button
                                     id="metronome-toggle-btn"
-                                    class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-amber-400 transition shrink-0">
+                                    class="p-2 rounded-lg bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] transition shrink-0">
                                     <i data-lucide="play" class="w-4 h-4"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="space-y-2 border-b border-slate-800 pb-3">
+                        <div class="space-y-2 border-b border-[var(--border-color)] pb-3">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                                    <i data-lucide="arrow-down-circle" class="w-3.5 h-3.5 text-sky-400"></i> Auto-Scroll
+                                <span class="text-xs font-bold text-[var(--text-color)] flex items-center gap-1.5">
+                                    <i data-lucide="arrow-down-circle" class="w-3.5 h-3.5 text-[var(--text-color)]"></i>
+                                    Auto-Scroll
                                 </span>
-                                <span id="autoscroll-status-val" class="text-[11px] font-mono text-sky-400">Ready</span>
+                                <span id="autoscroll-status-val" class="text-[11px] font-mono text-[var(--text-color)]"
+                                    >Ready</span
+                                >
                             </div>
                             <div
-                                class="text-[11px] text-slate-400 flex justify-between bg-slate-950 px-2 py-1 rounded border border-slate-800">
+                                class="text-[11px] text-[var(--text-hint)] flex justify-between bg-[var(--bg-primary)] px-2 py-1 rounded border border-[var(--border-color)]">
                                 <span
-                                    >Duration: <strong id="song-duration-label" class="text-slate-200">3m</strong></span
+                                    >Duration:
+                                    <strong id="song-duration-label" class="text-[var(--text-color)]">3m</strong></span
                                 >
                                 <span
                                     >Pre-delay:
-                                    <strong id="song-predelay-label" class="text-slate-200">10s</strong></span
+                                    <strong id="song-predelay-label" class="text-[var(--text-color)]">10s</strong></span
                                 >
                             </div>
                             <div class="flex items-center gap-2">
@@ -554,10 +657,10 @@
                                     max="5"
                                     step="0.25"
                                     value="1"
-                                    class="w-full accent-sky-400 h-1.5 bg-slate-950 rounded-lg cursor-pointer" />
+                                    class="w-full accent-[var(--color-secondary)] h-1.5 bg-[var(--bg-primary)] rounded-lg cursor-pointer" />
                                 <button
                                     id="autoscroll-toggle-btn"
-                                    class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-sky-400 transition shrink-0">
+                                    class="p-2 rounded-lg bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] transition shrink-0">
                                     <i data-lucide="play" class="w-4 h-4"></i>
                                 </button>
                             </div>
@@ -565,15 +668,16 @@
 
                         <div class="space-y-2">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                                    <i data-lucide="waves" class="w-3.5 h-3.5 text-indigo-400"></i> Pad Player (Synth)
+                                <span class="text-xs font-bold text-[var(--text-color)] flex items-center gap-1.5">
+                                    <i data-lucide="waves" class="w-3.5 h-3.5 text-[var(--text-color)]"></i> Pad Player
+                                    (Synth)
                                 </span>
-                                <span id="pad-key-val" class="text-xs font-mono text-indigo-400">Key: C</span>
+                                <span id="pad-key-val" class="text-xs font-mono text-[var(--text-color)]">Key: C</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <select
                                     id="pad-key-select"
-                                    class="flex-1 bg-slate-950 border border-slate-800 rounded-lg text-xs py-1.5 px-2 text-slate-200">
+                                    class="flex-1 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg text-xs py-1.5 px-2 text-[var(--text-color)]">
                                     <option value="C">C Major</option>
                                     <option value="Cm">C Minor</option>
                                     <option value="D">D Major</option>
@@ -586,28 +690,28 @@
                                 </select>
                                 <button
                                     id="pad-toggle-btn"
-                                    class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-indigo-400 transition shrink-0">
+                                    class="p-2 rounded-lg bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] transition shrink-0">
                                     <i data-lucide="power" class="w-4 h-4"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-800">
-                            <span class="text-xs font-bold text-slate-400">Transpose:</span>
+                        <div class="flex items-center justify-between gap-2 pt-2 border-t border-[var(--border-color)]">
+                            <span class="text-xs font-bold text-[var(--text-hint)]">Transpose:</span>
                             <div class="flex items-center gap-1">
                                 <button
                                     id="transpose-down"
-                                    class="p-2 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg text-xs font-bold transition">
+                                    class="p-2 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] border border-[var(--border-color)] rounded-lg text-xs font-bold transition">
                                     -1
                                 </button>
                                 <button
                                     id="transpose-up"
-                                    class="p-2 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg text-xs font-bold transition">
+                                    class="p-2 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] border border-[var(--border-color)] rounded-lg text-xs font-bold transition">
                                     +1
                                 </button>
                                 <button
                                     id="save-key-btn"
-                                    class="hidden px-2 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition">
+                                    class="hidden px-2 py-1 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] rounded-lg text-xs font-bold transition">
                                     Save
                                 </button>
                             </div>
@@ -616,7 +720,7 @@
 
                     <button
                         id="floating-main-btn"
-                        class="p-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-full shadow-2xl transition hover:scale-105 active:scale-95 flex items-center justify-center gap-2">
+                        class="p-3.5 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] font-bold rounded-full shadow-2xl transition hover:scale-105 active:scale-95 flex items-center justify-center gap-2">
                         <i data-lucide="sliders" class="w-6 h-6"></i>
                     </button>
                 </div>
@@ -626,11 +730,14 @@
         <!-- Context-Aware Sidebar Action Modal -->
         <div
             id="sidebar-action-modal"
-            class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <h3 id="sidebar-modal-title" class="font-bold text-slate-200 text-sm">Actions</h3>
-                    <button id="close-sidebar-action-modal" class="text-slate-400 hover:text-slate-200">
+            class="fixed inset-0 bg-[var(--bg-primary)]/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+            <div
+                class="bg-[var(--bg-primary-variant)] border border-[var(--border-color)] rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
+                <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+                    <h3 id="sidebar-modal-title" class="font-bold text-[var(--text-color)] text-sm">Actions</h3>
+                    <button
+                        id="close-sidebar-action-modal"
+                        class="text-[var(--text-hint)] hover:text-[var(--text-color)] transition">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -643,151 +750,173 @@
         <!-- Settings Modal -->
         <div
             id="settings-modal"
-            class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+            class="fixed inset-0 bg-[var(--bg-primary)]/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
             <div
-                class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-                <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
-                    <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
-                        <i data-lucide="settings" class="w-5 h-5 text-amber-500"></i> App Settings
+                class="bg-[var(--bg-primary-variant)] border border-[var(--border-color)] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)]">
+                    <h3 class="text-lg font-bold text-[var(--text-color)] flex items-center gap-2">
+                        <i data-lucide="settings" class="w-5 h-5 text-[var(--text-color)]"></i> App Settings
                     </h3>
-                    <button id="close-settings-btn" class="text-slate-400 hover:text-slate-200">
+                    <button
+                        id="close-settings-btn"
+                        class="text-[var(--text-hint)] hover:text-[var(--text-color)] transition">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
 
-                <div class="p-6 overflow-y-auto space-y-6 text-slate-300">
+                <div class="p-6 overflow-y-auto space-y-6 text-[var(--text-color)]">
                     <div class="space-y-4">
-                        <h4 class="text-sm font-semibold text-amber-500 uppercase tracking-wider">
+                        <h4 class="text-sm font-semibold text-[var(--text-color)] uppercase tracking-wider">
                             Typography & Scaling
                         </h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-slate-400 mb-1">Chord Font Size</label>
+                                <label class="block text-xs font-medium text-[var(--text-hint)] mb-1"
+                                    >Chord Font Size</label
+                                >
                                 <input
                                     type="range"
                                     id="setting-chord-scale"
                                     min="0.75"
                                     max="1.5"
                                     step="0.05"
-                                    class="w-full accent-amber-500" />
+                                    class="w-full accent-[var(--color-secondary)] cursor-pointer" />
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-400 mb-1">Heading Font Size</label>
+                                <label class="block text-xs font-medium text-[var(--text-hint)] mb-1"
+                                    >Heading Font Size</label
+                                >
                                 <input
                                     type="range"
                                     id="setting-heading-scale"
                                     min="0.7"
                                     max="1.3"
                                     step="0.05"
-                                    class="w-full accent-amber-500" />
+                                    class="w-full accent-[var(--color-secondary)] cursor-pointer" />
                             </div>
                             <div class="space-y-4 pt-2">
                                 <label class="flex items-center justify-between cursor-pointer">
-                                    <span class="text-sm font-semibold text-slate-300"
+                                    <span class="text-sm font-semibold text-[var(--text-color)]"
                                         >Auto-scale song text to screen width</span
                                     >
                                     <input
                                         type="checkbox"
                                         id="setting-auto-scale"
-                                        class="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                                        class="w-4 h-4 accent-[var(--color-secondary)] rounded cursor-pointer"
                                         checked />
                                 </label>
 
                                 <div id="max-font-size-container" class="flex items-center justify-between">
-                                    <span class="text-sm font-semibold text-slate-300">Max Font Size (px):</span>
+                                    <span class="text-sm font-semibold text-[var(--text-color)]"
+                                        >Max Font Size (px):</span
+                                    >
                                     <input
                                         type="number"
                                         id="setting-max-font-size"
                                         value="24"
                                         min="12"
                                         max="48"
-                                        class="w-20 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-sm text-amber-400 text-center font-mono" />
+                                        class="w-20 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg px-2 py-1 text-sm text-[var(--text-color)] text-center font-mono" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <hr class="border-slate-800" />
+                    <div class="flex items-center justify-between py-2 border-b border-[var(--border-color)]">
+                        <label for="theme-select" class="text-xs font-bold text-[var(--text-color)]">App Theme</label>
+                        <select
+                            id="theme-select"
+                            class="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg text-xs py-1.5 px-3 text-[var(--text-color)] focus:outline-none focus:border-[var(--color-secondary)]">
+                            <option value="system">System Default</option>
+                            <option value="dark">Dark Theme</option>
+                            <option value="light">Light Theme</option>
+                        </select>
+                    </div>
+                    <hr class="border-[var(--border-color)]" />
 
                     <div class="space-y-4">
-                        <h4 class="text-sm font-semibold text-amber-500 uppercase tracking-wider">
+                        <h4 class="text-sm font-semibold text-[var(--text-color)] uppercase tracking-wider">
                             Autoscroll Defaults
                         </h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-slate-400 mb-1"
+                                <label class="block text-xs font-medium text-[var(--text-hint)] mb-1"
                                     >Default Duration (seconds)</label
                                 >
                                 <input
                                     type="number"
                                     id="setting-autoscroll-duration"
                                     value="180"
-                                    class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-sm" />
+                                    class="w-full bg-[var(--bg-surface-variant)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-[var(--text-color)] text-sm" />
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-400 mb-1"
+                                <label class="block text-xs font-medium text-[var(--text-hint)] mb-1"
                                     >Default Predelay (seconds)</label
                                 >
                                 <input
                                     type="number"
                                     id="setting-autoscroll-predelay"
                                     value="5"
-                                    class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-sm" />
+                                    class="w-full bg-[var(--bg-surface-variant)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-[var(--text-color)] text-sm" />
                             </div>
                         </div>
                     </div>
 
-                    <hr class="border-slate-800" />
+                    <hr class="border-[var(--border-color)]" />
 
                     <div class="space-y-4">
-                        <h4 class="text-sm font-semibold text-amber-500 uppercase tracking-wider">
+                        <h4 class="text-sm font-semibold text-[var(--text-color)] uppercase tracking-wider">
                             WebSockets (Client / Host)
                         </h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-slate-400 mb-1">WebSocket Mode</label>
+                                <label class="block text-xs font-medium text-[var(--text-hint)] mb-1"
+                                    >WebSocket Mode</label
+                                >
                                 <select
                                     id="setting-ws-mode"
-                                    class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-sm">
+                                    class="w-full bg-[var(--bg-surface-variant)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-[var(--text-color)] text-sm">
                                     <option value="disabled">Disabled</option>
                                     <option value="host">Host Stage Display</option>
                                     <option value="client">Client Receiver</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-400 mb-1">Host / Server URL</label>
+                                <label class="block text-xs font-medium text-[var(--text-hint)] mb-1"
+                                    >Host / Server URL</label
+                                >
                                 <input
                                     type="text"
                                     id="setting-ws-url"
                                     placeholder="ws://localhost:8080"
-                                    class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-sm" />
+                                    class="w-full bg-[var(--bg-surface-variant)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-[var(--text-color)] text-sm" />
                             </div>
                         </div>
                     </div>
 
-                    <hr class="border-slate-800" />
+                    <hr class="border-[var(--border-color)]" />
 
                     <div class="space-y-4">
-                        <h4 class="text-sm font-semibold text-amber-500 uppercase tracking-wider">
+                        <h4 class="text-sm font-semibold text-[var(--text-color)] uppercase tracking-wider">
                             MIDI Device Options
                         </h4>
                         <div>
-                            <label class="block text-xs font-medium text-slate-400 mb-1"
+                            <label class="block text-xs font-medium text-[var(--text-hint)] mb-1"
                                 >Preferred MIDI Input Port</label
                             >
                             <select
                                 id="setting-midi-port"
-                                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-sm">
+                                class="w-full bg-[var(--bg-surface-variant)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-[var(--text-color)] text-sm">
                                 <option value="">-- No MIDI Device Connected --</option>
                             </select>
                         </div>
                     </div>
 
-                    <hr class="border-slate-800" />
+                    <hr class="border-[var(--border-color)]" />
 
                     <!-- Group 5: Stage Display / Cast Options -->
                     <div class="space-y-4">
-                        <h4 class="text-sm font-semibold text-amber-500 uppercase tracking-wider">
+                        <h4 class="text-sm font-semibold text-[var(--text-color)] uppercase tracking-wider">
                             Stage Display / Cast Options
                         </h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -796,15 +925,15 @@
                                     type="checkbox"
                                     id="setting-cast-show-chords"
                                     checked
-                                    class="accent-amber-500 w-4 h-4 rounded cursor-pointer" />
+                                    class="accent-[var(--color-secondary)] w-4 h-4 rounded cursor-pointer" />
                                 <label
                                     for="setting-cast-show-chords"
-                                    class="text-xs font-medium text-slate-300 cursor-pointer"
+                                    class="text-xs font-medium text-[var(--text-color)] cursor-pointer"
                                     >Show Chords on Stage Cast</label
                                 >
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-400 mb-1"
+                                <label class="block text-xs font-medium text-[var(--text-hint)] mb-1"
                                     >Stage Cast Font Scale</label
                                 >
                                 <input
@@ -814,16 +943,17 @@
                                     max="2.5"
                                     step="0.1"
                                     value="1.4"
-                                    class="w-full accent-amber-500" />
+                                    class="w-full accent-[var(--color-secondary)] cursor-pointer" />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-end px-6 py-4 border-t border-slate-800 bg-slate-950/40 gap-3">
+                <div
+                    class="flex items-center justify-end px-6 py-4 border-t border-[var(--border-color)] bg-[var(--bg-primary)]/40 gap-3">
                     <button
                         id="save-settings-btn"
-                        class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
+                        class="bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] px-4 py-2 rounded-lg text-sm font-semibold transition">
                         Save & Apply
                     </button>
                 </div>
@@ -833,35 +963,36 @@
         <!-- Storage Root Selector Modal -->
         <div
             id="folder-modal"
-            class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <div class="flex items-center space-x-2 text-amber-400">
+            class="hidden fixed inset-0 z-50 bg-[var(--bg-primary)]/80 backdrop-blur-md flex items-center justify-center p-4">
+            <div
+                class="bg-[var(--bg-primary-variant)] border border-[var(--border-color)] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6">
+                <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+                    <div class="flex items-center space-x-2 text-[var(--text-color)]">
                         <i data-lucide="folder-tree" class="w-5 h-5"></i>
-                        <h3 class="font-bold text-lg text-slate-100">Select OpenSong Root Folder</h3>
+                        <h3 class="font-bold text-lg text-[var(--text-color)]">Select OpenSong Root Folder</h3>
                     </div>
                     <button
                         id="close-folder-modal"
-                        class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white">
+                        class="p-1 hover:bg-[var(--bg-surface-variant)] rounded text-[var(--text-hint)] hover:text-[var(--text-color)] transition">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
-                <p class="text-sm text-slate-400 leading-relaxed">
+                <p class="text-sm text-[var(--text-hint)] leading-relaxed">
                     Choose your local OpenSong directory containing Songs, Sets, and Settings.
                 </p>
                 <div id="modal-progress-container" class="hidden text-center py-6 space-y-4">
                     <div class="relative inline-flex items-center justify-center">
                         <div
-                            class="w-12 h-12 border-4 border-amber-500/20 border-t-amber-400 rounded-full animate-spin"></div>
-                        <i data-lucide="music" class="w-5 h-5 text-amber-400 absolute"></i>
+                            class="w-12 h-12 border-4 border-[var(--color-secondary)]/20 border-t-[var(--color-secondary)] rounded-full animate-spin"></div>
+                        <i data-lucide="music" class="w-5 h-5 text-[var(--text-color)] absolute"></i>
                     </div>
-                    <h4 class="text-base font-bold text-slate-100">Scanning Directory...</h4>
+                    <h4 class="text-base font-bold text-[var(--text-color)]">Scanning Directory...</h4>
                 </div>
                 <div id="modal-actions-container" class="space-y-3">
                     <div id="reconnect-folder-container" class="hidden">
                         <button
                             id="modal-reconnect-folder-btn"
-                            class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition flex items-center justify-center space-x-2 mb-2">
+                            class="w-full py-3 px-4 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] font-bold rounded-xl transition flex items-center justify-center space-x-2 mb-2">
                             <i data-lucide="check-circle" class="w-5 h-5"></i
                             ><span>Restore Permission to Saved Folder</span>
                         </button>
@@ -869,7 +1000,7 @@
 
                     <button
                         id="modal-select-folder-btn"
-                        class="w-full py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition flex items-center justify-center space-x-2">
+                        class="w-full py-3 px-4 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] font-bold rounded-xl transition flex items-center justify-center space-x-2">
                         <i data-lucide="folder-open" class="w-5 h-5"></i><span>Select Root Folder</span>
                     </button>
                 </div>
@@ -880,49 +1011,50 @@
         <!-- Import / Export Modal -->
         <div
             id="import-modal"
-            class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <div class="flex items-center space-x-2 text-emerald-400">
+            class="hidden fixed inset-0 z-50 bg-[var(--bg-primary)]/80 backdrop-blur-md flex items-center justify-center p-4">
+            <div
+                class="bg-[var(--bg-primary-variant)] border border-[var(--border-color)] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6">
+                <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+                    <div class="flex items-center space-x-2 text-[var(--text-color)]">
                         <i data-lucide="repeat" class="w-5 h-5"></i>
-                        <h3 class="font-bold text-lg text-slate-100">Import & Export Archives</h3>
+                        <h3 class="font-bold text-lg text-[var(--text-color)]">Import & Export Archives</h3>
                     </div>
                     <button
                         id="close-import-modal"
-                        class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white">
+                        class="p-1 hover:bg-[var(--bg-surface-variant)] rounded text-[var(--text-hint)] hover:text-[var(--text-color)] transition">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
 
                 <div class="space-y-4 text-xs">
                     <div>
-                        <h4 class="font-bold text-slate-200 mb-2">Import Backups or Files</h4>
+                        <h4 class="font-bold text-[var(--text-color)] mb-2">Import Backups or Files</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <button
                                 id="modal-import-archive-btn"
-                                class="py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition flex items-center justify-center space-x-2">
+                                class="py-3 px-4 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] font-bold rounded-xl transition flex items-center justify-center space-x-2">
                                 <i data-lucide="file-archive" class="w-4 h-4"></i><span>Import .osb / .osbs / Zip</span>
                             </button>
                             <button
                                 id="modal-import-files-btn"
-                                class="py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition flex items-center justify-center space-x-2">
+                                class="py-3 px-4 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] font-bold rounded-xl transition flex items-center justify-center space-x-2">
                                 <i data-lucide="file-plus" class="w-4 h-4"></i><span>Import Songs / PDFs / DB</span>
                             </button>
                         </div>
                     </div>
 
-                    <div class="border-t border-slate-800 pt-3">
-                        <h4 class="font-bold text-slate-200 mb-2">Export Library</h4>
+                    <div class="border-t border-[var(--border-color)] pt-3">
+                        <h4 class="font-bold text-[var(--text-color)] mb-2">Export Library</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <button
                                 id="modal-export-osb-btn"
-                                class="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded-xl border border-slate-700 transition flex items-center justify-center space-x-2">
+                                class="py-3 px-4 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] font-bold rounded-xl border border-[var(--border-color)] transition flex items-center justify-center space-x-2">
                                 <i data-lucide="folder-output" class="w-4 h-4"></i
                                 ><span>Export Songs Folders (.osb)</span>
                             </button>
                             <button
                                 id="modal-export-osbs-btn"
-                                class="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-indigo-400 font-bold rounded-xl border border-slate-700 transition flex items-center justify-center space-x-2">
+                                class="py-3 px-4 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] font-bold rounded-xl border border-[var(--border-color)] transition flex items-center justify-center space-x-2">
                                 <i data-lucide="archive" class="w-4 h-4"></i><span>Export Sets Backup (.osbs)</span>
                             </button>
                         </div>
@@ -942,35 +1074,35 @@
         <!-- OSB Folder Selection Export Modal -->
         <div
             id="osb-export-modal"
-            class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+            class="hidden fixed inset-0 z-50 bg-[var(--bg-primary)]/85 backdrop-blur-md flex items-center justify-center p-4">
             <div
-                class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
-                    <div class="flex items-center space-x-2 text-amber-400">
+                class="bg-[var(--bg-primary-variant)] border border-[var(--border-color)] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+                <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3 shrink-0">
+                    <div class="flex items-center space-x-2 text-[var(--text-color)]">
                         <i data-lucide="folder-output" class="w-5 h-5"></i>
-                        <h3 class="font-bold text-lg text-slate-100">Select Folders to Export (.osb)</h3>
+                        <h3 class="font-bold text-lg text-[var(--text-color)]">Select Folders to Export (.osb)</h3>
                     </div>
                     <button
                         id="close-osb-export-modal"
-                        class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white">
+                        class="p-1 hover:bg-[var(--bg-surface-variant)] rounded text-[var(--text-hint)] hover:text-[var(--text-color)] transition">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
-                <p class="text-xs text-slate-400 leading-relaxed shrink-0">
+                <p class="text-xs text-[var(--text-hint)] leading-relaxed shrink-0">
                     Choose which song folders from OpenSong/Songs/ to bundle into your .osb backup:
                 </p>
                 <div
                     id="osb-folders-checkbox-list"
-                    class="flex-1 overflow-y-auto space-y-2 pr-1 text-xs divide-y divide-slate-800/60"></div>
-                <div class="flex justify-end gap-2 pt-3 border-t border-slate-800 shrink-0">
+                    class="flex-1 overflow-y-auto space-y-2 pr-1 text-xs divide-y divide-[var(--border-color)]"></div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-[var(--border-color)] shrink-0">
                     <button
                         id="osb-export-cancel-btn"
-                        class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition">
+                        class="px-4 py-2 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] font-bold text-xs rounded-xl border border-[var(--border-color)] transition">
                         Cancel
                     </button>
                     <button
                         id="osb-export-confirm-btn"
-                        class="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition">
+                        class="px-5 py-2 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] font-bold text-xs rounded-xl border border-[var(--border-color)] transition">
                         Export Selected (.osb)
                     </button>
                 </div>
@@ -980,36 +1112,36 @@
         <!-- Conflict Resolution Modal -->
         <div
             id="conflict-modal"
-            class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+            class="hidden fixed inset-0 z-50 bg-[var(--bg-primary)]/85 backdrop-blur-md flex items-center justify-center p-4">
             <div
-                class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
-                    <div class="flex items-center space-x-2 text-amber-400">
+                class="bg-[var(--bg-primary-variant)] border border-[var(--border-color)] rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+                <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3 shrink-0">
+                    <div class="flex items-center space-x-2 text-[var(--text-color)]">
                         <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-                        <h3 class="font-bold text-lg text-slate-100">Files Already Exist</h3>
+                        <h3 class="font-bold text-lg text-[var(--text-color)]">Files Already Exist</h3>
                     </div>
                     <button
                         id="close-conflict-modal"
-                        class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white">
+                        class="p-1 hover:bg-[var(--bg-surface-variant)] rounded text-[var(--text-hint)] hover:text-[var(--text-color)] transition">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
-                <p class="text-xs text-slate-400 leading-relaxed shrink-0">
+                <p class="text-xs text-[var(--text-hint)] leading-relaxed shrink-0">
                     The archive contains items that already exist in your library. Select which files you wish to
                     overwrite or skip:
                 </p>
                 <div
                     id="conflict-items-list"
-                    class="flex-1 overflow-y-auto space-y-2 pr-1 text-xs divide-y divide-slate-800/60"></div>
-                <div class="flex justify-end gap-2 pt-3 border-t border-slate-800 shrink-0">
+                    class="flex-1 overflow-y-auto space-y-2 pr-1 text-xs divide-y divide-[var(--border-color)]"></div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-[var(--border-color)] shrink-0">
                     <button
                         id="conflict-cancel-btn"
-                        class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition">
+                        class="px-4 py-2 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] font-bold text-xs rounded-xl border border-[var(--border-color)] transition">
                         Cancel Import
                     </button>
                     <button
                         id="conflict-proceed-btn"
-                        class="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition">
+                        class="px-5 py-2 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] font-bold text-xs rounded-xl border border-[var(--border-color)] transition">
                         Proceed with Selected
                     </button>
                 </div>
@@ -1019,29 +1151,31 @@
         <!-- Share Options Modal -->
         <div
             id="share-modal"
-            class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+            class="hidden fixed inset-0 z-50 bg-[var(--bg-primary)]/80 backdrop-blur-md flex items-center justify-center p-4">
             <div
-                class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-xs">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <h3 class="font-bold text-sm text-amber-400 flex items-center gap-1.5">
-                        <i data-lucide="share-2" class="w-4 h-4"></i> Export / Share File
+                class="bg-[var(--bg-primary-variant)] border border-[var(--border-color)] rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-xs">
+                <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-2">
+                    <h3 class="font-bold text-sm text-[var(--text-color)] flex items-center gap-1.5">
+                        <i data-lucide="share-2" class="w-4 h-4 text-[var(--text-color)]"></i> Export / Share File
                     </h3>
-                    <button id="close-share-modal" class="p-1 text-slate-400 hover:text-white">
+                    <button
+                        id="close-share-modal"
+                        class="p-1 text-[var(--text-hint)] hover:text-[var(--text-color)] transition">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
                 <div class="space-y-2">
                     <button
                         id="share-extless-btn"
-                        class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl transition text-left flex justify-between items-center">
-                        <span>Extensionless File</span
-                        ><span id="share-name-extless" class="font-mono text-amber-400"></span>
+                        class="w-full py-2.5 px-4 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] border border-[var(--border-color)] font-bold rounded-xl transition text-left flex justify-between items-center">
+                        <span>Extensionless File</span>
+                        <span id="share-name-extless" class="font-mono text-[var(--text-color)]"></span>
                     </button>
                     <button
                         id="share-ext-btn"
-                        class="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition text-left flex justify-between items-center">
-                        <span id="share-ext-label">With extension</span
-                        ><span id="share-name-ext" class="font-mono"></span>
+                        class="w-full py-2.5 px-4 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] font-bold rounded-xl transition text-left flex justify-between items-center">
+                        <span id="share-ext-label">With extension</span>
+                        <span id="share-name-ext" class="font-mono text-[var(--text-color)]"></span>
                     </button>
                 </div>
             </div>
@@ -1050,30 +1184,30 @@
         <!-- Manage Sets Modal -->
         <div
             id="manage-sets-modal"
-            class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+            class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-sm">
             <div
-                class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl max-w-lg w-full space-y-4 relative flex flex-col max-h-[85vh]">
+                class="bg-[var(--bg-primary-variant)] border border-[var(--border-color)] rounded-2xl p-5 shadow-2xl max-w-lg w-full space-y-4 relative flex flex-col max-h-[85vh]">
                 <!-- Header -->
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
+                <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3 shrink-0">
                     <div class="flex items-center gap-2">
-                        <i data-lucide="folder-archive" class="w-5 h-5 text-amber-400"></i>
-                        <h3 class="text-base font-extrabold text-slate-100">Saved Sets Library</h3>
+                        <i data-lucide="folder-archive" class="w-5 h-5 text-[var(--text-color)]"></i>
+                        <h3 class="text-base font-extrabold text-[var(--text-color)]">Saved Sets Library</h3>
                     </div>
                     <button
                         id="close-manage-sets-btn"
-                        class="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">
+                        class="p-1 text-[var(--text-hint)] hover:text-[var(--text-color)] rounded-lg hover:bg-[var(--bg-surface-variant)] transition">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
 
                 <!-- Search / Filter input inside modal -->
                 <div class="relative shrink-0">
-                    <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+                    <i data-lucide="search" class="w-4 h-4 text-[var(--text-hint)] absolute left-3 top-3"></i>
                     <input
                         type="text"
                         id="manage-sets-search"
                         placeholder="Filter saved sets..."
-                        class="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-200 focus:outline-none focus:border-amber-500" />
+                        class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl py-2 pl-9 pr-3 text-xs text-[var(--text-color)] focus:outline-none focus:border-[var(--color-secondary)]" />
                 </div>
 
                 <!-- Saved Sets Scrollable List -->
@@ -1082,10 +1216,10 @@
                 </div>
 
                 <!-- Footer / Dismiss -->
-                <div class="border-t border-slate-800 pt-3 flex justify-end shrink-0">
+                <div class="border-t border-[var(--border-color)] pt-3 flex justify-end shrink-0">
                     <button
                         id="cancel-manage-sets-btn"
-                        class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition">
+                        class="px-4 py-2 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] font-bold text-xs rounded-xl border border-[var(--border-color)] transition">
                         Close
                     </button>
                 </div>
@@ -1095,37 +1229,38 @@
         <!-- Comprehensive Tabbed Song Editor Modal -->
         <div
             id="song-editor-modal"
-            class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+            class="hidden fixed inset-0 z-50 bg-[var(--bg-primary)]/85 backdrop-blur-md flex items-center justify-center p-4">
             <div
-                class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
-                    <h3 class="font-bold text-lg text-amber-400">Create / Edit Song</h3>
+                class="bg-[var(--bg-primary-variant)] border border-[var(--border-color)] rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col">
+                <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3 shrink-0">
+                    <h3 class="font-bold text-lg text-[var(--text-color)]">Create / Edit Song</h3>
                     <button
                         id="close-song-editor"
-                        class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white">
+                        class="p-1 hover:bg-[var(--bg-surface-variant)] rounded text-[var(--text-hint)] hover:text-[var(--text-color)] transition">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
 
-                <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0 gap-1 overflow-x-auto">
+                <div
+                    class="flex bg-[var(--bg-primary)] p-1 rounded-xl border border-[var(--border-color)] shrink-0 gap-1 overflow-x-auto">
                     <button
                         data-editors-tab="lyrics"
-                        class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg bg-amber-500 text-slate-950 transition">
+                        class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg bg-[var(--color-secondary)] text-[var(--text-color)] transition">
                         Lyrics
                     </button>
                     <button
                         data-editors-tab="main"
-                        class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">
+                        class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-[var(--text-hint)] hover:text-[var(--text-color)] transition">
                         Main
                     </button>
                     <button
                         data-editors-tab="features"
-                        class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">
+                        class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-[var(--text-hint)] hover:text-[var(--text-color)] transition">
                         Song features
                     </button>
                     <button
                         data-editors-tab="tags"
-                        class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">
+                        class="editor-tab-btn flex-1 py-1.5 px-3 text-xs font-bold rounded-lg text-[var(--text-hint)] hover:text-[var(--text-color)] transition">
                         Tags
                     </button>
                 </div>
@@ -1133,36 +1268,39 @@
                 <div class="flex-1 overflow-y-auto space-y-4 pr-1">
                     <div id="editor-pane-lyrics" class="editor-pane space-y-3 text-xs">
                         <div>
-                            <label class="font-bold text-slate-300 block mb-1">Presentation Order e.g. V1 C V2 C</label
+                            <label class="font-bold text-[var(--text-color)] block mb-1"
+                                >Presentation Order e.g. V1 C V2 C</label
                             ><input
                                 type="text"
                                 id="edit-song-presentation-input"
-                                class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono" />
+                                class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2 text-[var(--text-color)] font-mono" />
                         </div>
                         <div>
-                            <label class="font-bold text-slate-300 block mb-1">Lyrics & Chords (OpenSong Format)</label>
+                            <label class="font-bold text-[var(--text-color)] block mb-1"
+                                >Lyrics & Chords (OpenSong Format)</label
+                            >
                             <textarea
                                 id="edit-song-lyrics-input"
                                 rows="10"
-                                class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-xs text-slate-100"
+                                class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2 font-mono text-xs text-[var(--text-color)]"
                                 placeholder="[V1]&#10;.C     G&#10;Amazing grace..."></textarea>
                         </div>
                     </div>
 
                     <div id="editor-pane-main" class="editor-pane hidden space-y-3 text-xs">
                         <div>
-                            <label class="font-bold text-slate-300 block mb-1">Title *</label
+                            <label class="font-bold text-[var(--text-color)] block mb-1">Title *</label
                             ><input
                                 type="text"
                                 id="edit-song-title-input"
-                                class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" />
+                                class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2 text-[var(--text-color)]" />
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label class="font-bold text-slate-300 block mb-1">Folder</label>
+                                <label class="font-bold text-[var(--text-color)] block mb-1">Folder</label>
                                 <select
                                     id="edit-song-folder-select"
-                                    class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-amber-400 font-mono">
+                                    class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2 text-[var(--text-color)] font-mono">
                                     <option value="MAIN">MAIN</option>
                                     <option value="NEW_FOLDER">+ Create New Folder...</option>
                                 </select>
@@ -1170,39 +1308,40 @@
                                     type="text"
                                     id="edit-song-new-folder-input"
                                     placeholder="Enter new folder name..."
-                                    class="hidden mt-2 w-full bg-slate-950 border border-amber-500/50 rounded-lg p-2 text-amber-300 font-mono" />
+                                    class="hidden mt-2 w-full bg-[var(--bg-primary)] border border-[var(--color-secondary)]/50 rounded-lg p-2 text-[var(--text-color)] font-mono" />
                             </div>
                             <div>
-                                <label class="font-bold text-slate-300 block mb-1">Filename (No Extension)</label
+                                <label class="font-bold text-[var(--text-color)] block mb-1"
+                                    >Filename (No Extension)</label
                                 ><input
                                     type="text"
                                     id="edit-song-filename-input"
-                                    class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono" />
+                                    class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2 text-[var(--text-color)] font-mono" />
                             </div>
                         </div>
                     </div>
 
                     <div id="editor-pane-features" class="editor-pane hidden space-y-3 text-xs">
                         <div>
-                            <label class="font-bold text-slate-300 block mb-1">Author / Artist</label
+                            <label class="font-bold text-[var(--text-color)] block mb-1">Author / Artist</label
                             ><input
                                 type="text"
                                 id="edit-song-author-input"
-                                class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" />
+                                class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2 text-[var(--text-color)]" />
                         </div>
                         <div>
-                            <label class="font-bold text-slate-300 block mb-1">Copyright</label
+                            <label class="font-bold text-[var(--text-color)] block mb-1">Copyright</label
                             ><input
                                 type="text"
                                 id="edit-song-copyright-input"
-                                class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100" />
+                                class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2 text-[var(--text-color)]" />
                         </div>
                         <div class="grid grid-cols-3 gap-2">
                             <div>
-                                <label class="font-bold text-slate-300 block mb-1">Key</label>
+                                <label class="font-bold text-[var(--text-color)] block mb-1">Key</label>
                                 <select
                                     id="edit-song-key-input"
-                                    class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono">
+                                    class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2 text-[var(--text-color)] font-mono">
                                     <option value="C">C</option>
                                     <option value="C#">C#</option>
                                     <option value="Db">Db</option>
@@ -1223,10 +1362,10 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="font-bold text-slate-300 block mb-1">Capo Fret</label>
+                                <label class="font-bold text-[var(--text-color)] block mb-1">Capo Fret</label>
                                 <select
                                     id="edit-song-capo-input"
-                                    class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono">
+                                    class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2 text-[var(--text-color)] font-mono">
                                     <option value="">None</option>
                                     <option value="1">1</option>
                                     <option value="2">2</option>
@@ -1238,55 +1377,56 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="font-bold text-slate-300 block mb-1">Tempo (BPM)</label>
+                                <label class="font-bold text-[var(--text-color)] block mb-1">Tempo (BPM)</label>
                                 <input
                                     type="number"
                                     id="edit-song-tempo-input"
-                                    class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"
+                                    class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2 text-[var(--text-color)]"
                                     value="120" />
                             </div>
                         </div>
                         <div>
-                            <label class="font-bold text-slate-300 block mb-1">Time Signature</label
+                            <label class="font-bold text-[var(--text-color)] block mb-1">Time Signature</label
                             ><input
                                 type="text"
                                 id="edit-song-timesig-input"
-                                class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100 font-mono"
+                                class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2 text-[var(--text-color)] font-mono"
                                 value="4/4" />
                         </div>
                         <div>
-                            <label class="font-bold text-slate-300 block mb-1">Sticky Notes / Popup Notes</label
+                            <label class="font-bold text-[var(--text-color)] block mb-1"
+                                >Sticky Notes / Popup Notes</label
                             ><textarea
                                 id="edit-song-notes-input"
                                 rows="2"
-                                class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"></textarea>
+                                class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2 text-[var(--text-color)]"></textarea>
                         </div>
                     </div>
 
                     <div id="editor-pane-tags" class="editor-pane hidden space-y-3 text-xs">
                         <div>
-                            <label class="font-bold text-slate-300 block mb-1">Themes</label
+                            <label class="font-bold text-[var(--text-color)] block mb-1">Themes</label
                             ><input
                                 type="text"
                                 id="edit-song-themes-input"
-                                class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"
+                                class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2 text-[var(--text-color)]"
                                 placeholder="e.g. Worship, Grace" />
                         </div>
                         <div>
-                            <label class="font-bold text-slate-300 block mb-1">BeatBuddy / Drummer</label
+                            <label class="font-bold text-[var(--text-color)] block mb-1">BeatBuddy / Drummer</label
                             ><input
                                 type="text"
                                 id="edit-song-beatbuddy-input"
-                                class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-100"
+                                class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2 text-[var(--text-color)]"
                                 placeholder="e.g. Rock 4/4" />
                         </div>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-2 border-t border-slate-800 shrink-0">
+                <div class="flex justify-end gap-2 pt-2 border-t border-[var(--border-color)] shrink-0">
                     <button
                         id="save-song-btn"
-                        class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition">
+                        class="px-5 py-2.5 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] font-bold text-xs rounded-xl transition">
                         Save Song
                     </button>
                 </div>
@@ -1429,6 +1569,7 @@
                 setupEventListeners();
                 setupSetNavigationListeners();
                 setupSidebarInteractions();
+                loadCurrentSetFromStorage();
                 await initSqlDatabase();
 
                 // Set the version
@@ -2287,15 +2428,16 @@
                 // If there is an active/temporary set being built or viewed, pin it to the top
                 if (window.currentActiveSet) {
                     const tempItem = document.createElement("li");
-                    tempItem.className = "p-3 bg-indigo-950/60 border border-indigo-700/60 rounded-xl space-y-2 mb-2";
+                    tempItem.className =
+                        "p-3 bg-[var(--bg-primary-variant)]/60 border border-[var(--border-color)] rounded-xl space-y-2 mb-2";
                     tempItem.innerHTML = `
             <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-indigo-300 uppercase tracking-wider">Current set (temporary)</span>
-                <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full font-mono">${window.currentActiveSet.songs.length} songs</span>
+                <span class="text-xs font-bold text-[var(--text-color)] uppercase tracking-wider">Current set (temporary)</span>
+                <span class="text-[10px] bg-[var(--color-secondary)]/20 text-[var(--text-color)] px-2 py-0.5 rounded-full font-mono">${window.currentActiveSet.songs.length} songs</span>
             </div>
-            <div class="text-xs text-slate-300 font-medium truncate">${window.currentActiveSet.title || "Untitled Set"}</div>
-            <div class="space-y-1 pl-2 border-l border-indigo-800/60 pt-1">
-                ${window.currentActiveSet.songs.map((s, idx) => `<div class="text-[11px] text-slate-400 truncate">${idx + 1}.${s.title}</div>`).join("")}
+            <div class="text-xs text-[var(--text-color)] font-medium truncate">${window.currentActiveSet.title || "Untitled Set"}</div>
+            <div class="space-y-1 pl-2 border-l border-[var(--border-color)] pt-1">
+                ${window.currentActiveSet.songs.map((s, idx) => `<div class="text-[11px] text-[var(--text-hint)] truncate">${idx + 1}.${s.title}</div>`).join("")}
             </div>
         `;
                     container.appendChild(tempItem);
@@ -2304,21 +2446,21 @@
                     const foundSong = loadedSongs.find((s) => s.title.toLowerCase() === t.toLowerCase());
                     const itemDiv = document.createElement("div");
                     itemDiv.className =
-                        "p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between cursor-grab hover:border-indigo-500/40 transition select-none";
+                        "p-3 rounded-xl bg-[var(--bg-primary-variant)]/60 border border-[var(--border-color)] flex items-center justify-between cursor-grab hover:border-[var(--color-secondary)]/40 transition select-none";
                     itemDiv.draggable = true;
                     itemDiv.dataset.index = idx;
 
                     itemDiv.innerHTML = `
-                    <div class="flex items-center space-x-3 flex-1 truncate">
-                        <i data-lucide="grip-vertical" class="w-4 h-4 text-slate-600"></i>
-                        <span class="text-xs font-mono text-slate-500">${idx + 1}</span>
-                        <span class="font-bold text-slate-200 text-sm truncate">${t}</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs text-amber-400 font-semibold">${foundSong ? foundSong.key || "" : "Not Found"}</span>
-                        <button class="text-slate-500 hover:text-red-400 transition remove-set-song"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                `;
+            <div class="flex items-center space-x-3 flex-1 truncate">
+                <i data-lucide="grip-vertical" class="w-4 h-4 text-[var(--text-hint)]"></i>
+                <span class="text-xs font-mono text-[var(--text-hint)]">${idx + 1}</span>
+                <span class="font-bold text-[var(--text-color)] text-sm truncate">${t}</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-[var(--text-color)] font-semibold">${foundSong ? foundSong.key || "" : "Not Found"}</span>
+                <button class="text-[var(--text-hint)] hover:text-[var(--text-color)] transition remove-set-song"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+        `;
 
                     if (foundSong) {
                         itemDiv.addEventListener("click", async (e) => {
@@ -2338,10 +2480,10 @@
 
                     itemDiv.addEventListener("dragstart", (e) => {
                         e.dataTransfer.setData("text/plain", idx);
-                        itemDiv.classList.add("opacity-50", "border-indigo-500");
+                        itemDiv.classList.add("opacity-50", "border-[var(--color-secondary)]");
                     });
                     itemDiv.addEventListener("dragend", () => {
-                        itemDiv.classList.remove("opacity-50", "border-indigo-500");
+                        itemDiv.classList.remove("opacity-50", "border-[var(--color-secondary)]");
                     });
                     itemDiv.addEventListener("dragover", (e) => e.preventDefault());
                     itemDiv.addEventListener("drop", (e) => {
@@ -2370,7 +2512,7 @@
                     const btn = document.createElement("button");
                     btn.id = "dynamic-save-set-btn";
                     btn.className =
-                        "px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition animate-pulse";
+                        "px-3 py-1.5 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] rounded-lg text-xs font-bold flex items-center gap-1.5 transition animate-pulse";
                     btn.innerHTML = '<i data-lucide="save" class="w-3.5 h-3.5"></i> Save Changes';
                     btn.onclick = async () => {
                         const existingIdx = loadedSets.findIndex(
@@ -2593,15 +2735,15 @@
 
                         sectionContainer = document.createElement("div");
                         sectionContainer.className =
-                            "w-full p-4 md:p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3 cursor-pointer hover:border-amber-500/40 transition";
+                            "w-full p-4 md:p-6 rounded-2xl bg-[var(--bg-primary-variant)]/60 border border-[var(--border-color)] space-y-3 cursor-pointer hover:border-[var(--color-secondary)]/40 transition";
                         const prettyName = formatSectionHeading(trimmed);
-                        sectionContainer.innerHTML = `<h4 class="section-heading text-amber-400 font-extrabold text-sm tracking-wide mb-2">${prettyName}</h4>`;
+                        sectionContainer.innerHTML = `<h4 class="section-heading text-[var(--hint-color)] font-extrabold text-sm tracking-wide mb-2">${prettyName}</h4>`;
 
                         sectionContainer.addEventListener("click", () => {
                             document
                                 .querySelectorAll("#sheet-content > div")
-                                .forEach((el) => el.classList.remove("ring-2", "ring-amber-500"));
-                            sectionContainer.classList.add("ring-2", "ring-amber-500");
+                                .forEach((el) => el.classList.remove("ring-2", "ring-[var(--color-secondary)]"));
+                            sectionContainer.classList.add("ring-2", "ring-[var(--color-secondary)]");
                             updateCastWindow(activeSong, thisSectionIdx, true);
                         });
 
@@ -2614,7 +2756,7 @@
                         const thisSectionIdx = sectionCounter;
                         sectionContainer = document.createElement("div");
                         sectionContainer.className =
-                            "w-full p-4 md:p-6 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-3";
+                            "w-full p-4 md:p-6 rounded-2xl bg-[var(--bg-primary-variant)]/40 border border-[var(--border-color)]bg-[var(--bg-primary-variant)] space-y-3";
                         elements.sheetContent.appendChild(sectionContainer);
                     }
 
@@ -2642,7 +2784,7 @@
                     } else {
                         // Pure lyric line without chords gets its own clean class
                         div.className = "pure-lyric-line my-1";
-                        div.innerHTML = `<div class="lyric-below">${line}</div>`;
+                        div.innerHTML = `<div class="lyric-below text-[var(--text-color)]">${line}</div>`;
                     }
                     sectionContainer.appendChild(div);
 
@@ -2655,7 +2797,15 @@
             }
 
             function buildChordLyricPairs(chordLine, lyricLine, capoFret, capoSteps, mode, transposeOffset) {
-                if (!lyricLine) return `<div class="chord-above" style="white-space: pre;">${chordLine}</div>`;
+                if (!lyricLine) {
+                    let nativeChordLine = chordLine;
+                    let html = `<div class="chord-above" style="white-space: pre; font-weight:700; color: var(--chord-color, #ffff00);">${nativeChordLine}</div>`;
+                    if (capoFret) {
+                        html += `<div class="chord-above" style="white-space: pre; font-weight:700; color: var(--capo-color, #ff0000);">${nativeChordLine}</div>`;
+                    }
+                    return html;
+                }
+
                 const normalizedChordLine = chordLine.replace(/\xA0/g, " ");
                 const chordRegex = /([A-G][b#]?[^\s]*)/g;
                 let match,
@@ -2665,12 +2815,16 @@
                 }
 
                 if (chordsMap.length === 0)
-                    return `<div class="lyric-below" style="white-space: pre-wrap;">${lyricLine}</div>`;
+                    return `<div class="lyric-below text-[var(--text-color)]" style="white-space: pre-wrap;">${lyricLine}</div>`;
 
                 let html = "";
                 if (chordsMap[0].index > 0) {
                     let leadingText = lyricLine.slice(0, chordsMap[0].index);
-                    html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span style="width: 0; overflow: visible; white-space: nowrap;"><div class="chord-above" style="visibility: hidden;">&nbsp;</div></span><span class="lyric-below" style="white-space: pre;">${leadingText}</span></span>`;
+                    let hiddenPlaceholders = `<div class="chord-above" style="visibility: hidden;">&nbsp;</div>`;
+                    if (capoFret) {
+                        hiddenPlaceholders += `<div class="chord-above" style="visibility: hidden;">&nbsp;</div>`;
+                    }
+                    html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span style="width: 0; overflow: visible; white-space: nowrap; display: flex; flex-direction: column;">${hiddenPlaceholders}</span><span class="lyric-below text-[var(--text-color)]" style="white-space: pre;">${leadingText}</span></span>`;
                 }
 
                 chordsMap.forEach((c, i) => {
@@ -2679,12 +2833,33 @@
                     let nativeChord = transposeChord(c.text, transposeOffset);
                     let capoChord = capoFret ? transposeChord(nativeChord, capoSteps) : nativeChord;
 
-                    let topHtml = `<div class="chord-above" style="white-space: pre; font-weight:700; color:#f59e0b;">${nativeChord}</div>`;
-                    html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span style="width: 0; overflow: visible; white-space: nowrap; display: flex; flex-direction: column; transform: translateX(4px);">${topHtml}</span><span class="lyric-below" style="white-space: pre;">${chunk}</span></span>`;
+                    let topHtml = `<div class="chord-above" style="white-space: pre; font-weight:700; color: var(--chord-color, #ffff00);">${nativeChord}</div>`;
+                    if (capoFret) {
+                        topHtml += `<div class="chord-above" style="white-space: pre; font-weight:700; color: var(--capo-color, #ff0000);">${capoChord}</div>`;
+                    }
+
+                    html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span style="width: 0; overflow: visible; white-space: nowrap; display: flex; flex-direction: column; transform: translateX(4px);">${topHtml}</span><span class="lyric-below text-[var(--text-color)]" style="white-space: pre;">${chunk}</span></span>`;
                 });
                 return html;
             }
 
+            elements.floatingCapoBtn.addEventListener("click", () => {
+                if (capoDisplayMode === "native") {
+                    capoDisplayMode = "capo";
+                } else if (capoDisplayMode === "capo") {
+                    capoDisplayMode = "both";
+                } else {
+                    capoDisplayMode = "native";
+                }
+
+                // Update the button label/state
+                updateFloatingCapoButtonState();
+
+                // Re-render the song sheet so the chords update immediately
+                if (typeof renderSongSheet === "function" && activeSong) {
+                    renderSongSheet(activeSong);
+                }
+            });
             function updateFloatingCapoButtonState() {
                 if (!activeSong || !activeSong.capo) {
                     elements.floatingCapoBtn.classList.add("hidden");
@@ -2704,13 +2879,23 @@
                 activeTab = tab;
 
                 // 1. Update active tab button styles
-                elements.tabSongsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === "songs" ? "bg-amber-500 text-slate-950" : "text-slate-400 hover:bg-slate-800"}`;
-                elements.tabSetsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === "sets" ? "bg-indigo-500 text-slate-950" : "text-slate-400 hover:bg-slate-800"}`;
+                elements.tabSongsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md flex items-center justify-center gap-1.5 transition ${
+                    tab === "songs"
+                        ? "bg-[var(--color-secondary)] text-[var(--text-color)]"
+                        : "text-[var(--text-hint)] hover:text-[var(--text-color)] hover:bg-[var(--bg-surface-variant)]/60"
+                }`;
+                elements.tabSetsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md flex items-center justify-center gap-1.5 transition ${
+                    tab === "sets"
+                        ? "bg-[var(--color-secondary)] text-[var(--text-color)]"
+                        : "text-[var(--text-hint)] hover:text-[var(--text-color)] hover:bg-[var(--bg-surface-variant)]/60"
+                }`;
                 elements.activeTabLabel.textContent = tab === "songs" ? "Showing All Songs" : "Current Active Set";
 
                 // 2. Get search container and category filter elements by direct ID
                 const searchContainer = document.getElementById("song-search-container");
-                const filterContainer = elements.folderFilterSelect?.closest('.flex') || document.getElementById("category-filter-container");
+                const filterContainer =
+                    elements.folderFilterSelect?.closest(".flex") ||
+                    document.getElementById("category-filter-container");
                 const refreshBtn = document.getElementById("rescan-btn");
 
                 if (tab === "sets") {
@@ -2826,6 +3011,7 @@
 
                     updateTabCounts();
                     renderSidebarList();
+                    saveCurrentSetToStorage();
                     const written = await writeSetToDisk({ ...currentSet });
                     showToast(
                         written
@@ -2852,16 +3038,16 @@
                             const li = document.createElement("li");
                             const isActive = activeSong && activeSong.id === song.id;
                             const isInSet = currentSet.songTitles.includes(song.title);
-                            li.className = `p-3 rounded-xl transition flex items-center justify-between border ${isActive ? "bg-amber-500/10 border-amber-500/30 text-amber-400 font-bold" : "hover:bg-slate-800/60 text-slate-300 border-transparent"}`;
+                            li.className = `p-3 rounded-xl transition flex items-center justify-between border ${isActive ? "bg-[var(--color-secondary)]/10 border-[var(--color-secondary)]/40 text-[var(--text-color)] font-bold" : "hover:bg-[var(--bg-surface-variant)]/60 text-[var(--text-color)] border-transparent"}`;
                             li.innerHTML = `
-                        <div class="truncate pr-2 flex-1 song-click-target cursor-pointer">
-                            <div class="text-sm truncate">${song.title}</div>
-                            <div class="text-xs text-slate-500 font-normal">${song.author || "Loading..."} <span class="text-[10px] text-amber-500/80 font-mono">(${song.folderPath || "MAIN"})</span></div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800">${song.key || "C"}</span>
-                            <input type="checkbox" class="set-membership-chk w-4 h-4 accent-amber-500 rounded cursor-pointer" ${isInSet ? "checked" : ""} title="Add to current set">
-                        </div>`;
+                <div class="truncate pr-2 flex-1 song-click-target cursor-pointer">
+                    <div class="text-sm truncate">${song.title}</div>
+                    <div class="text-xs text-[var(--text-hint)] font-normal">${song.author || "Loading..."} <span class="text-[10px] text-[var(--text-color)] font-mono">(${song.folderPath || "MAIN"})</span></div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-mono px-2 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-hint)] border border-[var(--border-color)]">${song.key || "C"}</span>
+                    <input type="checkbox" class="set-membership-chk w-4 h-4 accent-[var(--color-secondary)] rounded cursor-pointer" ${isInSet ? "checked" : ""} title="Add to current set">
+                </div>`;
 
                             li.querySelector(".song-click-target").addEventListener("click", async () => {
                                 await ensureSongContentLoaded(song);
@@ -2880,6 +3066,7 @@
                                 } else {
                                     currentSet.songTitles = currentSet.songTitles.filter((t) => t !== song.title);
                                 }
+                                saveCurrentSetToStorage();
                             });
 
                             elements.songList.appendChild(li);
@@ -2891,33 +3078,33 @@
                     // 1. Current Set Header Card with Save Button
                     const currentSetCard = document.createElement("li");
                     currentSetCard.className =
-                        "p-3 bg-slate-900/90 border border-slate-800 rounded-2xl space-y-3 mb-3 shadow-lg";
+                        "p-3 bg-[var(--bg-primary-variant)]/90 border border-[var(--border-color)] rounded-2xl space-y-3 mb-3 shadow-lg";
 
                     let songItemsHtml =
                         currentSet.songTitles && currentSet.songTitles.length > 0
                             ? currentSet.songTitles
                                   .map(
                                       (t, idx) => `
-            <div class="flex items-center justify-between p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
+            <div class="flex items-center justify-between p-2 bg-[var(--bg-primary)]/60 rounded-xl border border-[var(--border-color)]">
                 <div class="flex items-center space-x-2 truncate pr-2">
-                    <span class="text-xs font-mono text-slate-500">${idx + 1}.</span>
-                    <span class="text-xs font-bold text-slate-200 truncate">${t}</span>
+                    <span class="text-xs font-mono text-[var(--text-hint)]">${idx + 1}.</span>
+                    <span class="text-xs font-bold text-[var(--text-color)] truncate">${t}</span>
                 </div>
-                <button class="text-slate-400 hover:text-amber-400 p-1 transition edit-set-song-item" title="View Song">
+                <button class="text-[var(--text-hint)] hover:text-[var(--text-color)] p-1 transition edit-set-song-item" title="View Song">
                     <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                 </button>
             </div>`
                                   )
                                   .join("")
-                            : '<div class="text-xs text-slate-500 italic p-2 text-center">No songs in current set. Tick songs in the Song tab!</div>';
+                            : '<div class="text-xs text-[var(--text-hint)] italic p-2 text-center">No songs in current set. Tick songs in the Song tab!</div>';
 
                     currentSetCard.innerHTML = `
-        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+        <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-2.5">
             <div>
-                <div class="text-xs font-extrabold text-slate-200 uppercase tracking-wide">Current set</div>
-                <div class="text-[11px] text-slate-400">${currentSet.title ? "(" + currentSet.title + ")" : "(Not saved)"}</div>
+                <div class="text-xs font-extrabold text-[var(--text-color)] uppercase tracking-wide">Current set</div>
+                <div class="text-[11px] text-[var(--text-hint)]">${currentSet.title ? "(" + currentSet.title + ")" : "(Not saved)"}</div>
             </div>
-            <button id="sidebar-set-save-btn" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-md flex items-center gap-1.5 transition">
+            <button id="sidebar-set-save-btn" class="px-3.5 py-1.5 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] font-extrabold text-xs rounded-xl shadow-md flex items-center gap-1.5 transition">
                 <i data-lucide="save" class="w-3.5 h-3.5"></i> SAVE
             </button>
         </div>
@@ -3038,11 +3225,11 @@
                     btn.addEventListener("click", (e) => {
                         const targetTab = e.currentTarget.getAttribute("data-editors-tab");
                         document.querySelectorAll(".editor-tab-btn").forEach((b) => {
-                            b.classList.remove("bg-amber-500", "text-slate-950");
-                            b.classList.add("text-slate-400", "hover:text-white");
+                            b.classList.remove("bg-[var(--color-secondary)]", "text-[var(--text-color)]");
+                            b.classList.add("text-[var(--text-hint)]", "hover:text-[var(--text-color)]");
                         });
-                        e.currentTarget.classList.remove("text-slate-400", "hover:text-white");
-                        e.currentTarget.classList.add("bg-amber-500", "text-slate-950");
+                        e.currentTarget.classList.remove("text-[var(--text-hint)]", "hover:text-[var(--text-color)]");
+                        e.currentTarget.classList.add("bg-[var(--color-secondary)]", "text-[var(--text-color)]");
 
                         document.querySelectorAll(".editor-pane").forEach((pane) => pane.classList.add("hidden"));
                         const activePane = document.getElementById(`editor-pane-${targetTab}`);
@@ -3057,6 +3244,13 @@
 
             function transposeChord(chord, semitones) {
                 if (!chord) return "";
+
+                // Handle slashed bass notes (e.g., A/G# -> transpose both 'A' and 'G#')
+                if (chord.includes("/")) {
+                    const parts = chord.split("/");
+                    return parts.map((part) => transposeChord(part, semitones)).join("/");
+                }
+
                 const notesSharp = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
                 const notesFlat = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
 
@@ -3237,7 +3431,7 @@
                     if (castWindow) {
                         castWindow.document.open();
                         castWindow.document.write(`<!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<html lang="en" class="h-full bg-[var(--bg-primary)] text-[var(--text-color)]">
 <head>
     <meta charset="UTF-8">
     <title>OpenSongApp Stage Display</title>
@@ -3245,14 +3439,14 @@
     <style>
         .chord-lyric-pair-line { display: flex; flex-wrap: wrap; row-gap: 0.5rem; line-height: 1.4; max-width: 100%; word-break: break-word; }
         .chord-lyric-pair { display: inline-flex; flex-direction: column; vertical-align: top; position: relative; }
-        .chord-above { font-weight: 700; color: #f59e0b; line-height: 1.1; white-space: pre; }
-        .lyric-below { color: #f1f5f9; white-space: pre; }
+        .chord-above { font-weight: 700; color: var(--color-secondary); line-height: 1.1; white-space: pre; }
+        .lyric-below { color: var(--text-color); white-space: pre; }
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
     </style>
 </head>
-<body class="h-full flex flex-col overflow-hidden select-none bg-slate-950 text-slate-100 font-sans p-8 justify-center items-center">
+<body class="h-full flex flex-col overflow-hidden select-none bg-[var(--bg-primary)] text-[var(--text-color)] font-sans p-8 justify-center items-center">
     <main class="w-full max-w-4xl flex-1 overflow-y-auto space-y-6" id="cast-viewport">
         <div id="cast-content" class="space-y-6"></div>
     </main>
@@ -3265,8 +3459,8 @@
                 document.getElementById('cast-viewport').style.fontSize = (e.data.settings.fontScale || 1.4) + 'rem';
                 
                 const sectionDiv = document.createElement('div');
-                sectionDiv.className = 'p-8 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-6 shadow-2xl';
-                sectionDiv.innerHTML = '<h2 class="text-amber-400 font-extrabold text-2xl uppercase tracking-wider mb-4 border-b border-slate-800 pb-3">' + e.data.heading + '</h2>';
+                sectionDiv.className = 'p-8 rounded-3xl bg-[var(--bg-primary-variant)]/90 border border-[var(--border-color)] space-y-6 shadow-2xl';
+                sectionDiv.innerHTML = '<h2 class="text-[var(--text-color)] font-extrabold text-2xl uppercase tracking-wider mb-4 border-b border-[var(--border-color)] pb-3">' + e.data.heading + '</h2>';
 
                 const lines = e.data.lyrics.split('\\n');
                 for (let i = 0; i < lines.length; i++) {
@@ -3312,7 +3506,7 @@
                             {
                                 label: "Create new song",
                                 icon: "file-plus",
-                                color: "text-amber-400",
+                                color: "text-[var(--text-color)]",
                                 action: () => {
                                     closeSidebarModal();
                                     openNewSongEditor(); // Directly calls your setup logic and opens the editor modal
@@ -3321,7 +3515,7 @@
                             {
                                 label: "Import song",
                                 icon: "file-input",
-                                color: "text-amber-400",
+                                color: "text-[var(--text-color)]",
                                 action: () => {
                                     closeSidebarModal();
                                     elements.individualFilesInput.click();
@@ -3330,7 +3524,7 @@
                             {
                                 label: "Import backups",
                                 icon: "archive",
-                                color: "text-indigo-400",
+                                color: "text-[var(--text-color)]",
                                 action: () => {
                                     closeSidebarModal();
                                     elements.importModal.classList.remove("hidden");
@@ -3348,7 +3542,7 @@
                             {
                                 label: "Share current song",
                                 icon: "share-2",
-                                color: "text-emerald-400",
+                                color: "text-[var(--text-color)]",
                                 action: () => {
                                     closeSidebarModal();
                                     if (activeSong) {
@@ -3376,9 +3570,9 @@
                         options.forEach((opt) => {
                             const btn = document.createElement("button");
                             btn.className =
-                                "w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 font-bold rounded-xl text-xs flex items-center gap-2.5 transition text-left " +
+                                "w-full py-2.5 px-3 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] border border-[var(--border-color)] font-bold rounded-xl text-xs flex items-center gap-2.5 transition text-left " +
                                 opt.color;
-                            btn.innerHTML = `<i data-lucide="${opt.icon}" class="w-4 h-4"></i> ${opt.label}`;
+                            btn.innerHTML = `<i data-lucide="${opt.icon}" class="w-4 h-4 text-[var(--text-color)]"></i> ${opt.label}`;
                             btn.addEventListener("click", opt.action);
                             sidebarModalOptions.appendChild(btn);
                         });
@@ -3389,7 +3583,7 @@
                             {
                                 label: "Create new set",
                                 icon: "layers",
-                                color: "text-indigo-400",
+                                color: "text-[var(--text-color)]",
                                 action: () => {
                                     closeSidebarModal();
                                     currentSet = {
@@ -3405,7 +3599,7 @@
                             {
                                 label: "Manage sets",
                                 icon: "folder-archive",
-                                color: "text-amber-400",
+                                color: "text-[var(--text-color)]",
                                 action: () => {
                                     closeSidebarModal();
                                     openManageSetsModal();
@@ -3414,7 +3608,7 @@
                             {
                                 label: "Import backups",
                                 icon: "archive",
-                                color: "text-indigo-400",
+                                color: "text-[var(--text-color)]",
                                 action: () => {
                                     closeSidebarModal();
                                     elements.importModal.classList.remove("hidden");
@@ -3423,7 +3617,7 @@
                             {
                                 label: "Save current set",
                                 icon: "save",
-                                color: "text-emerald-400",
+                                color: "text-[var(--text-color)]",
                                 action: () => {
                                     closeSidebarModal();
                                     document.getElementById("sidebar-save-set-btn")?.click();
@@ -3432,7 +3626,7 @@
                             {
                                 label: "Share current set",
                                 icon: "share-2",
-                                color: "text-amber-400",
+                                color: "text-[var(--text-color)]",
                                 action: () => {
                                     closeSidebarModal();
                                     if (activeSet) {
@@ -3451,9 +3645,9 @@
                         options.forEach((opt) => {
                             const btn = document.createElement("button");
                             btn.className =
-                                "w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 font-bold rounded-xl text-xs flex items-center gap-2.5 transition text-left " +
+                                "w-full py-2.5 px-3 bg-[var(--bg-surface-variant)] hover:bg-[var(--color-secondary)]/30 text-[var(--text-color)] border border-[var(--border-color)] font-bold rounded-xl text-xs flex items-center gap-2.5 transition text-left " +
                                 opt.color;
-                            btn.innerHTML = `<i data-lucide="${opt.icon}" class="w-4 h-4"></i> ${opt.label}`;
+                            btn.innerHTML = `<i data-lucide="${opt.icon}" class="w-4 h-4 text-[var(--text-color)]"></i> ${opt.label}`;
                             btn.addEventListener("click", opt.action);
                             sidebarModalOptions.appendChild(btn);
                         });
@@ -3493,24 +3687,24 @@
 
                     if (filtered.length === 0) {
                         listContainer.innerHTML =
-                            '<div class="text-xs text-slate-500 p-4 text-center italic">No saved sets found.</div>';
+                            '<div class="text-xs text-[var(--text-hint)] p-4 text-center italic">No saved sets found.</div>';
                         return;
                     }
 
                     filtered.forEach((setObj) => {
                         const card = document.createElement("div");
                         card.className =
-                            "p-3 bg-slate-950/80 hover:bg-slate-800/80 border border-slate-800/80 hover:border-amber-500/40 rounded-xl flex items-center justify-between cursor-pointer transition group";
+                            "p-3 bg-[var(--bg-primary)]/80 hover:bg-[var(--bg-surface-variant)] border border-[var(--border-color)] hover:border-[var(--color-secondary)]/40 rounded-xl flex items-center justify-between cursor-pointer transition group";
 
                         card.innerHTML = `
                 <div class="truncate pr-2">
                     <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-slate-200 group-hover:text-amber-400 transition truncate">${setObj.title}</span>
-                        <span class="text-[10px] font-mono px-1.5 py-0.5 bg-slate-800 text-indigo-300 rounded">${setObj.category || "MAIN"}</span>
+                        <span class="text-xs font-bold text-[var(--text-color)] group-hover:text-[var(--text-color)] transition truncate">${setObj.title}</span>
+                        <span class="text-[10px] font-mono px-1.5 py-0.5 bg-[var(--bg-surface-variant)] text-[var(--text-hint)] rounded border border-[var(--border-color)]">${setObj.category || "MAIN"}</span>
                     </div>
-                    <div class="text-[11px] text-slate-500 font-mono mt-0.5">${setObj.songTitles ? setObj.songTitles.length : 0} songs</div>
+                    <div class="text-[11px] text-[var(--text-hint)] font-mono mt-0.5">${setObj.songTitles ? setObj.songTitles.length : 0} songs</div>
                 </div>
-                <button class="px-3 py-1.5 bg-indigo-600/20 group-hover:bg-indigo-600 text-indigo-300 group-hover:text-white font-bold text-xs rounded-lg transition shrink-0 flex items-center gap-1">
+                <button class="px-3 py-1.5 bg-[var(--color-secondary)]/20 group-hover:bg-[var(--color-secondary)] text-[var(--text-color)] font-bold text-xs rounded-lg border border-[var(--border-color)] transition shrink-0 flex items-center gap-1">
                     Load Set <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
                 </button>
             `;
@@ -3694,6 +3888,42 @@
                     },
                     { passive: true }
                 );
+            }
+
+            // Theme selection
+            const themeSelect = document.getElementById("theme-select");
+            if (themeSelect) {
+                themeSelect.value = localStorage.getItem("app-theme") || "system";
+
+                themeSelect.addEventListener("change", (e) => {
+                    const selected = e.target.value;
+                    localStorage.setItem("app-theme", selected);
+                    applyTheme(selected);
+                    showToast(`Theme updated to ${selected}`);
+                });
+            }
+
+            // Save the current set state whenever it changes
+            function saveCurrentSetToStorage() {
+                if (typeof activeSet !== "undefined" && activeSet) {
+                    localStorage.setItem("open_song_active_set", JSON.stringify(activeSet));
+                }
+            }
+
+            // Load the current set upon app startup
+            function loadCurrentSetFromStorage() {
+                const saved = localStorage.getItem("open_song_active_set");
+                if (saved) {
+                    try {
+                        activeSet = JSON.parse(saved);
+                        // Re-render your sidebar set list view here
+                        if (typeof renderSidebarSetList === "function") {
+                            renderSidebarSetList();
+                        }
+                    } catch (e) {
+                        console.error("Failed to parse saved active set", e);
+                    }
+                }
             }
         </script>
     </body>
