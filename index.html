@@ -478,38 +478,6 @@
                             <div id="sheet-copyright"></div>
                             <div id="sheet-ccli"></div>
                         </footer>
-
-                        <!-- Action Modal -->
-                        <div
-                            id="action-modal"
-                            class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-                            <div
-                                class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
-                                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                                    <h3 class="font-bold text-slate-200 text-sm">Quick Actions</h3>
-                                    <button id="close-action-modal" class="text-slate-400 hover:text-slate-200">
-                                        <i data-lucide="x" class="w-4 h-4"></i>
-                                    </button>
-                                </div>
-                                <div class="space-y-2">
-                                    <button
-                                        id="modal-new-song-btn"
-                                        class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded-xl text-xs flex items-center gap-2 transition">
-                                        <i data-lucide="file-plus" class="w-4 h-4"></i> New Song
-                                    </button>
-                                    <button
-                                        id="modal-import-export-btn"
-                                        class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-indigo-400 font-bold rounded-xl text-xs flex items-center gap-2 transition">
-                                        <i data-lucide="folder-sync" class="w-4 h-4"></i> Import / Export
-                                    </button>
-                                    <button
-                                        id="modal-share-current-btn"
-                                        class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold rounded-xl text-xs flex items-center gap-2 transition">
-                                        <i data-lucide="share-2" class="w-4 h-4"></i> Share Current Song
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                     </article>
                 </div>
 
@@ -651,6 +619,21 @@
                 </div>
             </main>
         </div>
+
+        <!-- Context-Aware Sidebar Action Modal -->
+<div id="sidebar-action-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 id="sidebar-modal-title" class="font-bold text-slate-200 text-sm">Actions</h3>
+            <button id="close-sidebar-action-modal" class="text-slate-400 hover:text-slate-200">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        <div id="sidebar-modal-options" class="space-y-2">
+            <!-- Dynamically populated options -->
+        </div>
+    </div>
+</div>
 
         <!-- Settings Modal -->
         <div
@@ -3212,34 +3195,141 @@
             }
 
             // FAB Toggle logic
+            // Context-Aware FAB Action Modal Logic
             const sidebarFab = document.getElementById("fab-actions-btn");
+            const sidebarActionModal = document.getElementById("sidebar-action-modal");
+            const closeSidebarActionModal = document.getElementById("close-sidebar-action-modal");
+            const sidebarModalTitle = document.getElementById("sidebar-modal-title");
+            const sidebarModalOptions = document.getElementById("sidebar-modal-options");
 
-            if (sidebarFab) {
+            if (sidebarFab && sidebarActionModal) {
                 sidebarFab.addEventListener("click", () => {
-                    // Check which tab is currently active (e.g., checking active class or dataset)
-                    const isSetsTabActive =
-                        document.getElementById("sets-tab-btn")?.classList.contains("active-tab") ||
-                        document.getElementById("sets-list-container")?.classList.contains("hidden") === false;
+                    sidebarModalOptions.innerHTML = "";
 
-                    if (isSetsTabActive) {
-                        // Action for SETS tab (e.g., Create New Set)
-                        openNewSetModal();
+                    if (activeTab === "songs") {
+                        sidebarModalTitle.textContent = "Song Actions";
+                        const options = [
+                            {
+                                label: "Create new song",
+                                icon: "file-plus",
+                                color: "text-amber-400",
+                                action: () => { closeSidebarModal(); elements.newSongBtn.click(); }
+                            },
+                            {
+                                label: "Import song",
+                                icon: "file-input",
+                                color: "text-amber-400",
+                                action: () => { closeSidebarModal(); elements.individualFilesInput.click(); }
+                            },
+                            {
+                                label: "Import backups",
+                                icon: "archive",
+                                color: "text-indigo-400",
+                                action: () => { closeSidebarModal(); elements.importModal.classList.remove("hidden"); }
+                            },
+                            {
+                                label: "Import online",
+                                icon: "globe",
+                                color: "text-sky-400",
+                                action: () => { closeSidebarModal(); showToast("Online song import coming soon!"); }
+                            },
+                            {
+                                label: "Share current song",
+                                icon: "share-2",
+                                color: "text-emerald-400",
+                                action: () => {
+                                    closeSidebarModal();
+                                    if (activeSong) {
+                                        shareTarget = activeSong;
+                                        elements.shareNameExtless.textContent = activeSong.filename || activeSong.title;
+                                        elements.shareNameExt.textContent = (activeSong.filename || activeSong.title) + ".ost";
+                                        elements.shareModal.classList.remove("hidden");
+                                    } else {
+                                        showToast("No song currently selected.");
+                                    }
+                                }
+                            },
+                            {
+                                label: "Export backup",
+                                icon: "folder-output",
+                                color: "text-purple-400",
+                                action: () => { closeSidebarModal(); elements.osbExportModal.classList.remove("hidden"); }
+                            }
+                        ];
+
+                        options.forEach(opt => {
+                            const btn = document.createElement("button");
+                            btn.className = "w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 font-bold rounded-xl text-xs flex items-center gap-2.5 transition text-left " + opt.color;
+                            btn.innerHTML = `<i data-lucide="${opt.icon}" class="w-4 h-4"></i> ${opt.label}`;
+                            btn.addEventListener("click", opt.action);
+                            sidebarModalOptions.appendChild(btn);
+                        });
+
                     } else {
-                        // Action for SONGS tab (e.g., New Song / Action Modal)
-                        openActionModal();
+                        sidebarModalTitle.textContent = "Set Actions";
+                        const options = [
+                            {
+                                label: "Create new set",
+                                icon: "layers",
+                                color: "text-indigo-400",
+                                action: () => {
+                                    closeSidebarModal();
+                                    currentSet = { category: "MAIN", title: "New Set", filename: "New Set", songTitles: [] };
+                                    showToast("New set created. Select checkboxes next to songs to add them.");
+                                    renderSidebarList();
+                                }
+                            },
+                            {
+                                label: "Import backups",
+                                icon: "archive",
+                                color: "text-indigo-400",
+                                action: () => { closeSidebarModal(); elements.importModal.classList.remove("hidden"); }
+                            },
+                            {
+                                label: "Save current set",
+                                icon: "save",
+                                color: "text-emerald-400",
+                                action: () => { closeSidebarModal(); document.getElementById("sidebar-save-set-btn")?.click(); }
+                            },
+                            {
+                                label: "Share current set",
+                                icon: "share-2",
+                                color: "text-amber-400",
+                                action: () => {
+                                    closeSidebarModal();
+                                    if (activeSet) {
+                                        shareTarget = activeSet;
+                                        elements.shareNameExtless.textContent = activeSet.filename || activeSet.title;
+                                        elements.shareNameExt.textContent = (activeSet.filename || activeSet.title) + ".osts";
+                                        elements.shareModal.classList.remove("hidden");
+                                    } else {
+                                        showToast("No set currently selected or active.");
+                                    }
+                                }
+                            }
+                        ];
+
+                        options.forEach(opt => {
+                            const btn = document.createElement("button");
+                            btn.className = "w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 font-bold rounded-xl text-xs flex items-center gap-2.5 transition text-left " + opt.color;
+                            btn.innerHTML = `<i data-lucide="${opt.icon}" class="w-4 h-4"></i> ${opt.label}`;
+                            btn.addEventListener("click", opt.action);
+                            sidebarModalOptions.appendChild(btn);
+                        });
                     }
+
+                    lucide.createIcons();
+                    sidebarActionModal.classList.remove("hidden");
                 });
-            }
 
-            function openNewSetModal() {
-                // Trigger your existing new set creation logic or modal
-                console.log("Triggering New Set creation...");
-                showToast("Creating new set...");
-            }
+                function closeSidebarModal() {
+                    sidebarActionModal.classList.add("hidden");
+                }
 
-            function openActionModal() {
-                const actionModal = document.getElementById("action-modal");
-                if (actionModal) actionModal.classList.remove("hidden");
+                closeSidebarActionModal?.addEventListener("click", closeSidebarModal);
+                sidebarActionModal.addEventListener("click", (e) => {
+                    if (e.target === sidebarActionModal) closeSidebarModal();
+                });
             }
         </script>
     </body>
