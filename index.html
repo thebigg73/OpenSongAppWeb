@@ -3369,6 +3369,89 @@
                     }
                 }
             }
+
+            // Universal Song Navigation Helper (supports Sets & Filtered Library Lists)
+function navigateSong(direction) { // direction: -1 for previous, 1 for next
+    if (activeSet) {
+        // Navigate within the active set
+        const newIndex = activeSetSongIndex + direction;
+        if (newIndex >= 0 && newIndex < activeSet.songTitles.length) {
+            activeSetSongIndex = newIndex;
+            loadSongFromActiveSet(activeSetSongIndex);
+        } else {
+            showToast(direction > 0 ? "End of set reached" : "Start of set reached");
+        }
+    } else if (activeSong) {
+        // Navigate within the currently active sidebar list / filter
+        const query = elements.songSearch ? elements.songSearch.value.toLowerCase() : "";
+        const filteredSongs = loadedSongs.filter((song) => {
+            const matchesQuery = song.title.toLowerCase().includes(query) || (song.author && song.author.toLowerCase().includes(query));
+            const matchesFolder = selectedFolderFilter === "ALL" || (song.folderPath || "MAIN") === selectedFolderFilter;
+            return matchesQuery && matchesFolder;
+        });
+
+        const currentIndex = filteredSongs.findIndex(s => s.id === activeSong.id);
+        if (currentIndex !== -1) {
+            const newIndex = currentIndex + direction;
+            if (newIndex >= 0 && newIndex < filteredSongs.length) {
+                const targetSong = filteredSongs[newIndex];
+                ensureSongContentLoaded(targetSong).then(() => {
+                    renderSongSheet(targetSong);
+                });
+            } else {
+                showToast(direction > 0 ? "End of song list reached" : "Start of song list reached");
+            }
+        }
+    }
+}
+
+// 1. Keyboard Arrow Navigation Listeners
+document.addEventListener('keydown', (e) => {
+    // Ignore if user is typing in an input, textarea, or active modal
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+    if (document.getElementById('song-editor-modal')?.classList.contains('hidden') === false) return;
+    if (document.getElementById('settings-modal')?.classList.contains('hidden') === false) return;
+    if (document.getElementById('folder-modal')?.classList.contains('hidden') === false) return;
+
+    if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        navigateSong(-1); // Previous song
+    } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        navigateSong(1);  // Next song
+    }
+});
+
+// 2. Mobile / Touch Swipe Gesture Listeners on the Song Sheet
+let touchStartX = 0;
+let touchStartY = 0;
+const songSheetElement = document.getElementById('song-sheet');
+
+if (songSheetElement) {
+    songSheetElement.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    songSheetElement.addEventListener('touchend', (e) => {
+        const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
+
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+
+        // Verify it's a deliberate horizontal swipe (larger horizontal delta than vertical, and > 50px)
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+            if (deltaX > 0) {
+                // Swipe Right -> Previous Song
+                navigateSong(-1);
+            } else {
+                // Swipe Left -> Next Song
+                navigateSong(1);
+            }
+        }
+    }, { passive: true });
+}
         </script>
     </body>
 </html>
