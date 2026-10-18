@@ -140,7 +140,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4h</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4i</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -743,6 +743,7 @@
         let pendingImportItems = [];
         let shareTarget = null;
         let castSettings = { showChords: true, fontScale: 1.4 };
+        let sqliteDb = null;
 
         const elements = {
             modal: document.getElementById('folder-modal'),
@@ -847,6 +848,7 @@
             lucide.createIcons();
             setupEventListeners();
             setupSetNavigationListeners();
+            await initSqlDatabase();
 
             const savedHandle = await getStoredDirectoryHandle();
             if (savedHandle) {
@@ -893,12 +895,18 @@
         const STORE_NAME = 'handles';
         function openIdb() {
             return new Promise((resolve, reject) => {
-                const req = indexedDB.open(DB_NAME, 1);
-                req.onupgradeneeded = e => e.target.result.createObjectStore(STORE_NAME);
+                const req = indexedDB.open(DB_NAME, 2);
+                req.onupgradeneeded = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME);
+                    }
+                };
                 req.onsuccess = e => resolve(e.target.result);
                 req.onerror = e => reject(e.target.error);
             });
         }
+
         async function saveDirectoryHandle(handle) {
             try {
                 const db = await openIdb();
@@ -907,6 +915,7 @@
                 return tx.complete;
             } catch (err) { console.error("Failed to save handle:", err); }
         }
+
         async function getStoredDirectoryHandle() {
             try {
                 const db = await openIdb();
@@ -926,6 +935,59 @@
             return true;
         }
 
+        async function saveSqlDbBuffer() {
+            if (!sqliteDb) return;
+            try {
+                const binaryArray = sqliteDb.export();
+                const db = await openIdb();
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put(binaryArray, 'sqliteCache');
+                return tx.complete;
+            } catch (err) { console.error("Failed to save sqlite cache:", err); }
+        }
+
+        async function getStoredSqlDbBuffer() {
+            try {
+                const db = await openIdb();
+                return new Promise((resolve) => {
+                    const tx = db.transaction(STORE_NAME, 'readonly');
+                    const req = tx.objectStore(STORE_NAME).get('sqliteCache');
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = () => resolve(null);
+                });
+            } catch (e) { return null; }
+        }
+
+        async function initSqlDatabase() {
+            if (sqliteDb) return sqliteDb;
+            try {
+                const SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
+                const cachedBuf = await getStoredSqlDbBuffer();
+                if (cachedBuf) {
+                    sqliteDb = new SQL.Database(cachedBuf);
+                } else {
+                    sqliteDb = new SQL.Database();
+                    sqliteDb.run(`CREATE TABLE IF NOT EXISTS songs (
+                        filename TEXT,
+                        folderPath TEXT,
+                        title TEXT,
+                        author TEXT,
+                        key TEXT,
+                        capo TEXT,
+                        tempo INTEGER,
+                        lyrics TEXT,
+                        modified TEXT,
+                        uuid TEXT,
+                        PRIMARY KEY (filename, folderPath)
+                    );`);
+                }
+                return sqliteDb;
+            } catch (e) {
+                console.error("Failed to init sql.js:", e);
+                return null;
+            }
+        }
+
         elements.modalReconnectBtn.addEventListener('click', async () => {
             if (!rootDirectoryHandle) return;
             elements.modalProgressContainer.classList.remove('hidden');
@@ -937,7 +999,7 @@
                         throw new Error("Permission denied");
                     }
                 }
-                await processRootDirectory(rootDirectoryHandle);
+                await processRootDirectory(rootDirectoryHandle, false);
             } catch (err) {
                 console.error(err);
                 elements.modalProgressContainer.classList.add('hidden');
@@ -963,18 +1025,24 @@
                     banner.style.display = 'none';
                 }
 
-                await processRootDirectory(savedHandle);
-                
-                // Force immediate UI refresh for mobile sync
-                updateTabCounts();
-                updateFolderFilterDropdown();
-                renderSidebarList();
-                
-                showToast(`Folder reconnected! Loaded ${loadedSongs.length} songs.`);
+                await processRootDirectory(savedHandle, false);
+                showToast("Folder reconnected successfully!");
             } catch (err) {
                 console.error("Reconnect failed:", err);
                 showToast("Could not reconnect folder. Please reselect.");
             }
+        }
+
+        // Refresh button acts as a manual full re-index & database rebuild
+        if (elements.rescanBtn) {
+            elements.rescanBtn.addEventListener('click', async () => {
+                if (!rootDirectoryHandle) {
+                    showToast("No root folder connected.");
+                    return;
+                }
+                showToast("Re-indexing songs and rebuilding database...");
+                await processRootDirectory(rootDirectoryHandle, true);
+            });
         }
 
         elements.changeFolderBtn.addEventListener('click', async () => {
@@ -983,611 +1051,222 @@
         });
         elements.closeFolderModal.addEventListener('click', () => elements.modal.classList.add('hidden'));
 
-        elements.openImportModalBtn.addEventListener('click', () => elements.importModal.classList.remove('hidden'));
-        elements.closeImportModal.addEventListener('click', () => elements.importModal.classList.add('hidden'));
-
-        elements.modalImportArchiveBtn.addEventListener('click', () => elements.archiveFileInput.click());
-        elements.modalImportFilesBtn.addEventListener('click', () => elements.individualFilesInput.click());
-
-        elements.shareSongBtn.addEventListener('click', () => {
-            if (!activeSong) return;
-            shareTarget = { type: 'song', obj: activeSong };
-            elements.shareNameExtless.textContent = activeSong.title;
-            elements.shareNameExt.textContent = `${activeSong.title}.ost`;
-            elements.shareExtLabel.textContent = "OpenSong Song (.ost)";
-            elements.shareModal.classList.remove('hidden');
-        });
-
-        elements.shareSetBtn.addEventListener('click', () => {
-            if (!activeSet) return;
-            shareTarget = { type: 'set', obj: activeSet };
-            elements.shareNameExtless.textContent = activeSet.title;
-            elements.shareNameExt.textContent = `${activeSet.title}.osts`;
-            elements.shareExtLabel.textContent = "OpenSong Set (.osts)";
-            elements.shareModal.classList.remove('hidden');
-        });
-
-        elements.closeShareModal.addEventListener('click', () => elements.shareModal.classList.add('hidden'));
-
-        elements.shareExtlessBtn.addEventListener('click', () => {
-            if (!shareTarget) return;
-            triggerFileDownload(shareTarget, false);
-            elements.shareModal.classList.add('hidden');
-        });
-
-        elements.shareExtBtn.addEventListener('click', () => {
-            if (!shareTarget) return;
-            triggerFileDownload(shareTarget, true);
-            elements.shareModal.classList.add('hidden');
-        });
-
-        function triggerFileDownload(target, useExtension) {
-            let content = "", filename = "";
-            if (target.type === 'song') {
-                const s = target.obj;
-                filename = useExtension ? `${s.title}.ost` : s.title;
-                content = generateOpenSongXML(s);
-            } else {
-                const st = target.obj;
-                filename = useExtension ? `${st.filename || st.title}.osts` : (st.filename || st.title);
-                content = generateOpenSongSetXML(st);
-            }
-            const blob = new Blob([content], { type: "text/xml;charset=utf-8" });
-            saveAs(blob, filename);
-            showToast(`Downloaded ${filename}`);
-        }
-
-        elements.modalExportOsbBtn.addEventListener('click', () => {
-            elements.importModal.classList.add('hidden');
-            const foldersSet = new Set();
-            loadedSongs.forEach(s => foldersSet.add(s.folderPath || 'MAIN'));
-            elements.osbFoldersCheckboxList.innerHTML = '';
-
-            Array.from(foldersSet).sort().forEach(folder => {
-                const div = document.createElement('label');
-                div.className = 'flex items-center space-x-3 py-2 px-1 cursor-pointer hover:bg-slate-800/40 rounded';
-                div.innerHTML = `<input type="checkbox" value="${folder}" checked class="accent-amber-500 w-4 h-4 rounded"><span>Songs/${folder}</span>`;
-                elements.osbFoldersCheckboxList.appendChild(div);
-            });
-            elements.osbExportModal.classList.remove('hidden');
-        });
-
-        elements.closeOsbExportModal.addEventListener('click', () => elements.osbExportModal.classList.add('hidden'));
-        elements.osbExportCancelBtn.addEventListener('click', () => elements.osbExportModal.classList.add('hidden'));
-
-        elements.osbExportConfirmBtn.addEventListener('click', async () => {
-            const selectedFolders = Array.from(elements.osbFoldersCheckboxList.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
-            elements.osbExportModal.classList.add('hidden');
-            if (selectedFolders.length === 0) return;
-
-            const zip = new JSZip();
-            loadedSongs.forEach(song => {
-                const fPath = song.folderPath || 'MAIN';
-                if (selectedFolders.includes(fPath)) {
-                    const zipPath = `Songs/${fPath}/${song.filename || song.title}`;
-                    const xmlContent = generateOpenSongXML(song);
-                    zip.file(zipPath, xmlContent);
-                }
-            });
-
-            const content = await zip.generateAsync({ type: "blob" });
-            saveAs(content, "OpenSong_Songs_Backup.osb");
-        });
-
-        elements.modalExportOsbsBtn.addEventListener('click', async () => {
-            elements.importModal.classList.add('hidden');
-            const zip = new JSZip();
-            loadedSets.forEach(setObj => {
-                const filename = (setObj.filename || setObj.title) + '.osts';
-                const xmlContent = generateOpenSongSetXML(setObj);
-                zip.file(filename, xmlContent);
-            });
-
-            const content = await zip.generateAsync({ type: "blob" });
-            saveAs(content, "OpenSong_Sets_Backup.osbs");
-        });
-
-        async function processRootDirectory(handle) {
+        async function processRootDirectory(handle, forceRebuild = false) {
             elements.modalProgressContainer.classList.remove('hidden');
             elements.modalActionsContainer.classList.add('hidden');
             elements.folderStatus.textContent = handle.name;
             
             loadedSongs = [];
             loadedSets = [];
-            let scannedCount = 0;
+            await initSqlDatabase();
 
-            console.log(`[OpenSongApp] Starting scan of root directory: ${handle.name}`);
+            // Check if we can load instantly from SQLite cache without rescanning files
+            if (!forceRebuild && sqliteDb) {
+                try {
+                    const res = sqliteDb.exec("SELECT * FROM songs");
+                    if (res && res.length > 0 && res[0].values.length > 0) {
+                        const cols = res[0].columns;
+                        res[0].values.forEach(row => {
+                            const song = {};
+                            cols.forEach((c, idx) => song[c] = row[idx]);
+                            song.id = 'song_' + Math.random().toString(36).substring(2, 8);
+                            song.isLoaded = true;
+                            loadedSongs.push(song);
+                        });
+                        console.log(`[OpenSongApp] Loaded ${loadedSongs.length} songs instantly from SQLite cache.`);
+                        
+                        // Close modal immediately
+                        elements.modalProgressContainer.classList.add('hidden');
+                        elements.modalActionsContainer.classList.remove('hidden');
+                        elements.modal.classList.add('hidden');
+                        const banner = document.getElementById('reconnect-banner');
+                        if (banner) { banner.classList.add('hidden'); banner.style.display = 'none'; }
+                        
+                        selectedFolderFilter = 'ALL';
+                        updateTabCounts();
+                        updateFolderFilterDropdown();
+                        renderSidebarList();
+                        showToast(`Loaded ${loadedSongs.length} songs from cache!`);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("Cache load fallback to full scan:", e);
+                }
+            }
+
+            console.log(`[OpenSongApp] Performing full file scan and database indexing for ${handle.name}`);
 
             try {
-                let foundSongsDir = false;
-                for await (const entry of handle.values()) {
-                    try {
-                        if (entry.kind === 'directory' && entry.name.toLowerCase() === 'songs') {
-                            foundSongsDir = true;
-                            scannedCount += await scanSongDir(entry, '');
-                        } else if (entry.kind === 'directory' && entry.name.toLowerCase() === 'sets') {
-                            for await (const setFile of entry.values()) {
-                                try {
-                                    if (setFile.kind === 'file') {
-                                        const f = await setFile.getFile();
-                                        const setObj = parseOpenSongSetXML(await f.text(), f.name);
-                                        if (setObj) loadedSets.push(setObj);
-                                    }
-                                } catch (innerSetErr) {
-                                    console.warn("Skipped unreadable set file:", innerSetErr);
+                let songFileHandles = [];
+                let setFileHandles = [];
+
+                async function collectHandles(dirHandle, prefix) {
+                    for await (const entry of dirHandle.values()) {
+                        try {
+                            if (entry.kind === 'file') {
+                                const lowerName = entry.name.toLowerCase();
+                                if (lowerName.endsWith('.pdf')) {
+                                    songFileHandles.push({ handle: entry, type: 'pdf', folder: prefix || 'PDFs' });
+                                } else if (lowerName.endsWith('.osts') || lowerName.endsWith('.ost') || prefix.toLowerCase().includes('sets')) {
+                                    setFileHandles.push({ handle: entry, type: 'set' });
+                                } else if (!lowerName.endsWith('.db')) {
+                                    songFileHandles.push({ handle: entry, type: 'song', folder: prefix || 'MAIN' });
+                                }
+                            } else if (entry.kind === 'directory') {
+                                const subName = entry.name.toLowerCase();
+                                if (subName === 'sets') {
+                                    await collectHandles(entry, 'Sets');
+                                } else {
+                                    const subFolderName = prefix ? `${prefix}/${entry.name}` : entry.name;
+                                    await collectHandles(entry, subFolderName);
                                 }
                             }
-                        }
-                    } catch (entryErr) {
-                        console.warn("Skipped unreadable root entry:", entry.name, entryErr);
+                        } catch (e) { console.warn("Handle error:", e); }
                     }
                 }
 
-                if (!foundSongsDir && loadedSongs.length === 0) {
-                    scannedCount += await scanSongDir(handle, '');
+                let foundSongsDir = false;
+                for await (const entry of handle.values()) {
+                    if (entry.kind === 'directory' && entry.name.toLowerCase() === 'songs') {
+                        foundSongsDir = true;
+                        await collectHandles(entry, '');
+                    } else if (entry.kind === 'directory' && entry.name.toLowerCase() === 'sets') {
+                        await collectHandles(entry, 'Sets');
+                    }
                 }
-            } catch (e) {
-                console.error("Directory scan fatal error:", e);
-                showToast("Directory scan encountered permissions restrictions.");
-            } finally {
-                elements.modalProgressContainer.classList.add('hidden');
-                elements.modalActionsContainer.classList.remove('hidden');
-                elements.modal.classList.add('hidden');
-                
-                const banner = document.getElementById('reconnect-banner');
-                if (banner) {
-                    banner.classList.add('hidden');
-                    banner.style.display = 'none';
+
+                if (!foundSongsDir && songFileHandles.length === 0) {
+                    await collectHandles(handle, '');
                 }
-                
+
+                // Reset SQLite table on full rebuild
+                if (sqliteDb) {
+                    sqliteDb.run("DELETE FROM songs;");
+                }
+
+                // Phase 2: Instant skeleton population
+                songFileHandles.forEach((item, index) => {
+                    const cleanTitle = item.handle.name.replace(/\.[^/.]+$/, "");
+                    loadedSongs.push({
+                        id: 'song_placeholder_' + index,
+                        filename: item.handle.name,
+                        folderPath: item.folder,
+                        title: cleanTitle,
+                        author: 'Loading...',
+                        key: 'C',
+                        isPdf: item.type === 'pdf',
+                        fileHandle: item.handle,
+                        isLoaded: false,
+                        uuid: generateUUID(),
+                        modified: new Date().toISOString()
+                    });
+                });
+
+                for (const item of setFileHandles) {
+                    try {
+                        const f = await item.handle.getFile();
+                        const text = await f.text();
+                        const setObj = parseOpenSongSetXML(text, item.handle.name);
+                        if (setObj) loadedSets.push(setObj);
+                    } catch (e) { console.warn("Set parse error:", e); }
+                }
+
                 selectedFolderFilter = 'ALL';
                 updateTabCounts();
                 updateFolderFilterDropdown();
                 renderSidebarList();
-                
-                console.log(`[OpenSongApp] Scan complete. Total loaded songs: ${loadedSongs.length}, sets: ${loadedSets.length}`);
-                showToast(`Loaded ${loadedSongs.length} songs & ${loadedSets.length} sets!`);
+
+                elements.modalProgressContainer.classList.add('hidden');
+                elements.modalActionsContainer.classList.remove('hidden');
+                elements.modal.classList.add('hidden');
+                const banner = document.getElementById('reconnect-banner');
+                if (banner) { banner.classList.add('hidden'); banner.style.display = 'none'; }
+
+                showToast(`Index skeleton ready: ${loadedSongs.length} songs indexed!`);
+
+                // Phase 3: Background lazy-load parsing with percentage progress and SQLite caching
+                backgroundLazyLoadAndCacheSongs(songFileHandles);
+
+            } catch (e) {
+                console.error("Directory scan error:", e);
+                elements.modalProgressContainer.classList.add('hidden');
+                elements.modalActionsContainer.classList.remove('hidden');
+                showToast("Directory scan error.");
             }
         }
 
-        async function scanSongDir(dirHandle, prefix) {
-            let count = 0;
-            try {
-                for await (const entry of dirHandle.values()) {
-                    try {
-                        if (entry.kind === 'file') {
-                            const f = await entry.getFile();
-                            const lowerName = f.name.toLowerCase();
-                            if (lowerName.endsWith('.pdf')) {
-                                const blobUrl = URL.createObjectURL(f);
-                                pdfBlobsMap[f.name] = blobUrl;
-                                addOrUpdateSong({ 
-                                    id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), 
-                                    filename: f.name, 
-                                    folderPath: prefix || 'PDFs', 
-                                    title: f.name.replace(/\.[^/.]+$/, ""), 
-                                    isPdf: true, 
-                                    pdfUrl: blobUrl, 
-                                    key: 'C', 
-                                    uuid: generateUUID(), 
-                                    modified: new Date().toISOString() 
-                                });
-                                count++;
-                            } else {
-                                const song = parseOpenSongXML(await f.text(), f.name, prefix || 'MAIN');
-                                if (song) {
-                                    addOrUpdateSong(song);
-                                    count++;
-                                }
-                            }
-                            
-                            // Every 10 songs, update the UI and log progress so mobile users see feedback
-                            if (count % 10 === 0) {
-                                updateTabCounts();
-                                renderSidebarList();
-                                console.log(`[OpenSongApp] Progress: Loaded ${loadedSongs.length} songs so far...`);
-                            }
-                        } else if (entry.kind === 'directory') {
-                            const subFolderName = prefix ? `${prefix}/${entry.name}` : entry.name;
-                            count += await scanSongDir(entry, subFolderName);
-                        }
-                    } catch (fileErr) {
-                        console.warn("Skipped subfile/subfolder due to mobile permission limit:", fileErr);
-                    }
-                }
-            } catch (err) {
-                console.warn("Scan directory iteration warning:", err);
+        async function backgroundLazyLoadAndCacheSongs(songFileHandles) {
+            let processed = 0;
+            const total = songFileHandles.length;
+            const statusEl = document.getElementById('folder-status-text');
+
+            if (sqliteDb) {
+                sqliteDb.run("BEGIN TRANSACTION;");
             }
-            return count;
-        }
-        function parseOpenSongXML(xmlString, filename, folderPath) {
-            try {
-                const doc = new DOMParser().parseFromString(xmlString, "text/xml");
-                if (doc.querySelector("parsererror")) return null;
-                const song = doc.querySelector("song");
-                if (!song) return null;
-                
-                const getVal = (tagName) => {
-                    for (let child of song.children) {
-                        if (child.nodeName.toLowerCase() === tagName.toLowerCase()) {
-                            return child.textContent.trim();
-                        }
-                    }
-                    return '';
-                };
-                
-                const parsedKey = getVal("key");
-                const cleanFilename = filename.endsWith('.ost') ? filename.slice(0, -4) : filename;
-                
-                return {
-                    id: 'song_' + Math.random().toString(36).substring(2, 8),
-                    filename: cleanFilename, 
-                    folderPath: folderPath || 'MAIN',
-                    title: getVal("title") || cleanFilename,
-                    author: getVal("author"),
-                    copyright: getVal("copyright"),
-                    presentation: getVal("presentation"),
-                    key: parsedKey || 'C',
-                    keyoriginal: getVal("keyoriginal"),
-                    capo: getVal("capo"),
-                    tempo: getVal("tempo") || 120,
-                    time_sig: getVal("time_sig") || '4/4',
-                    hymn_number: getVal("hymn_number"),
-                    duration: getVal("duration"),
-                    predelay: getVal("predelay"),
-                    ccli: getVal("ccli"),
-                    theme: getVal("theme"),
-                    altheme: getVal("altheme"),
-                    user1: getVal("user1"),
-                    user2: getVal("user2"),
-                    user3: getVal("user3"),
-                    beatbuddysong: getVal("beatbuddysong"),
-                    beatbuddykit: getVal("beatbuddykit"),
-                    drummer: getVal("drummer"),
-                    drummerkit: getVal("drummerkit"),
-                    preferedinstrument: getVal("preferedinstrument"),
-                    previewoverride: getVal("previewoverride"),
-                    aka: getVal("aka"),
-                    midi: getVal("midi"),
-                    midi_index: getVal("midi_index"),
-                    notes: getVal("notes"),
-                    pad_file: getVal("pad_file"),
-                    custom_chords: getVal("custom_chords"),
-                    link_web: getVal("link_web"),
-                    link_audio: getVal("link_audio"),
-                    loop_audio: getVal("loop_audio") === 'true',
-                    abc_notation: getVal("abc_notation"),
-                    abc_transpose: getVal("abc_transpose"),
-                    uuid: getVal("uuid") || generateUUID(),
-                    modified: getVal("modified") || new Date().toISOString(),
-                    lyrics: getVal("lyrics")
-                };
-            } catch (e) { return null; }
-        }
 
-        function parseSetFilename(filename) {
-            let clean = filename.endsWith('.osts') ? filename.slice(0, -5) : (filename.endsWith('.ost') ? filename.slice(0, -4) : filename);
-            if (clean.includes('___')) {
-                const parts = clean.split('___');
-                return { category: parts[0], title: parts.slice(1).join('___'), filename: clean };
-            }
-            return { category: 'MAIN', title: clean, filename: clean };
-        }
-
-        function parseOpenSongSetXML(xmlString, filename) {
-            try {
-                const doc = new DOMParser().parseFromString(xmlString, "text/xml");
-                const setNode = doc.querySelector("set");
-                if (!setNode) return null;
-                const songTitles = [];
-                doc.querySelectorAll("slide_group").forEach(g => {
-                    const name = g.getAttribute("name");
-                    if (name) songTitles.push(name);
-                });
-                const parsed = parseSetFilename(filename);
-                return { 
-                    id: 'set_' + Math.random().toString(36).substring(2, 8), 
-                    filename: parsed.filename, 
-                    title: setNode.getAttribute("name") || parsed.title, 
-                    category: parsed.category,
-                    songTitles 
-                };
-            } catch (e) { return null; }
-        }
-
-        function generateOpenSongXML(song) {
-            return `<?xml version="1.0" encoding="UTF-8"?>
-<song>
-    <title>${escapeXml(song.title || '')}</title>
-    <author>${escapeXml(song.author || '')}</author>
-    <copyright>${escapeXml(song.copyright || '')}</copyright>
-    <presentation>${escapeXml(song.presentation || '')}</presentation>
-    <hymn_number>${escapeXml(song.hymn_number || '')}</hymn_number>
-    <key>${escapeXml(song.key || 'C')}</key>
-    <keyoriginal>${escapeXml(song.keyoriginal || '')}</keyoriginal>
-    <capo>${escapeXml(song.capo || '')}</capo>
-    <tempo>${song.tempo || 120}</tempo>
-    <time_sig>${escapeXml(song.time_sig || '4/4')}</time_sig>
-    <duration>${escapeXml(song.duration || '')}</duration>
-    <predelay>${escapeXml(song.predelay || '')}</predelay>
-    <ccli>${escapeXml(song.ccli || '')}</ccli>
-    <theme>${escapeXml(song.theme || '')}</theme>
-    <altheme>${escapeXml(song.altheme || '')}</altheme>
-    <user1>${escapeXml(song.user1 || '')}</user1>
-    <user2>${escapeXml(song.user2 || '')}</user2>
-    <user3>${escapeXml(song.user3 || '')}</user3>
-    <beatbuddysong>${escapeXml(song.beatbuddysong || '')}</beatbuddysong>
-    <beatbuddykit>${escapeXml(song.beatbuddykit || '')}</beatbuddykit>
-    <drummer>${escapeXml(song.drummer || '')}</drummer>
-    <drummerkit>${escapeXml(song.drummerkit || '')}</drummerkit>
-    <preferedinstrument>${escapeXml(song.preferedinstrument || '')}</preferedinstrument>
-    <previewoverride>${escapeXml(song.previewoverride || '')}</previewoverride>
-    <aka>${escapeXml(song.aka || '')}</aka>
-    <midi>${escapeXml(song.midi || '')}</midi>
-    <midi_index>${escapeXml(song.midi_index || '')}</midi_index>
-    <notes>${escapeXml(song.notes || '')}</notes>
-    <pad_file>${escapeXml(song.pad_file || '')}</pad_file>
-    <custom_chords>${escapeXml(song.custom_chords || '')}</custom_chords>
-    <link_web>${escapeXml(song.link_web || '')}</link_web>
-    <link_audio>${escapeXml(song.link_audio || '')}</link_audio>
-    <loop_audio>${song.loop_audio ? 'true' : 'false'}</loop_audio>
-    <abc_notation>${escapeXml(song.abc_notation || '')}</abc_notation>
-    <abc_transpose>${escapeXml(song.abc_transpose || '')}</abc_transpose>
-    <uuid>${escapeXml(song.uuid || generateUUID())}</uuid>
-    <modified>${escapeXml(song.modified || new Date().toISOString())}</modified>
-    <lyrics>${escapeXml(song.lyrics || '')}</lyrics>
-</song>`;
-        }
-
-        function generateOpenSongSetXML(setObj) {
-            let slides = setObj.songTitles.map(t => `<slide_group name="${escapeXml(t)}"></slide_group>`).join('\n');
-            return `<?xml version="1.0" encoding="UTF-8"?>
-<set name="${escapeXml(setObj.title)}">
-    ${slides}
-</set>`;
-        }
-
-        function escapeXml(str) {
-            return String(str).replace(/[<>&'"]/g, function (c) {
-                switch (c) {
-                    case '<': return '&lt;';
-                    case '>': return '&gt;';
-                    case '&': return '&amp;';
-                    case '\'': return '&apos;';
-                    case '"': return '&quot;';
-                }
-            });
-        }
-
-        async function writeSongToDisk(songObj) {
-            if (!rootDirectoryHandle) return false;
-            try {
-                const opts = { mode: 'readwrite' };
-                if ((await rootDirectoryHandle.queryPermission(opts)) !== 'granted') {
-                    if ((await rootDirectoryHandle.requestPermission(opts)) !== 'granted') return false;
-                }
-                const songsDir = await rootDirectoryHandle.getDirectoryHandle('Songs', { create: true });
-                let targetDir = songsDir;
-                if (songObj.folderPath && songObj.folderPath !== 'MAIN') {
-                    for (const sf of songObj.folderPath.split('/')) {
-                        targetDir = await targetDir.getDirectoryHandle(sf, { create: true });
-                    }
-                }
-                const fileHandle = await targetDir.getFileHandle(songObj.filename || songObj.title, { create: true });
-                const writable = await fileHandle.createWritable();
-                await writable.write(generateOpenSongXML(songObj));
-                await writable.close();
-                return true;
-            } catch (err) { return false; }
-        }
-
-        async function writeSetToDisk(setObj) {
-            if (!rootDirectoryHandle) return false;
-            try {
-                const opts = { mode: 'readwrite' };
-                if ((await rootDirectoryHandle.queryPermission(opts)) !== 'granted') {
-                    if ((await rootDirectoryHandle.requestPermission(opts)) !== 'granted') return false;
-                }
-                const setsDir = await rootDirectoryHandle.getDirectoryHandle('Sets', { create: true });
-                const fileHandle = await setsDir.getFileHandle(setObj.filename || setObj.title, { create: true });
-                const writable = await fileHandle.createWritable();
-                await writable.write(generateOpenSongSetXML(setObj));
-                await writable.close();
-                return true;
-            } catch (err) { return false; }
-        }
-
-        const notesList = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-        const flatNotes = {'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'};
-
-        function transposeChord(chord, semitones) {
-            if (!chord) return '';
-            let rootMatch = chord.match(/^[A-G][b#]?/);
-            if (!rootMatch) return chord;
-            let root = rootMatch[0];
-            if (flatNotes[root]) root = flatNotes[root];
-            let idx = notesList.indexOf(root);
-            if (idx === -1) return chord;
-            let newIdx = (idx + semitones + 12) % 12;
-            return notesList[newIdx] + chord.slice(root.length);
-        }
-
-        function transposeSongLyricsText(rawLyrics, semitones) {
-            if (!rawLyrics || semitones === 0) return rawLyrics;
-            const lines = rawLyrics.split('\n');
-            const transposedLines = lines.map(line => {
-                if (line.startsWith('.')) {
-                    const chordLine = line.slice(1);
-                    const transposedChordLine = chordLine.replace(/([A-G][b#]?[^\s]*)/g, (match) => {
-                        return transposeChord(match, semitones);
-                    });
-                    return '.' + transposedChordLine;
-                }
-                return line;
-            });
-            return transposedLines.join('\n');
-        }
-
-        elements.archiveFileInput.addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files || []);
-            if (files.length === 0) return;
-            elements.importModal.classList.add('hidden');
-            pendingImportItems = [];
-
-            for (const file of files) {
+            for (let i = 0; i < songFileHandles.length; i++) {
+                const item = songFileHandles[i];
                 try {
-                    const zip = new JSZip();
-                    const zipContent = await zip.loadAsync(file);
-                    for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
-                        if (zipEntry.dir) continue;
-                        const lowerName = filename.toLowerCase();
-
-                        if (lowerName.includes('nonopensongsongs.db')) {
-                            const dbBuf = await zipEntry.async("uint8array");
-                            parseNonOpenSongSQLite(dbBuf);
-                        } else if (lowerName.endsWith('.pdf')) {
-                            const pdfBlob = await zipEntry.async("blob");
-                            const pureName = filename.split('/').pop();
-                            pdfBlobsMap[pureName] = URL.createObjectURL(pdfBlob);
-                            const exists = loadedSongs.some(s => s.filename.toLowerCase() === pureName.toLowerCase());
-                            pendingImportItems.push({
-                                type: 'song',
-                                itemObj: {
-                                    id: 'song_pdf_' + Math.random().toString(36).substring(2, 8),
-                                    filename: pureName, folderPath: 'PDFs', title: pureName.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: pdfBlobsMap[pureName], key: 'C', uuid: generateUUID(), modified: new Date().toISOString()
-                                },
-                                labelTitle: pureName, category: 'PDF Song', isConflict: exists, selected: true
-                            });
-                        } else if (lowerName.includes('sets/') || lowerName.endsWith('.osbs') || lowerName.endsWith('.ost') || lowerName.endsWith('.osts')) {
-                            const text = await zipEntry.async("text");
-                            const setObj = parseOpenSongSetXML(text, filename.split('/').pop());
-                            if (setObj) {
-                                const exists = loadedSets.some(s => s.title.toLowerCase() === setObj.title.toLowerCase());
-                                pendingImportItems.push({
-                                    type: 'set', itemObj: setObj, labelTitle: setObj.title, category: 'OpenSong Set', isConflict: exists, selected: true
-                                });
-                            }
-                        } else {
-                            let folder = 'MAIN';
-                            const parts = filename.split('/');
-                            const songsIdx = parts.findIndex(p => p.toLowerCase() === 'songs');
-                            if (songsIdx !== -1 && parts.length > songsIdx + 2) {
-                                folder = parts.slice(songsIdx + 1, parts.length - 1).join('/');
-                            } else if (parts.length > 1) {
-                                folder = parts[0];
-                            }
-                            const songName = parts[parts.length - 1];
-                            const text = await zipEntry.async("text");
-                            const songObj = parseOpenSongXML(text, songName, folder);
-
-                            if (songObj) {
-                                const exists = loadedSongs.some(s => s.title.toLowerCase() === songObj.title.toLowerCase() && (s.folderPath || 'MAIN') === folder);
-                                pendingImportItems.push({
-                                    type: 'song', itemObj: songObj, labelTitle: `${songObj.title} (${folder})`, category: 'Song', isConflict: exists, selected: true
-                                });
-                            }
-                        }
-                    }
-                } catch (err) { console.error(err); }
-            }
-
-            if (pendingImportItems.length > 0) showConflictModal(pendingImportItems);
-        });
-
-        function showConflictModal(items) {
-            elements.conflictItemsList.innerHTML = '';
-            items.forEach((item, idx) => {
-                const div = document.createElement('label');
-                div.className = 'flex items-center justify-between py-2 px-1 cursor-pointer hover:bg-slate-800/40 rounded';
-                div.innerHTML = `
-                    <div class="flex items-center space-x-3 truncate">
-                        <input type="checkbox" data-index="${idx}" ${item.selected ? 'checked' : ''} class="accent-amber-500 w-4 h-4 rounded">
-                        <div class="truncate"><strong class="text-slate-200">${item.labelTitle}</strong> <span class="text-slate-400 font-mono text-[10px]">[${item.category}]</span></div>
-                    </div>
-                    <span class="text-[10px] px-2 py-0.5 rounded ${item.isConflict ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300'}">${item.isConflict ? 'Exists (Overwrite)' : 'New'}</span>
-                `;
-                elements.conflictItemsList.appendChild(div);
-            });
-            elements.conflictModal.classList.remove('hidden');
-        }
-
-        elements.closeConflictModal.addEventListener('click', () => elements.conflictModal.classList.add('hidden'));
-        elements.conflictCancelBtn.addEventListener('click', () => {
-            elements.conflictModal.classList.add('hidden');
-            pendingImportItems = [];
-        });
-
-        elements.conflictProceedBtn.addEventListener('click', () => {
-            const checkboxes = elements.conflictItemsList.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => {
-                const idx = parseInt(cb.getAttribute('data-index'), 10);
-                pendingImportItems[idx].selected = cb.checked;
-            });
-            elements.conflictModal.classList.add('hidden');
-            executeImportBatch(pendingImportItems);
-            pendingImportItems = [];
-        });
-
-        async function executeImportBatch(items) {
-            const selectedItems = items.filter(i => i.selected);
-            if (selectedItems.length === 0) return;
-            showToast(`Importing ${selectedItems.length} items to library & disk...`);
-            
-            let count = 0;
-            for (const item of selectedItems) {
-                if (item.type === 'song') {
-                    addOrUpdateSong(item.itemObj);
-                    await writeSongToDisk(item.itemObj);
-                    count++;
-                } else if (item.type === 'set') {
-                    const existingSetIdx = loadedSets.findIndex(s => s.title.toLowerCase() === item.itemObj.title.toLowerCase());
-                    if (existingSetIdx !== -1) loadedSets[existingSetIdx] = item.itemObj;
-                    else loadedSets.push(item.itemObj);
-                    await writeSetToDisk(item.itemObj);
-                    count++;
-                }
-            }
-            updateTabCounts();
-            updateFolderFilterDropdown();
-            renderSidebarList();
-            showToast(`Successfully imported and saved ${count} items!`);
-        }
-
-        elements.individualFilesInput.addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files || []);
-            if (files.length === 0) return;
-            elements.importModal.classList.add('hidden');
-            pendingImportItems = [];
-
-            for (const file of files) {
-                const nameLower = file.name.toLowerCase();
-                if (nameLower.endsWith('.pdf')) {
-                    const blobUrl = URL.createObjectURL(file);
-                    pdfBlobsMap[file.name] = blobUrl;
-                    const exists = loadedSongs.some(s => s.filename.toLowerCase() === file.name.toLowerCase());
-                    pendingImportItems.push({
-                        type: 'song', itemObj: { id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: file.name, folderPath: 'PDFs', title: file.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: 'C', uuid: generateUUID(), modified: new Date().toISOString() },
-                        labelTitle: file.name, category: 'PDF Song', isConflict: exists, selected: true
-                    });
-                } else {
-                    const text = await file.text();
-                    if (nameLower.endsWith('.osts') || (nameLower.endsWith('.ost') && text.includes('<set')) || text.includes('<set')) {
-                        const setObj = parseOpenSongSetXML(text, file.name);
-                        if (setObj) {
-                            const exists = loadedSets.some(s => s.title.toLowerCase() === setObj.title.toLowerCase());
-                            pendingImportItems.push({ type: 'set', itemObj: setObj, labelTitle: setObj.title, category: 'OpenSong Set', isConflict: exists, selected: true });
+                    const f = await item.handle.getFile();
+                    if (item.type === 'pdf') {
+                        const blobUrl = URL.createObjectURL(f);
+                        pdfBlobsMap[item.handle.name] = blobUrl;
+                        const song = loadedSongs.find(s => s.filename === item.handle.name && s.folderPath === item.folder);
+                        if (song) {
+                            song.isPdf = true;
+                            song.pdfUrl = blobUrl;
+                            song.author = '';
+                            song.isLoaded = true;
                         }
                     } else {
-                        const songObj = parseOpenSongXML(text, file.name, 'MAIN');
-                        if (songObj) {
-                            const exists = loadedSongs.some(s => s.title.toLowerCase() === songObj.title.toLowerCase() && (s.folderPath || 'MAIN') === 'MAIN');
-                            pendingImportItems.push({ type: 'song', itemObj: songObj, labelTitle: songObj.title, category: 'Song', isConflict: exists, selected: true });
+                        const text = await f.text();
+                        const parsedSong = parseOpenSongXML(text, item.handle.name, item.folder);
+                        if (parsedSong) {
+                            const idx = loadedSongs.findIndex(s => s.filename === item.handle.name && s.folderPath === item.folder);
+                            if (idx !== -1) {
+                                loadedSongs[idx] = { ...loadedSongs[idx], ...parsedSong, fileHandle: item.handle, isLoaded: true };
+                            }
+                            // Insert into SQLite cache
+                            if (sqliteDb) {
+                                const stmt = sqliteDb.prepare("INSERT OR REPLACE INTO songs (filename, folderPath, title, author, key, capo, tempo, lyrics, modified, uuid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                stmt.run([
+                                    parsedSong.filename,
+                                    parsedSong.folderPath,
+                                    parsedSong.title,
+                                    parsedSong.author || '',
+                                    parsedSong.key || 'C',
+                                    parsedSong.capo || '',
+                                    parseInt(parsedSong.tempo) || 120,
+                                    parsedSong.lyrics || '',
+                                    parsedSong.modified || '',
+                                    parsedSong.uuid || ''
+                                ]);
+                                stmt.free();
+                            }
                         }
                     }
+                } catch (err) {
+                    console.warn(`Failed lazy loading file ${item.handle.name}:`, err);
+                }
+
+                processed++;
+                const percent = Math.round((processed / total) * 100);
+
+                if (processed % 15 === 0 || processed === total) {
+                    if (statusEl) statusEl.textContent = `Indexing... ${percent}%`;
+                    updateTabCounts();
+                    renderSidebarList(elements.songSearch.value.toLowerCase());
                 }
             }
-            if (pendingImportItems.length > 0) showConflictModal(pendingImportItems);
-        });
+
+            if (sqliteDb) {
+                sqliteDb.run("COMMIT;");
+                await saveSqlDbBuffer();
+            }
+
+            if (statusEl) statusEl.textContent = rootDirectoryHandle ? rootDirectoryHandle.name : "Root Directory Loaded";
+            showToast(`Indexing complete: ${total} songs cached in SQLite!`);
+        }
 
         async function parseNonOpenSongSQLite(uint8ArrayData) {
             try {
@@ -1620,7 +1299,7 @@
                     const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
                     rootDirectoryHandle = handle;
                     await saveDirectoryHandle(handle);
-                    await processRootDirectory(handle);
+                    await processRootDirectory(handle, true);
                     return;
                 } catch (err) {
                     if (err.name === 'AbortError') return;
@@ -1670,6 +1349,22 @@
             showToast("Folder scanned successfully!");
         });
 
+        // Lazy-load song content on demand if a placeholder hasn't been parsed yet
+        async function ensureSongContentLoaded(song) {
+            if (song.isLoaded || !song.fileHandle) return song;
+            try {
+                const f = await song.fileHandle.getFile();
+                const text = await f.text();
+                const parsed = parseOpenSongXML(text, song.filename, song.folderPath);
+                if (parsed) {
+                    Object.assign(song, parsed, { isLoaded: true });
+                }
+            } catch (e) {
+                console.warn("Failed lazy-loading individual song file:", e);
+            }
+            return song;
+        }
+
         elements.newSongBtn.addEventListener('click', () => {
             elements.editSongTitleInput.value = '';
             elements.editSongAuthorInput.value = '';
@@ -1691,8 +1386,9 @@
             elements.songEditorModal.classList.remove('hidden');
         });
 
-        elements.editSongBtn.addEventListener('click', () => {
+        elements.editSongBtn.addEventListener('click', async () => {
             if (!activeSong) return;
+            await ensureSongContentLoaded(activeSong);
             elements.editSongTitleInput.value = activeSong.title || '';
             elements.editSongAuthorInput.value = activeSong.author || '';
             elements.editSongCopyrightInput.value = activeSong.copyright || '';
@@ -1740,6 +1436,7 @@
                 notes: elements.editSongNotesInput.value,
                 theme: elements.editSongThemesInput.value,
                 beatbuddysong: elements.editSongBeatbuddyInput.value,
+                isLoaded: true,
                 uuid: activeSong ? (activeSong.uuid || generateUUID()) : generateUUID(),
                 modified: new Date().toISOString(),
                 lyrics: elements.editSongLyricsInput.value
@@ -1751,8 +1448,14 @@
             renderSidebarList();
             renderSongSheet(newSongData);
 
-            const written = await writeSongToDisk(newSongData);
-            showToast(written ? "Song saved and written to disk!" : "Song saved in memory.");
+            await writeSongToDisk(newSongData);
+            if (sqliteDb) {
+                const stmt = sqliteDb.prepare("INSERT OR REPLACE INTO songs (filename, folderPath, title, author, key, capo, tempo, lyrics, modified, uuid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                stmt.run([newSongData.filename, newSongData.folderPath, newSongData.title, newSongData.author, newSongData.key, newSongData.capo, newSongData.tempo, newSongData.lyrics, newSongData.modified, newSongData.uuid]);
+                stmt.free();
+                await saveSqlDbBuffer();
+            }
+            showToast("Song saved and written to disk & SQLite cache!");
         });
 
         function addOrUpdateSong(songObj) {
@@ -1790,18 +1493,20 @@
             }
         }
 
-        function loadSongFromActiveSet(index) {
+        async function loadSongFromActiveSet(index) {
             if (!activeSet || !activeSet.songTitles[index]) return;
             const songTitle = activeSet.songTitles[index];
-            const foundSong = loadedSongs.find(s => s.title.toLowerCase() === songTitle.toLowerCase());
+            let foundSong = loadedSongs.find(s => s.title.toLowerCase() === songTitle.toLowerCase());
             if (foundSong) {
+                await ensureSongContentLoaded(foundSong);
                 renderSongSheet(foundSong, activeSet, index);
             } else {
                 showToast(`Song "${songTitle}" not found in loaded library.`);
             }
         }
 
-        function renderSongSheet(song, fromSetContext = null, songIndexInSet = -1) {
+        async function renderSongSheet(song, fromSetContext = null, songIndexInSet = -1) {
+            await ensureSongContentLoaded(song);
             activeSong = song;
             activeSet = null;
             capoDisplayMode = 'native';
@@ -1877,8 +1582,9 @@
                 `;
 
                 if (foundSong) {
-                    itemDiv.addEventListener('click', (e) => {
+                    itemDiv.addEventListener('click', async (e) => {
                         if (e.target.closest('button') || e.target.closest('svg')) return;
+                        await ensureSongContentLoaded(foundSong);
                         renderSongSheet(foundSong, setObj, idx);
                     });
                 }
@@ -2053,8 +1759,8 @@
         }
 
         function updateTabCounts() {
-            if (elements.tabSongsCount) elements.tabSongsCount.textContent = `(${loadedSongs.length})`;
-            if (elements.tabSetsCount) elements.tabSetsCount.textContent = `(${loadedSets.length})`;
+            elements.tabSongsCount.textContent = `(${loadedSongs.length})`;
+            elements.tabSetsCount.textContent = `(${loadedSets.length})`;
         }
 
         function updateFolderFilterDropdown() {
@@ -2155,14 +1861,15 @@
                     li.innerHTML = `
                         <div class="truncate pr-2 flex-1 song-click-target cursor-pointer">
                             <div class="text-sm truncate">${song.title}</div>
-                            <div class="text-xs text-slate-500 font-normal">${song.author || 'Unknown'} <span class="text-[10px] text-amber-500/80 font-mono">(${song.folderPath || 'MAIN'})</span></div>
+                            <div class="text-xs text-slate-500 font-normal">${song.author || 'Loading...'} <span class="text-[10px] text-amber-500/80 font-mono">(${song.folderPath || 'MAIN'})</span></div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800">${song.key || '?'}</span>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800">${song.key || 'C'}</span>
                             <input type="checkbox" class="set-membership-chk w-4 h-4 accent-amber-500 rounded cursor-pointer" ${isInSet ? 'checked' : ''} title="Add to current set">
                         </div>`;
                     
-                    li.querySelector('.song-click-target').addEventListener('click', () => {
+                    li.querySelector('.song-click-target').addEventListener('click', async () => {
+                        await ensureSongContentLoaded(song);
                         renderSongSheet(song);
                         if (window.innerWidth < 1024) {
                             document.getElementById('sidebar').classList.add('-translate-x-full');
@@ -2242,9 +1949,10 @@
         const saveKeyBtn = document.getElementById('save-key-btn');
 
         if (transposeUpBtn) {
-            transposeUpBtn.addEventListener('click', (e) => {
+            transposeUpBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (!activeSong) return;
+                await ensureSongContentLoaded(activeSong);
                 activeSong.transposeOffset = ((activeSong.transposeOffset || 0) + 1) % 12;
                 if (saveKeyBtn) saveKeyBtn.classList.remove('hidden');
                 renderSongSheet(activeSong, activeSet, activeSetSongIndex);
@@ -2252,9 +1960,10 @@
         }
 
         if (transposeDownBtn) {
-            transposeDownBtn.addEventListener('click', (e) => {
+            transposeDownBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (!activeSong) return;
+                await ensureSongContentLoaded(activeSong);
                 activeSong.transposeOffset = ((activeSong.transposeOffset || 0) - 1 + 12) % 12;
                 if (saveKeyBtn) saveKeyBtn.classList.remove('hidden');
                 renderSongSheet(activeSong, activeSet, activeSetSongIndex);
@@ -2265,6 +1974,7 @@
             saveKeyBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (!activeSong || !activeSong.transposeOffset) return;
+                await ensureSongContentLoaded(activeSong);
                 const semitones = activeSong.transposeOffset;
                 const newKey = transposeChord(activeSong.key || 'C', semitones);
                 activeSong.lyrics = transposeSongLyricsText(activeSong.lyrics, semitones);
@@ -2276,31 +1986,18 @@
                 renderSidebarList(elements.songSearch.value.toLowerCase());
                 renderSongSheet(activeSong, activeSet, activeSetSongIndex);
                 await writeSongToDisk(activeSong);
+                
+                if (sqliteDb) {
+                    const stmt = sqliteDb.prepare("UPDATE songs SET key=?, lyrics=?, modified=? WHERE filename=? AND folderPath=?");
+                    stmt.run([activeSong.key, activeSong.lyrics, activeSong.modified, activeSong.filename, activeSong.folderPath || 'MAIN']);
+                    stmt.free();
+                    await saveSqlDbBuffer();
+                }
+
                 showToast(`Key & chords updated and saved as ${newKey}`);
             });
         }
 
-        const sidebar = document.getElementById('sidebar');
-        const backdrop = document.getElementById('sidebar-backdrop');
-        const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
-
-        if (toggleSidebarBtn && sidebar && backdrop) {
-            const toggleDrawer = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                sidebar.classList.toggle('-translate-x-full');
-                backdrop.classList.toggle('hidden');
-            };
-
-            toggleSidebarBtn.addEventListener('click', toggleDrawer);
-            toggleSidebarBtn.addEventListener('touchend', toggleDrawer);
-
-            backdrop.addEventListener('click', () => {
-                sidebar.classList.add('-translate-x-full');
-                backdrop.classList.add('hidden');
-            });
-        }
-        
         const settingsBtn = document.getElementById('open-settings-btn');
         const settingsModal = document.getElementById('settings-modal');
         const closeSettingsBtn = document.getElementById('close-settings-btn');
@@ -2341,7 +2038,8 @@
             return { heading: currentHeading, content: sectionLines.join('\n') };
         }
 
-        function updateCastWindow(song, sectionIndex = 0, isManualClick = false) {
+        async function updateCastWindow(song, sectionIndex = 0, isManualClick = false) {
+            if (song) await ensureSongContentLoaded(song);
             if (castWindow && !castWindow.closed && song) {
                 const extracted = extractSectionContent(song.lyrics, sectionIndex);
                 castWindow.postMessage({
@@ -2357,8 +2055,9 @@
 
         const castBtn = document.getElementById('cast-display-btn');
         if (castBtn) {
-            castBtn.addEventListener('click', (e) => {
+            castBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
+                if (activeSong) await ensureSongContentLoaded(activeSong);
                 showToast("Opening stage presentation window...");
                 castWindow = window.open('', '_blank', 'width=1024,height=768');
                 if (castWindow) {
