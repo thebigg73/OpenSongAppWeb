@@ -2,7 +2,7 @@
 <html lang="en" class="h-full bg-slate-950 text-slate-100">
     <head>
         <script>
-            const version = "1.0f";
+            const version = "1.0g";
         </script>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -260,22 +260,8 @@
                         <span id="tab-sets-count" class="opacity-75 font-normal">(0)</span>
                     </button>
                 </div>
-                <!-- Dynamic Sidebar Action Sub-bar (e.g. New Set / Save Set buttons when Sets tab is active) -->
-                <div id="sidebar-sets-toolbar" class="hidden px-3 pb-2 border-b border-slate-800 flex gap-2">
-                    <button
-                        id="sidebar-new-set-btn"
-                        class="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1 transition">
-                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Set
-                    </button>
-                    <button
-                        id="sidebar-save-set-btn"
-                        class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1 transition">
-                        <i data-lucide="save" class="w-3.5 h-3.5"></i> Save Set
-                    </button>
-                </div>
-
                 <div class="px-3 pb-2 border-b border-slate-800 flex flex-col gap-2">
-                    <div class="relative">
+                    <div id="song-search-container" class="relative">
                         <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-500"></i>
                         <input
                             type="text"
@@ -2716,19 +2702,31 @@
 
             function switchSidebarTab(tab) {
                 activeTab = tab;
+
+                // 1. Update active tab button styles
                 elements.tabSongsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === "songs" ? "bg-amber-500 text-slate-950" : "text-slate-400 hover:bg-slate-800"}`;
                 elements.tabSetsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === "sets" ? "bg-indigo-500 text-slate-950" : "text-slate-400 hover:bg-slate-800"}`;
-                elements.activeTabLabel.textContent = tab === "songs" ? "Showing All Songs" : "Showing All Sets";
+                elements.activeTabLabel.textContent = tab === "songs" ? "Showing All Songs" : "Current Active Set";
 
-                const setsToolbar = document.getElementById("sidebar-sets-toolbar");
-                if (setsToolbar) {
-                    if (tab === "sets") setsToolbar.classList.remove("hidden");
-                    else setsToolbar.classList.add("hidden");
+                // 2. Get search container and category filter elements by direct ID
+                const searchContainer = document.getElementById("song-search-container");
+                const filterContainer = elements.folderFilterSelect?.closest('.flex') || document.getElementById("category-filter-container");
+                const refreshBtn = document.getElementById("rescan-btn");
+
+                if (tab === "sets") {
+                    // Hide search input, folder filter, and refresh button on Sets tab
+                    if (searchContainer) searchContainer.classList.add("hidden");
+                    if (filterContainer) filterContainer.classList.add("hidden");
+                    if (refreshBtn) refreshBtn.classList.add("hidden");
+                } else {
+                    // Show controls on Songs tab
+                    if (searchContainer) searchContainer.classList.remove("hidden");
+                    if (filterContainer) filterContainer.classList.remove("hidden");
+                    if (refreshBtn) refreshBtn.classList.remove("hidden");
                 }
 
-                document.getElementById("filter-label").textContent = tab === "songs" ? "Folder:" : "Category:";
-                updateFolderFilterDropdown();
-                renderSidebarList(elements.songSearch.value.toLowerCase());
+                // 3. Render list for active tab
+                renderSidebarList(elements.songSearch ? elements.songSearch.value.toLowerCase() : "");
             }
 
             function updateTabCounts() {
@@ -3405,14 +3403,14 @@
                                 }
                             },
                             {
-    label: "Manage sets",
-    icon: "folder-archive",
-    color: "text-amber-400",
-    action: () => {
-        closeSidebarModal();
-        openManageSetsModal();
-    }
-},
+                                label: "Manage sets",
+                                icon: "folder-archive",
+                                color: "text-amber-400",
+                                action: () => {
+                                    closeSidebarModal();
+                                    openManageSetsModal();
+                                }
+                            },
                             {
                                 label: "Import backups",
                                 icon: "archive",
