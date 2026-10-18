@@ -143,7 +143,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4p</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4r</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1829,51 +1829,62 @@ function applyTextScaling() {
     if (!sheetContent) return;
 
     const sections = sheetContent.querySelectorAll('#sheet-content > div');
+    if (sections.length === 0) return;
 
-    sections.forEach(section => {
-        const sectionInnerWidth = section.clientWidth - 32;
+    if (userSettings.autoScale) {
+        let globalMinScale = 1;
 
-        section.querySelectorAll('.chord-lyric-pair-line').forEach(line => {
-            if (userSettings.autoScale) {
+        // Pass 1: Find the most restrictive scale ratio across the entire song
+        sections.forEach(section => {
+            const sectionInnerWidth = section.clientWidth - 32; // accounting for padding
+            section.querySelectorAll('.chord-lyric-pair-line').forEach(line => {
                 line.style.flexWrap = 'nowrap';
                 line.style.whiteSpace = 'nowrap';
-
-                // Temporarily apply max font size to measure full unscaled width
                 line.style.fontSize = `${userSettings.maxFontSize}px`;
+
                 const scrollWidth = line.scrollWidth;
-
-                let finalSize = userSettings.maxFontSize;
                 if (scrollWidth > sectionInnerWidth && scrollWidth > 0) {
-                    const scaleRatio = sectionInnerWidth / scrollWidth;
-                    finalSize = Math.max(12, Math.floor(userSettings.maxFontSize * scaleRatio));
+                    const ratio = sectionInnerWidth / scrollWidth;
+                    if (ratio < globalMinScale) {
+                        globalMinScale = ratio;
+                    }
                 }
+            });
+        });
 
-                // Apply base lyric font size
-                line.style.fontSize = `${finalSize}px`;
+        // Calculate a single unified font size for the entire song
+        const unifiedSize = Math.max(12, Math.floor(userSettings.maxFontSize * globalMinScale));
 
-                // Scale chords proportionally using your CSS variable (e.g., 85% of lyric size)
-                const chordScaleFactor = getComputedStyle(document.documentElement).getPropertyValue('--chord-font-scale').trim() || '0.85rem';
-                // If it's a rem/em value, we can calculate it relative to finalSize
-                let chordSize = finalSize * 0.85; // default fallback proportion
-                if (chordScaleFactor.includes('rem') || chordScaleFactor.includes('em')) {
-                    chordSize = finalSize * parseFloat(chordScaleFactor);
-                }
+        // Calculate proportional chord size
+        const chordScaleFactor = getComputedStyle(document.documentElement).getPropertyValue('--chord-font-scale').trim() || '0.85rem';
+        let chordSize = unifiedSize * 0.85;
+        if (chordScaleFactor.includes('rem') || chordScaleFactor.includes('em')) {
+            chordSize = unifiedSize * parseFloat(chordScaleFactor);
+        }
 
+        // Pass 2: Apply the unified font size to every section uniformly
+        sections.forEach(section => {
+            section.querySelectorAll('.chord-lyric-pair-line').forEach(line => {
+                line.style.fontSize = `${unifiedSize}px`;
                 line.querySelectorAll('.chord-above').forEach(chord => {
                     chord.style.fontSize = `${chordSize}px`;
                 });
+            });
+        });
 
-            } else {
+    } else {
+        // Auto-scale disabled: allow natural wrapping
+        sections.forEach(section => {
+            section.querySelectorAll('.chord-lyric-pair-line').forEach(line => {
                 line.style.flexWrap = 'wrap';
                 line.style.whiteSpace = 'normal';
                 line.style.fontSize = `${userSettings.maxFontSize}px`;
-                
                 line.querySelectorAll('.chord-above').forEach(chord => {
-                    chord.style.fontSize = ''; // let CSS variable take over when auto-scale is off
+                    chord.style.fontSize = '';
                 });
-            }
+            });
         });
-    });
+    }
 }
 
         // Call applyTextScaling whenever the window resizes or settings are saved
@@ -1915,7 +1926,7 @@ window.addEventListener('resize', () => {
                     sectionCounter++;
                     const thisSectionIdx = sectionCounter;
                     sectionContainer = document.createElement('div');
-                    sectionContainer.className = 'p-4 rounded-xl bg-slate-900/40 border border-slate-800 space-y-2';
+                    sectionContainer.className = 'w-full p-4 md:p-6 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-3';
                     elements.sheetContent.appendChild(sectionContainer);
                 }
 
@@ -1934,6 +1945,9 @@ window.addEventListener('resize', () => {
                 }
                 sectionContainer.appendChild(div);
             }
+
+            // Trigger global text scaling across all rendered sections
+            applyTextScaling();
         }
 
         function buildChordLyricPairs(chordLine, lyricLine, capoFret, capoSteps, mode, transposeOffset) {
