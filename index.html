@@ -7,7 +7,10 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>OpenSongApp Web</title>
-        <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M9 18V5l12-2v13'></path><circle cx='6' cy='18' r='3'></circle><circle cx='18' cy='16' r='3'></circle></svg>">
+        <link
+            rel="icon"
+            type="image/svg+xml"
+            href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M9 18V5l12-2v13'></path><circle cx='6' cy='18' r='3'></circle><circle cx='18' cy='16' r='3'></circle></svg>" />
         <!-- Tailwind CSS Play CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
@@ -225,20 +228,22 @@
                 id="sidebar"
                 class="w-80 bg-slate-900/95 backdrop-blur-md border-r border-slate-800 flex flex-col transition-all duration-300 absolute lg:relative inset-y-0 left-0 z-10 -translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none">
                 <div class="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
-    <div class="flex flex-col">
-        <div class="flex items-center gap-2">
-            <i data-lucide="music" class="w-4 h-4 text-amber-400"></i>
-            <span class="font-extrabold text-slate-200 text-sm tracking-wide">OpenSongApp Web</span>
-        </div>
-        <div id="folder-status-text" class="text-[10px] font-mono text-slate-400 pl-6 -mt-0.5 truncate max-w-[190px]">
-            OpenSong
-        </div>
-    </div>
-    <span
-        id="app-version-badge"
-        class="text-[10px] font-mono px-1.5 py-0.5 bg-slate-800 text-slate-400 border border-slate-700 rounded">
-    </span>
-</div>
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="music" class="w-4 h-4 text-amber-400"></i>
+                            <span class="font-extrabold text-slate-200 text-sm tracking-wide">OpenSongApp Web</span>
+                        </div>
+                        <div
+                            id="folder-status-text"
+                            class="text-[10px] font-mono text-slate-400 pl-6 -mt-0.5 truncate max-w-[190px]">
+                            OpenSong
+                        </div>
+                    </div>
+                    <span
+                        id="app-version-badge"
+                        class="text-[10px] font-mono px-1.5 py-0.5 bg-slate-800 text-slate-400 border border-slate-700 rounded">
+                    </span>
+                </div>
                 <div
                     id="sidebar-header-action"
                     class="p-2 bg-slate-950 border-b border-slate-800 flex rounded-lg m-2 gap-1">
@@ -1051,6 +1056,51 @@
                         class="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition text-left flex justify-between items-center">
                         <span id="share-ext-label">With extension</span
                         ><span id="share-name-ext" class="font-mono"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage Sets Modal -->
+        <div
+            id="manage-sets-modal"
+            class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+            <div
+                class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl max-w-lg w-full space-y-4 relative flex flex-col max-h-[85vh]">
+                <!-- Header -->
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="folder-archive" class="w-5 h-5 text-amber-400"></i>
+                        <h3 class="text-base font-extrabold text-slate-100">Saved Sets Library</h3>
+                    </div>
+                    <button
+                        id="close-manage-sets-btn"
+                        class="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Search / Filter input inside modal -->
+                <div class="relative shrink-0">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+                    <input
+                        type="text"
+                        id="manage-sets-search"
+                        placeholder="Filter saved sets..."
+                        class="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-200 focus:outline-none focus:border-amber-500" />
+                </div>
+
+                <!-- Saved Sets Scrollable List -->
+                <div id="manage-sets-list" class="space-y-2 overflow-y-auto flex-1 pr-1">
+                    <!-- Dynamically populated -->
+                </div>
+
+                <!-- Footer / Dismiss -->
+                <div class="border-t border-slate-800 pt-3 flex justify-end shrink-0">
+                    <button
+                        id="cancel-manage-sets-btn"
+                        class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition">
+                        Close
                     </button>
                 </div>
             </div>
@@ -3355,15 +3405,14 @@
                                 }
                             },
                             {
-                                label: "Manage sets",
-                                icon: "folder-archive",
-                                color: "text-amber-400",
-                                action: () => {
-                                    closeSidebarModal();
-                                    // Opens a view/modal or renders the saved sets library list
-                                    openManageSetsModal();
-                                }
-                            },
+    label: "Manage sets",
+    icon: "folder-archive",
+    color: "text-amber-400",
+    action: () => {
+        closeSidebarModal();
+        openManageSetsModal();
+    }
+},
                             {
                                 label: "Import backups",
                                 icon: "archive",
@@ -3426,48 +3475,96 @@
                 });
             }
 
+            // Function to open the Manage Sets Popup Modal
             function openManageSetsModal() {
-                // Renders a quick popup or swaps the sidebar list to show all saved loadedSets
-                elements.songList.innerHTML = `
-        <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span class="text-xs font-bold text-amber-400 uppercase">Saved Sets Library (${loadedSets.length})</span>
-                <button id="back-to-current-set-btn" class="text-xs text-indigo-400 hover:underline">Back to Current Set</button>
-            </div>
-            <div class="space-y-1 max-h-72 overflow-y-auto">
-                ${loadedSets.length === 0 ? '<div class="text-xs text-slate-500 p-2">No saved sets found.</div>' : ""}
-                ${loadedSets
-                    .map(
-                        (s, idx) => `
-                    <div class="p-2 bg-slate-950 rounded-lg flex items-center justify-between cursor-pointer hover:bg-slate-800 transition load-saved-set-item" data-index="${idx}">
-                        <span class="text-xs font-bold text-slate-200 truncate">${s.title}</span>
-                        <span class="text-[10px] font-mono text-slate-400">${s.songTitles.length} songs</span>
-                    </div>`
-                    )
-                    .join("")}
-            </div>
-        </div>
-    `;
+                const modal = document.getElementById("manage-sets-modal");
+                const listContainer = document.getElementById("manage-sets-list");
+                const searchInput = document.getElementById("manage-sets-search");
 
-                document.getElementById("back-to-current-set-btn").addEventListener("click", () => {
-                    renderSidebarList();
-                });
+                if (!modal || !listContainer) return;
 
-                document.querySelectorAll(".load-saved-set-item").forEach((item) => {
-                    item.addEventListener("click", (e) => {
-                        const idx = e.currentTarget.getAttribute("data-index");
-                        const targetSet = loadedSets[idx];
-                        if (targetSet) {
-                            renderSetSheet(targetSet);
-                            currentSet = { ...targetSet };
-                            showToast(`Loaded saved set: ${targetSet.title}`);
+                // Helper to render set items inside the modal
+                const renderModalSets = (filter = "") => {
+                    listContainer.innerHTML = "";
+                    const query = filter.toLowerCase().trim();
+                    const filtered = loadedSets.filter(
+                        (s) =>
+                            s.title.toLowerCase().includes(query) ||
+                            (s.category && s.category.toLowerCase().includes(query))
+                    );
+
+                    if (filtered.length === 0) {
+                        listContainer.innerHTML =
+                            '<div class="text-xs text-slate-500 p-4 text-center italic">No saved sets found.</div>';
+                        return;
+                    }
+
+                    filtered.forEach((setObj) => {
+                        const card = document.createElement("div");
+                        card.className =
+                            "p-3 bg-slate-950/80 hover:bg-slate-800/80 border border-slate-800/80 hover:border-amber-500/40 rounded-xl flex items-center justify-between cursor-pointer transition group";
+
+                        card.innerHTML = `
+                <div class="truncate pr-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-200 group-hover:text-amber-400 transition truncate">${setObj.title}</span>
+                        <span class="text-[10px] font-mono px-1.5 py-0.5 bg-slate-800 text-indigo-300 rounded">${setObj.category || "MAIN"}</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 font-mono mt-0.5">${setObj.songTitles ? setObj.songTitles.length : 0} songs</div>
+                </div>
+                <button class="px-3 py-1.5 bg-indigo-600/20 group-hover:bg-indigo-600 text-indigo-300 group-hover:text-white font-bold text-xs rounded-lg transition shrink-0 flex items-center gap-1">
+                    Load Set <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+            `;
+
+                        card.addEventListener("click", () => {
+                            // Load target set into active working memory
+                            currentSet = {
+                                ...setObj,
+                                items: setObj.songTitles.map((t) => {
+                                    const found = loadedSongs.find((s) => s.title.toLowerCase() === t.toLowerCase());
+                                    return { title: t, overrideKey: found ? found.key || "C" : "C" };
+                                })
+                            };
+
+                            // Render main sheet set view & refresh sidebar current set
+                            renderSetSheet(setObj);
+                            renderSidebarList();
+
+                            modal.classList.add("hidden");
                             closeMobileSidebar();
-                        }
-                    });
-                });
+                            showToast(`Loaded set: ${setObj.title}`);
+                        });
 
-                lucide.createIcons();
+                        listContainer.appendChild(card);
+                    });
+
+                    lucide.createIcons();
+                };
+
+                // Initial render & show modal
+                if (searchInput) searchInput.value = "";
+                renderModalSets();
+                modal.classList.remove("hidden");
+
+                // Search filter listener
+                if (searchInput) {
+                    searchInput.oninput = (e) => renderModalSets(e.target.value);
+                }
             }
+
+            // Event Listeners for Closing the Manage Sets Modal
+            document.getElementById("close-manage-sets-btn")?.addEventListener("click", () => {
+                document.getElementById("manage-sets-modal")?.classList.add("hidden");
+            });
+            document.getElementById("cancel-manage-sets-btn")?.addEventListener("click", () => {
+                document.getElementById("manage-sets-modal")?.classList.add("hidden");
+            });
+            document.getElementById("manage-sets-modal")?.addEventListener("click", (e) => {
+                if (e.target === document.getElementById("manage-sets-modal")) {
+                    document.getElementById("manage-sets-modal").classList.add("hidden");
+                }
+            });
 
             // Share Modal Close Button
             if (elements.closeShareModal && elements.shareModal) {
