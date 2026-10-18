@@ -147,7 +147,10 @@
         <header
             class="h-16 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between z-20 shrink-0">
             <div class="flex items-center space-x-3">
-                <button id="toggle-sidebar-btn" class="p-2 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition" title="Toggle Sidebar">
+                <button
+                    id="toggle-sidebar-btn"
+                    class="p-2 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition"
+                    title="Toggle Sidebar">
                     <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
                 <div class="flex items-center space-x-2">
@@ -188,8 +191,9 @@
                     <i data-lucide="monitor-play" class="w-5 h-5"></i>
                 </button>
 
-                <button id="fullscreen-toggle-btn"
-                     class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700"
+                <button
+                    id="fullscreen-toggle-btn"
+                    class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700"
                     title="Fullscreen toggle">
                     <i data-lucide="maximize" class="w-5 h-5"></i>
                 </button>
@@ -229,7 +233,9 @@
                         class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">
                     </span>
                 </div>
-                <div id="folder-status-text" class="px-3 py-2 text-[11px] font-mono text-slate-400 bg-slate-950/40 border-b border-slate-800 truncate">
+                <div
+                    id="folder-status-text"
+                    class="px-3 py-2 text-[11px] font-mono text-slate-400 bg-slate-950/40 border-b border-slate-800 truncate">
                     <!-- Folder path / status will be injected here dynamically -->
                 </div>
                 <div
@@ -306,7 +312,9 @@
             </aside>
 
             <!-- Main Viewport Container -->
-            <main id="main-scroll-container" class="flex-1 bg-slate-950 overflow-y-auto p-0 flex flex-col relative scroll-smooth">
+            <main
+                id="main-scroll-container"
+                class="flex-1 bg-slate-950 overflow-y-auto p-0 flex flex-col relative scroll-smooth">
                 <div id="song-display-area" class="w-full max-w-none min-h-full flex flex-col relative">
                     <div
                         id="empty-state"
@@ -624,19 +632,21 @@
         </div>
 
         <!-- Context-Aware Sidebar Action Modal -->
-<div id="sidebar-action-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 id="sidebar-modal-title" class="font-bold text-slate-200 text-sm">Actions</h3>
-            <button id="close-sidebar-action-modal" class="text-slate-400 hover:text-slate-200">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
+        <div
+            id="sidebar-action-modal"
+            class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h3 id="sidebar-modal-title" class="font-bold text-slate-200 text-sm">Actions</h3>
+                    <button id="close-sidebar-action-modal" class="text-slate-400 hover:text-slate-200">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div id="sidebar-modal-options" class="space-y-2">
+                    <!-- Dynamically populated options -->
+                </div>
+            </div>
         </div>
-        <div id="sidebar-modal-options" class="space-y-2">
-            <!-- Dynamically populated options -->
-        </div>
-    </div>
-</div>
 
         <!-- Settings Modal -->
         <div
@@ -2021,25 +2031,25 @@
             }
 
             function openNewSongEditor() {
-    elements.editSongTitleInput.value = "";
-    elements.editSongAuthorInput.value = "";
-    elements.editSongCopyrightInput.value = "";
-    elements.editSongFilenameInput.value = "";
-    elements.editSongPresentationInput.value = "";
-    elements.editSongKeyInput.value = "C";
-    elements.editSongCapoInput.value = "";
-    elements.editSongTempoInput.value = "120";
-    elements.editSongTimesigInput.value = "4/4";
-    elements.editSongNotesInput.value = "";
-    elements.editSongThemesInput.value = "";
-    elements.editSongBeatbuddyInput.value = "";
-    elements.editSongNewFolderInput.value = "";
-    elements.editSongNewFolderInput.classList.add("hidden");
-    updateFolderFilterDropdown();
-    elements.editSongLyricsInput.value = "[V1]\n.C     G\nLyrics here...";
-    activeSong = null;
-    elements.songEditorModal.classList.remove("hidden");
-}
+                elements.editSongTitleInput.value = "";
+                elements.editSongAuthorInput.value = "";
+                elements.editSongCopyrightInput.value = "";
+                elements.editSongFilenameInput.value = "";
+                elements.editSongPresentationInput.value = "";
+                elements.editSongKeyInput.value = "C";
+                elements.editSongCapoInput.value = "";
+                elements.editSongTempoInput.value = "120";
+                elements.editSongTimesigInput.value = "4/4";
+                elements.editSongNotesInput.value = "";
+                elements.editSongThemesInput.value = "";
+                elements.editSongBeatbuddyInput.value = "";
+                elements.editSongNewFolderInput.value = "";
+                elements.editSongNewFolderInput.classList.add("hidden");
+                updateFolderFilterDropdown();
+                elements.editSongLyricsInput.value = "[V1]\n.C     G\nLyrics here...";
+                activeSong = null;
+                elements.songEditorModal.classList.remove("hidden");
+            }
 
             elements.editSongBtn.addEventListener("click", async () => {
                 if (!activeSong) return;
@@ -2826,29 +2836,70 @@
                             elements.songList.appendChild(li);
                         });
                 } else {
-                    loadedSets.sort((a, b) => a.title.localeCompare(b.title));
-                    loadedSets
-                        .filter((s) => {
-                            const matchesQuery = s.title.toLowerCase().includes(query);
-                            const matchesCat =
-                                selectedFolderFilter === "ALL" || (s.category || "MAIN") === selectedFolderFilter;
-                            return matchesQuery && matchesCat;
-                        })
-                        .forEach((setObj) => {
-                            const li = document.createElement("li");
-                            li.className =
-                                "p-3 rounded-xl cursor-pointer transition flex items-center justify-between border hover:bg-slate-800/60 text-slate-300 border-transparent";
-                            li.innerHTML = `<div class="truncate pr-2"><div class="text-sm truncate">${setObj.title} <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-1 rounded ml-1">${setObj.category || "MAIN"}</span></div><div class="text-xs text-slate-500 font-normal">${setObj.songTitles.length} songs</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>`;
-                            li.addEventListener("click", () => {
-                                renderSetSheet(setObj);
-                                currentSet = { ...setObj };
-                                if (window.innerWidth < 1024) {
-                                    document.getElementById("sidebar").classList.add("-translate-x-full");
-                                    document.getElementById("sidebar-backdrop").classList.add("hidden");
-                                }
-                            });
-                            elements.songList.appendChild(li);
+                    // Sets Tab Active (Android Native Layout Style)
+                    elements.songList.innerHTML = "";
+
+                    // 1. Current Set Header Card with Save Button
+                    const currentSetCard = document.createElement("li");
+                    currentSetCard.className =
+                        "p-3 bg-slate-900/90 border border-slate-800 rounded-2xl space-y-3 mb-3 shadow-lg";
+
+                    let songItemsHtml =
+                        currentSet.songTitles && currentSet.songTitles.length > 0
+                            ? currentSet.songTitles
+                                  .map(
+                                      (t, idx) => `
+            <div class="flex items-center justify-between p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
+                <div class="flex items-center space-x-2 truncate pr-2">
+                    <span class="text-xs font-mono text-slate-500">${idx + 1}.</span>
+                    <span class="text-xs font-bold text-slate-200 truncate">${t}</span>
+                </div>
+                <button class="text-slate-400 hover:text-amber-400 p-1 transition edit-set-song-item" title="View Song">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>`
+                                  )
+                                  .join("")
+                            : '<div class="text-xs text-slate-500 italic p-2 text-center">No songs in current set. Tick songs in the Song tab!</div>';
+
+                    currentSetCard.innerHTML = `
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+            <div>
+                <div class="text-xs font-extrabold text-slate-200 uppercase tracking-wide">Current set</div>
+                <div class="text-[11px] text-slate-400">${currentSet.title ? "(" + currentSet.title + ")" : "(Not saved)"}</div>
+            </div>
+            <button id="sidebar-set-save-btn" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-md flex items-center gap-1.5 transition">
+                <i data-lucide="save" class="w-3.5 h-3.5"></i> SAVE
+            </button>
+        </div>
+        <div class="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+            ${songItemsHtml}
+        </div>
+    `;
+
+                    // Wire up save button inside the card
+                    currentSetCard.querySelector("#sidebar-set-save-btn").addEventListener("click", () => {
+                        document.getElementById("sidebar-save-set-btn")?.click();
+                    });
+
+                    // Wire up song item clicks to open them
+                    currentSetCard.querySelectorAll(".edit-set-song-item").forEach((btn, idx) => {
+                        btn.addEventListener("click", async () => {
+                            const songTitle = currentSet.songTitles[idx];
+                            const foundSong = loadedSongs.find(
+                                (s) => s.title.toLowerCase() === songTitle.toLowerCase()
+                            );
+                            if (foundSong) {
+                                await ensureSongContentLoaded(foundSong);
+                                renderSongSheet(foundSong, currentSet, idx);
+                                closeMobileSidebar();
+                            } else {
+                                showToast(`Song "${songTitle}" not found in library.`);
+                            }
                         });
+                    });
+
+                    elements.songList.appendChild(currentSetCard);
                 }
                 lucide.createIcons();
             }
@@ -2872,7 +2923,6 @@
                         }
                     });
                 }
-
 
                 // Helper to auto-close sidebar on mobile after selecting a song/set
                 window.closeMobileSidebar = function () {
@@ -3223,19 +3273,28 @@
                                 label: "Import song",
                                 icon: "file-input",
                                 color: "text-amber-400",
-                                action: () => { closeSidebarModal(); elements.individualFilesInput.click(); }
+                                action: () => {
+                                    closeSidebarModal();
+                                    elements.individualFilesInput.click();
+                                }
                             },
                             {
                                 label: "Import backups",
                                 icon: "archive",
                                 color: "text-indigo-400",
-                                action: () => { closeSidebarModal(); elements.importModal.classList.remove("hidden"); }
+                                action: () => {
+                                    closeSidebarModal();
+                                    elements.importModal.classList.remove("hidden");
+                                }
                             },
                             {
                                 label: "Import online",
                                 icon: "globe",
                                 color: "text-sky-400",
-                                action: () => { closeSidebarModal(); showToast("Online song import coming soon!"); }
+                                action: () => {
+                                    closeSidebarModal();
+                                    showToast("Online song import coming soon!");
+                                }
                             },
                             {
                                 label: "Share current song",
@@ -3246,7 +3305,8 @@
                                     if (activeSong) {
                                         shareTarget = activeSong;
                                         elements.shareNameExtless.textContent = activeSong.filename || activeSong.title;
-                                        elements.shareNameExt.textContent = (activeSong.filename || activeSong.title) + ".ost";
+                                        elements.shareNameExt.textContent =
+                                            (activeSong.filename || activeSong.title) + ".ost";
                                         elements.shareModal.classList.remove("hidden");
                                     } else {
                                         showToast("No song currently selected.");
@@ -3257,20 +3317,25 @@
                                 label: "Export backup",
                                 icon: "folder-output",
                                 color: "text-purple-400",
-                                action: () => { closeSidebarModal(); elements.osbExportModal.classList.remove("hidden"); }
+                                action: () => {
+                                    closeSidebarModal();
+                                    elements.osbExportModal.classList.remove("hidden");
+                                }
                             }
                         ];
 
-                        options.forEach(opt => {
+                        options.forEach((opt) => {
                             const btn = document.createElement("button");
-                            btn.className = "w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 font-bold rounded-xl text-xs flex items-center gap-2.5 transition text-left " + opt.color;
+                            btn.className =
+                                "w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 font-bold rounded-xl text-xs flex items-center gap-2.5 transition text-left " +
+                                opt.color;
                             btn.innerHTML = `<i data-lucide="${opt.icon}" class="w-4 h-4"></i> ${opt.label}`;
                             btn.addEventListener("click", opt.action);
                             sidebarModalOptions.appendChild(btn);
                         });
-
                     } else {
                         sidebarModalTitle.textContent = "Set Actions";
+
                         const options = [
                             {
                                 label: "Create new set",
@@ -3278,22 +3343,43 @@
                                 color: "text-indigo-400",
                                 action: () => {
                                     closeSidebarModal();
-                                    currentSet = { category: "MAIN", title: "New Set", filename: "New Set", songTitles: [] };
+                                    currentSet = {
+                                        category: "MAIN",
+                                        title: "New Set",
+                                        filename: "New Set",
+                                        songTitles: []
+                                    };
                                     showToast("New set created. Select checkboxes next to songs to add them.");
                                     renderSidebarList();
+                                }
+                            },
+                            {
+                                label: "Manage sets",
+                                icon: "folder-archive",
+                                color: "text-amber-400",
+                                action: () => {
+                                    closeSidebarModal();
+                                    // Opens a view/modal or renders the saved sets library list
+                                    openManageSetsModal();
                                 }
                             },
                             {
                                 label: "Import backups",
                                 icon: "archive",
                                 color: "text-indigo-400",
-                                action: () => { closeSidebarModal(); elements.importModal.classList.remove("hidden"); }
+                                action: () => {
+                                    closeSidebarModal();
+                                    elements.importModal.classList.remove("hidden");
+                                }
                             },
                             {
                                 label: "Save current set",
                                 icon: "save",
                                 color: "text-emerald-400",
-                                action: () => { closeSidebarModal(); document.getElementById("sidebar-save-set-btn")?.click(); }
+                                action: () => {
+                                    closeSidebarModal();
+                                    document.getElementById("sidebar-save-set-btn")?.click();
+                                }
                             },
                             {
                                 label: "Share current set",
@@ -3304,7 +3390,8 @@
                                     if (activeSet) {
                                         shareTarget = activeSet;
                                         elements.shareNameExtless.textContent = activeSet.filename || activeSet.title;
-                                        elements.shareNameExt.textContent = (activeSet.filename || activeSet.title) + ".osts";
+                                        elements.shareNameExt.textContent =
+                                            (activeSet.filename || activeSet.title) + ".osts";
                                         elements.shareModal.classList.remove("hidden");
                                     } else {
                                         showToast("No set currently selected or active.");
@@ -3313,9 +3400,11 @@
                             }
                         ];
 
-                        options.forEach(opt => {
+                        options.forEach((opt) => {
                             const btn = document.createElement("button");
-                            btn.className = "w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 font-bold rounded-xl text-xs flex items-center gap-2.5 transition text-left " + opt.color;
+                            btn.className =
+                                "w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 font-bold rounded-xl text-xs flex items-center gap-2.5 transition text-left " +
+                                opt.color;
                             btn.innerHTML = `<i data-lucide="${opt.icon}" class="w-4 h-4"></i> ${opt.label}`;
                             btn.addEventListener("click", opt.action);
                             sidebarModalOptions.appendChild(btn);
@@ -3336,6 +3425,49 @@
                 });
             }
 
+            function openManageSetsModal() {
+                // Renders a quick popup or swaps the sidebar list to show all saved loadedSets
+                elements.songList.innerHTML = `
+        <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <span class="text-xs font-bold text-amber-400 uppercase">Saved Sets Library (${loadedSets.length})</span>
+                <button id="back-to-current-set-btn" class="text-xs text-indigo-400 hover:underline">Back to Current Set</button>
+            </div>
+            <div class="space-y-1 max-h-72 overflow-y-auto">
+                ${loadedSets.length === 0 ? '<div class="text-xs text-slate-500 p-2">No saved sets found.</div>' : ""}
+                ${loadedSets
+                    .map(
+                        (s, idx) => `
+                    <div class="p-2 bg-slate-950 rounded-lg flex items-center justify-between cursor-pointer hover:bg-slate-800 transition load-saved-set-item" data-index="${idx}">
+                        <span class="text-xs font-bold text-slate-200 truncate">${s.title}</span>
+                        <span class="text-[10px] font-mono text-slate-400">${s.songTitles.length} songs</span>
+                    </div>`
+                    )
+                    .join("")}
+            </div>
+        </div>
+    `;
+
+                document.getElementById("back-to-current-set-btn").addEventListener("click", () => {
+                    renderSidebarList();
+                });
+
+                document.querySelectorAll(".load-saved-set-item").forEach((item) => {
+                    item.addEventListener("click", (e) => {
+                        const idx = e.currentTarget.getAttribute("data-index");
+                        const targetSet = loadedSets[idx];
+                        if (targetSet) {
+                            renderSetSheet(targetSet);
+                            currentSet = { ...targetSet };
+                            showToast(`Loaded saved set: ${targetSet.title}`);
+                            closeMobileSidebar();
+                        }
+                    });
+                });
+
+                lucide.createIcons();
+            }
+
             // Share Modal Close Button
             if (elements.closeShareModal && elements.shareModal) {
                 elements.closeShareModal.addEventListener("click", () => {
@@ -3350,16 +3482,17 @@
                 });
             }
 
-            document.getElementById('fullscreen-toggle-btn').addEventListener('click', toggleAppFullscreen);
+            document.getElementById("fullscreen-toggle-btn").addEventListener("click", toggleAppFullscreen);
             function toggleAppFullscreen() {
                 if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                     // Enter fullscreen on the root document element
                     const docEl = document.documentElement;
                     if (docEl.requestFullscreen) {
-                        docEl.requestFullscreen().catch(err => {
+                        docEl.requestFullscreen().catch((err) => {
                             console.warn(`Fullscreen request failed: ${err.message}`);
                         });
-                    } else if (docEl.webkitRequestFullscreen) { // Safari compatibility fallback
+                    } else if (docEl.webkitRequestFullscreen) {
+                        // Safari compatibility fallback
                         docEl.webkitRequestFullscreen();
                     }
                 } else {
@@ -3373,87 +3506,99 @@
             }
 
             // Universal Song Navigation Helper (supports Sets & Filtered Library Lists)
-function navigateSong(direction) { // direction: -1 for previous, 1 for next
-    if (activeSet) {
-        // Navigate within the active set
-        const newIndex = activeSetSongIndex + direction;
-        if (newIndex >= 0 && newIndex < activeSet.songTitles.length) {
-            activeSetSongIndex = newIndex;
-            loadSongFromActiveSet(activeSetSongIndex);
-        } else {
-            showToast(direction > 0 ? "End of set reached" : "Start of set reached");
-        }
-    } else if (activeSong) {
-        // Navigate within the currently active sidebar list / filter
-        const query = elements.songSearch ? elements.songSearch.value.toLowerCase() : "";
-        const filteredSongs = loadedSongs.filter((song) => {
-            const matchesQuery = song.title.toLowerCase().includes(query) || (song.author && song.author.toLowerCase().includes(query));
-            const matchesFolder = selectedFolderFilter === "ALL" || (song.folderPath || "MAIN") === selectedFolderFilter;
-            return matchesQuery && matchesFolder;
-        });
+            function navigateSong(direction) {
+                // direction: -1 for previous, 1 for next
+                if (activeSet) {
+                    // Navigate within the active set
+                    const newIndex = activeSetSongIndex + direction;
+                    if (newIndex >= 0 && newIndex < activeSet.songTitles.length) {
+                        activeSetSongIndex = newIndex;
+                        loadSongFromActiveSet(activeSetSongIndex);
+                    } else {
+                        showToast(direction > 0 ? "End of set reached" : "Start of set reached");
+                    }
+                } else if (activeSong) {
+                    // Navigate within the currently active sidebar list / filter
+                    const query = elements.songSearch ? elements.songSearch.value.toLowerCase() : "";
+                    const filteredSongs = loadedSongs.filter((song) => {
+                        const matchesQuery =
+                            song.title.toLowerCase().includes(query) ||
+                            (song.author && song.author.toLowerCase().includes(query));
+                        const matchesFolder =
+                            selectedFolderFilter === "ALL" || (song.folderPath || "MAIN") === selectedFolderFilter;
+                        return matchesQuery && matchesFolder;
+                    });
 
-        const currentIndex = filteredSongs.findIndex(s => s.id === activeSong.id);
-        if (currentIndex !== -1) {
-            const newIndex = currentIndex + direction;
-            if (newIndex >= 0 && newIndex < filteredSongs.length) {
-                const targetSong = filteredSongs[newIndex];
-                ensureSongContentLoaded(targetSong).then(() => {
-                    renderSongSheet(targetSong);
-                });
-            } else {
-                showToast(direction > 0 ? "End of song list reached" : "Start of song list reached");
+                    const currentIndex = filteredSongs.findIndex((s) => s.id === activeSong.id);
+                    if (currentIndex !== -1) {
+                        const newIndex = currentIndex + direction;
+                        if (newIndex >= 0 && newIndex < filteredSongs.length) {
+                            const targetSong = filteredSongs[newIndex];
+                            ensureSongContentLoaded(targetSong).then(() => {
+                                renderSongSheet(targetSong);
+                            });
+                        } else {
+                            showToast(direction > 0 ? "End of song list reached" : "Start of song list reached");
+                        }
+                    }
+                }
             }
-        }
-    }
-}
 
-// 1. Keyboard Arrow Navigation Listeners
-document.addEventListener('keydown', (e) => {
-    // Ignore if user is typing in an input, textarea, or active modal
-    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
-    if (document.getElementById('song-editor-modal')?.classList.contains('hidden') === false) return;
-    if (document.getElementById('settings-modal')?.classList.contains('hidden') === false) return;
-    if (document.getElementById('folder-modal')?.classList.contains('hidden') === false) return;
+            // 1. Keyboard Arrow Navigation Listeners
+            document.addEventListener("keydown", (e) => {
+                // Ignore if user is typing in an input, textarea, or active modal
+                if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
+                if (document.getElementById("song-editor-modal")?.classList.contains("hidden") === false) return;
+                if (document.getElementById("settings-modal")?.classList.contains("hidden") === false) return;
+                if (document.getElementById("folder-modal")?.classList.contains("hidden") === false) return;
 
-    if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        navigateSong(-1); // Previous song
-    } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        navigateSong(1);  // Next song
-    }
-});
+                if (e.key === "ArrowLeft") {
+                    e.preventDefault();
+                    navigateSong(-1); // Previous song
+                } else if (e.key === "ArrowRight") {
+                    e.preventDefault();
+                    navigateSong(1); // Next song
+                }
+            });
 
-// 2. Mobile / Touch Swipe Gesture Listeners on the Song Sheet
-let touchStartX = 0;
-let touchStartY = 0;
-const songSheetElement = document.getElementById('song-sheet');
+            // 2. Mobile / Touch Swipe Gesture Listeners on the Song Sheet
+            let touchStartX = 0;
+            let touchStartY = 0;
+            const songSheetElement = document.getElementById("song-sheet");
 
-if (songSheetElement) {
-    songSheetElement.addEventListener('touchstart', (e) => {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-    }, { passive: true });
+            if (songSheetElement) {
+                songSheetElement.addEventListener(
+                    "touchstart",
+                    (e) => {
+                        touchStartX = e.touches[0].clientX;
+                        touchStartY = e.touches[0].clientY;
+                    },
+                    { passive: true }
+                );
 
-    songSheetElement.addEventListener('touchend', (e) => {
-        const touchEndX = e.changedTouches[0].clientX;
-        const touchEndY = e.changedTouches[0].clientY;
+                songSheetElement.addEventListener(
+                    "touchend",
+                    (e) => {
+                        const touchEndX = e.changedTouches[0].clientX;
+                        const touchEndY = e.changedTouches[0].clientY;
 
-        const deltaX = touchEndX - touchStartX;
-        const deltaY = touchEndY - touchStartY;
+                        const deltaX = touchEndX - touchStartX;
+                        const deltaY = touchEndY - touchStartY;
 
-        // Verify it's a deliberate horizontal swipe (larger horizontal delta than vertical, and > 50px)
-        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-            if (deltaX > 0) {
-                // Swipe Right -> Previous Song
-                navigateSong(-1);
-            } else {
-                // Swipe Left -> Next Song
-                navigateSong(1);
+                        // Verify it's a deliberate horizontal swipe (larger horizontal delta than vertical, and > 50px)
+                        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+                            if (deltaX > 0) {
+                                // Swipe Right -> Previous Song
+                                navigateSong(-1);
+                            } else {
+                                // Swipe Left -> Next Song
+                                navigateSong(1);
+                            }
+                        }
+                    },
+                    { passive: true }
+                );
             }
-        }
-    }, { passive: true });
-}
         </script>
     </body>
 </html>
