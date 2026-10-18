@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="en" class="h-full bg-slate-950 text-slate-100">
     <head>
+        <script>
+            const version = "1.0";
+        </script>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>OpenSongApp Web</title>
@@ -56,7 +59,7 @@
             .chord-above {
                 font-weight: 700;
                 color: #f59e0b;
-                line-height: 1.1;
+                line-height: 1.0;
                 user-select: none;
                 white-space: pre;
                 font-size: var(--chord-font-scale, 1rem);
@@ -65,7 +68,7 @@
             .chord-capo-above {
                 font-weight: 700;
                 color: #a855f7;
-                line-height: 1.1;
+                line-height: 1.;
                 user-select: none;
                 white-space: pre;
                 font-size: var(--chord-font-scale, 1rem);
@@ -162,8 +165,7 @@
                             >
                             <span
                                 id="app-version-badge"
-                                class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded"
-                                >v1.4s</span
+                                class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">${version}</span
                             >
                         </h1>
                         <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">
@@ -210,14 +212,6 @@
                         <i data-lucide="repeat" class="w-3.5 h-3.5"></i> Import/Export
                     </button>
                 </div>
-
-                <!-- Save Key Icon (Appears when transposed) -->
-                <button
-                    id="save-key-btn"
-                    class="hidden p-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg transition border border-amber-500/40"
-                    title="Save Transposed Key to Song">
-                    <i data-lucide="key" class="w-5 h-5"></i>
-                </button>
 
                 <button
                     id="cast-display-btn"
