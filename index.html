@@ -483,6 +483,28 @@
                                 <i data-lucide="plus" class="w-6 h-6"></i>
                             </button>
                         </div>
+
+                        <!-- Action Modal -->
+<div id="action-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 class="font-bold text-slate-200 text-sm">Quick Actions</h3>
+            <button id="close-action-modal" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+        <div class="space-y-2">
+            <button id="modal-new-song-btn" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded-xl text-xs flex items-center gap-2 transition">
+                <i data-lucide="file-plus" class="w-4 h-4"></i> New Song
+            </button>
+            <button id="modal-import-export-btn" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-indigo-400 font-bold rounded-xl text-xs flex items-center gap-2 transition">
+                <i data-lucide="folder-sync" class="w-4 h-4"></i> Import / Export
+            </button>
+            <button id="modal-share-current-btn" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold rounded-xl text-xs flex items-center gap-2 transition">
+                <i data-lucide="share-2" class="w-4 h-4"></i> Share Current Song
+            </button>
+        </div>
+    </div>
+</div>
+
                     </article>
                 </div>
 
@@ -1337,7 +1359,7 @@
                 changeFolderBtn: document.getElementById("change-folder-btn"),
                 modalSelectBtn: document.getElementById("modal-select-folder-btn"),
                 fallbackInput: document.getElementById("fallback-folder-input"),
-                newSongBtn: document.getElementById("new-song-btn"),
+                newSongBtn: document.getElementById("modal-new-song-btn"),
                 editSongBtn: document.getElementById("edit-song-btn"),
 
                 floatingMenu: document.getElementById("floating-menu"),
