@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en" class="h-full bg-slate-950 text-slate-100">
 <head>
     <meta charset="UTF-8">
@@ -34,13 +34,16 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+
         .chord-lyric-pair-line {
             display: flex;
-            flex-wrap: wrap;
-            row-gap: 0.5rem;
-            line-height: 1.4;
+            flex-wrap: nowrap;
+            white-space: nowrap;
+            width: 100%;
             max-width: 100%;
             word-break: break-word;
+            /* Base font size gets adjusted dynamically by auto-scale */
+            font-size: 20px; 
         }
         
         .chord-lyric-pair {
@@ -140,7 +143,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4o</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4p</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -294,49 +297,50 @@
                     <div id="set-songs-container" class="space-y-2"></div>
                 </article>
 
-    <article id="song-sheet" class="hidden flex-1 flex flex-col h-full w-full overflow-y-auto py-4 px-2 bg-slate-950"><div id="set-navigation-banner" class="hidden bg-indigo-950/40 border border-indigo-800/60 rounded-xl p-3 flex items-center justify-between mb-4">
-        <button id="back-to-set-btn" class="text-xs text-indigo-300 hover:text-indigo-100 flex items-center gap-1 font-semibold">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Set: <span id="banner-set-title" class="underline">--</span>
-        </button>
-        <div class="flex items-center gap-1">
-            <button id="prev-set-song-btn" class="p-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-            <span id="set-song-index-label" class="text-xs font-mono text-slate-400 px-2">1 / 5</span>
-            <button id="next-set-song-btn" class="p-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-        </div>
-    </div>
+                <article id="song-sheet" class="hidden flex-1 flex flex-col h-full w-full overflow-y-auto px-4 py-4 bg-slate-950">
+                    <div id="set-navigation-banner" class="hidden bg-indigo-950/40 border border-indigo-800/60 rounded-xl p-3 flex items-center justify-between mb-4">
+                        <button id="back-to-set-btn" class="text-xs text-indigo-300 hover:text-indigo-100 flex items-center gap-1 font-semibold">
+                            <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Set: <span id="banner-set-title" class="underline">--</span>
+                        </button>
+                        <div class="flex items-center gap-1">
+                            <button id="prev-set-song-btn" class="p-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                            <span id="set-song-index-label" class="text-xs font-mono text-slate-400 px-2">1 / 5</span>
+                            <button id="next-set-song-btn" class="p-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
 
-    <div class="border-b border-slate-800 pb-4 mb-4">
-        <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="sheet-title" class="text-3xl font-extrabold text-amber-400 tracking-tight">--</h2>
-            <div class="flex items-center gap-2">
-                <span id="sheet-folder-path" class="px-2 py-0.5 text-xs rounded bg-slate-800 text-slate-400 truncate max-w-[200px]">MAIN</span>
-                <span id="sheet-key-badge" class="px-2.5 py-1 text-xs font-bold rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">Key: C</span>
-                <span id="sheet-capo-badge" class="hidden px-2.5 py-1 text-xs font-bold rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">Capo: 2</span>
-                <button id="open-notes-popup-btn" class="hidden p-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition" title="Show Sticky Notes">
-                    <i data-lucide="sticky-note" class="w-3.5 h-3.5"></i>
-                </button>
-                <button id="open-abc-popup-btn" class="hidden p-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-lg text-xs font-bold flex items-center gap-1 transition" title="Show ABC Notation">
-                    <i data-lucide="music" class="w-3.5 h-3.5"></i>
-                </button>
-                <button id="share-song-btn" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
-                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Share Song
-                </button>
-                <button id="edit-song-btn" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition" title="Edit Song">
-                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                </button>
-            </div>
-        </div>
-        <p id="sheet-author" class="text-sm text-slate-400 mt-1">--</p>
-    </div>
+                    <div class="border-b border-slate-800 pb-4 mb-4">
+                        <div class="flex flex-wrap items-baseline justify-between gap-2">
+                            <h2 id="sheet-title" class="text-3xl font-extrabold text-amber-400 tracking-tight">--</h2>
+                            <div class="flex items-center gap-2">
+                                <span id="sheet-folder-path" class="px-2 py-0.5 text-xs rounded bg-slate-800 text-slate-400 truncate max-w-[200px]">MAIN</span>
+                                <span id="sheet-key-badge" class="px-2.5 py-1 text-xs font-bold rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">Key: C</span>
+                                <span id="sheet-capo-badge" class="hidden px-2.5 py-1 text-xs font-bold rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">Capo: 2</span>
+                                <button id="open-notes-popup-btn" class="hidden p-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition" title="Show Sticky Notes">
+                                    <i data-lucide="sticky-note" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button id="open-abc-popup-btn" class="hidden p-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-lg text-xs font-bold flex items-center gap-1 transition" title="Show ABC Notation">
+                                    <i data-lucide="music" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button id="share-song-btn" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold flex items-center gap-1.5 transition">
+                                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Share Song
+                                </button>
+                                <button id="edit-song-btn" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition" title="Edit Song">
+                                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p id="sheet-author" class="text-sm text-slate-400 mt-1">--</p>
+                    </div>
 
-    <!-- Expanded full-width content container -->
-    <div id="sheet-content" class="w-full flex-1 space-y-4 pb-20"></div>
+                    <!-- Expanded full-width content container -->
+                    <div id="sheet-content" class="w-full flex-1 space-y-4 pb-20"></div>
 
-    <footer id="sheet-footer" class="border-t border-slate-800/80 pt-4 text-xs text-slate-500 space-y-1 mt-auto">
-        <div id="sheet-copyright"></div>
-        <div id="sheet-ccli"></div>
-    </footer>
-</article>
+                    <footer id="sheet-footer" class="border-t border-slate-800/80 pt-4 text-xs text-slate-500 space-y-1 mt-auto">
+                        <div id="sheet-copyright"></div>
+                        <div id="sheet-ccli"></div>
+                    </footer>
+                </article>
             </div>
 
             <!-- Floating Stage Controller Toolbar Widget -->
@@ -1824,11 +1828,9 @@ function applyTextScaling() {
     const sheetContent = document.getElementById('sheet-content');
     if (!sheetContent) return;
 
-    // Find all section containers inside the sheet
     const sections = sheetContent.querySelectorAll('#sheet-content > div');
 
     sections.forEach(section => {
-        // Get the inner width of the section box (accounting for 16px padding on each side = 32px)
         const sectionInnerWidth = section.clientWidth - 32;
 
         section.querySelectorAll('.chord-lyric-pair-line').forEach(line => {
@@ -1836,18 +1838,39 @@ function applyTextScaling() {
                 line.style.flexWrap = 'nowrap';
                 line.style.whiteSpace = 'nowrap';
 
+                // Temporarily apply max font size to measure full unscaled width
+                line.style.fontSize = `${userSettings.maxFontSize}px`;
                 const scrollWidth = line.scrollWidth;
+
+                let finalSize = userSettings.maxFontSize;
                 if (scrollWidth > sectionInnerWidth && scrollWidth > 0) {
-                    const calculatedSize = Math.floor((sectionInnerWidth / scrollWidth) * userSettings.maxFontSize);
-                    line.style.fontSize = `${Math.max(12, Math.min(calculatedSize, userSettings.maxFontSize))}px`;
-                } else {
-                    line.style.fontSize = `${userSettings.maxFontSize}px`;
+                    const scaleRatio = sectionInnerWidth / scrollWidth;
+                    finalSize = Math.max(12, Math.floor(userSettings.maxFontSize * scaleRatio));
                 }
+
+                // Apply base lyric font size
+                line.style.fontSize = `${finalSize}px`;
+
+                // Scale chords proportionally using your CSS variable (e.g., 85% of lyric size)
+                const chordScaleFactor = getComputedStyle(document.documentElement).getPropertyValue('--chord-font-scale').trim() || '0.85rem';
+                // If it's a rem/em value, we can calculate it relative to finalSize
+                let chordSize = finalSize * 0.85; // default fallback proportion
+                if (chordScaleFactor.includes('rem') || chordScaleFactor.includes('em')) {
+                    chordSize = finalSize * parseFloat(chordScaleFactor);
+                }
+
+                line.querySelectorAll('.chord-above').forEach(chord => {
+                    chord.style.fontSize = `${chordSize}px`;
+                });
+
             } else {
-                // Auto-scale off: allow natural wrapping inside the section box
                 line.style.flexWrap = 'wrap';
                 line.style.whiteSpace = 'normal';
                 line.style.fontSize = `${userSettings.maxFontSize}px`;
+                
+                line.querySelectorAll('.chord-above').forEach(chord => {
+                    chord.style.fontSize = ''; // let CSS variable take over when auto-scale is off
+                });
             }
         });
     });
@@ -1872,9 +1895,9 @@ window.addEventListener('resize', () => {
                 if (trimmed.startsWith('[')) {
                     sectionCounter++;
                     const thisSectionIdx = sectionCounter;
-                    
+
                     sectionContainer = document.createElement('div');
-                    sectionContainer.className = 'p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2 cursor-pointer hover:border-amber-500/40 transition';
+                    sectionContainer.className = 'w-full p-4 md:p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3 cursor-pointer hover:border-amber-500/40 transition';
                     const prettyName = formatSectionHeading(trimmed);
                     sectionContainer.innerHTML = `<h4 class="section-heading text-amber-400 font-extrabold text-sm tracking-wide mb-2">${prettyName}</h4>`;
                     
