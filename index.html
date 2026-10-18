@@ -140,7 +140,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4d</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4e</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -956,9 +956,16 @@
                     }
                 }
                 rootDirectoryHandle = savedHandle;
+                
+                // Immediately hide the banner so it doesn't block touch events
+                const banner = document.getElementById('reconnect-banner');
+                if (banner) {
+                    banner.classList.add('hidden');
+                    banner.style.display = 'none';
+                }
+
                 await processRootDirectory(savedHandle);
                 showToast("Folder reconnected successfully!");
-                document.getElementById('reconnect-banner').classList.add('hidden');
             } catch (err) {
                 console.error("Reconnect failed:", err);
                 showToast("Could not reconnect folder. Please reselect.");
@@ -2225,6 +2232,27 @@
             });
         }
 
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
+
+        if (toggleSidebarBtn && sidebar && backdrop) {
+            const toggleDrawer = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                sidebar.classList.toggle('-translate-x-full');
+                backdrop.classList.toggle('hidden');
+            };
+
+            toggleSidebarBtn.addEventListener('click', toggleDrawer);
+            toggleSidebarBtn.addEventListener('touchend', toggleDrawer);
+
+            backdrop.addEventListener('click', () => {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+            });
+        }
+        
         const settingsBtn = document.getElementById('open-settings-btn');
         const settingsModal = document.getElementById('settings-modal');
         const closeSettingsBtn = document.getElementById('close-settings-btn');
