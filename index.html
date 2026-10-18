@@ -3333,6 +3333,20 @@
                     if (e.target === sidebarActionModal) closeSidebarModal();
                 });
             }
+
+            // Share Modal Close Button
+if (elements.closeShareModal && elements.shareModal) {
+    elements.closeShareModal.addEventListener("click", () => {
+        elements.shareModal.classList.add("hidden");
+    });
+
+    // Optional: also close if clicking the dark backdrop outside the modal card
+    elements.shareModal.addEventListener("click", (e) => {
+        if (e.target === elements.shareModal) {
+            elements.shareModal.classList.add("hidden");
+        }
+    });
+}
         </script>
     </body>
 </html>
