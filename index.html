@@ -848,6 +848,7 @@
             lucide.createIcons();
             setupEventListeners();
             setupSetNavigationListeners();
+            setupSidebarInteractions();
             await initSqlDatabase();
 
             const savedHandle = await getStoredDirectoryHandle();
@@ -2051,6 +2052,71 @@
             lucide.createIcons();
         }
 
+        function setupSidebarInteractions() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn'); // Main header hamburger button
+
+            // 1. Mobile Sidebar Open / Close Toggle & Backdrop
+            if (toggleSidebarBtn && sidebar && backdrop) {
+                const toggleDrawer = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sidebar.classList.toggle('-translate-x-full');
+                    backdrop.classList.toggle('hidden');
+                };
+
+                toggleSidebarBtn.addEventListener('click', toggleDrawer);
+                toggleSidebarBtn.addEventListener('touchend', toggleDrawer);
+
+                backdrop.addEventListener('click', () => {
+                    sidebar.classList.add('-translate-x-full');
+                    backdrop.classList.add('hidden');
+                });
+            }
+
+            // Helper to auto-close sidebar on mobile after selecting a song/set
+            window.closeMobileSidebar = function() {
+                if (window.innerWidth < 1024 && sidebar && backdrop) {
+                    sidebar.classList.add('-translate-x-full');
+                    backdrop.classList.add('hidden');
+                }
+            };
+
+            // 2. Search Input & Clear Button Logic
+            const searchInput = document.getElementById('song-search-input');
+            const clearSearchBtn = document.getElementById('clear-search');
+
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const query = e.target.value.toLowerCase();
+                    if (clearSearchBtn) {
+                        if (query) clearSearchBtn.classList.remove('hidden');
+                        else clearSearchBtn.classList.add('hidden');
+                    }
+                    renderSidebarList(query);
+                });
+            }
+
+            if (clearSearchBtn && searchInput) {
+                clearSearchBtn.addEventListener('click', () => {
+                    searchInput.value = '';
+                    clearSearchBtn.classList.add('hidden');
+                    renderSidebarList('');
+                });
+            }
+
+            // 3. Folder / Category Filter Dropdown Change
+            const filterSelect = document.getElementById('folder-filter-select');
+            if (filterSelect) {
+                filterSelect.addEventListener('change', (e) => {
+                    selectedFolderFilter = e.target.value;
+                    const query = searchInput ? searchInput.value.toLowerCase() : '';
+                    renderSidebarList(query);
+                });
+            }
+        }
+        
         function setupEventListeners() {
             elements.tabSongsBtn.addEventListener('click', () => switchSidebarTab('songs'));
             elements.tabSetsBtn.addEventListener('click', () => switchSidebarTab('sets'));
