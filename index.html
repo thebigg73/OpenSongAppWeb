@@ -2,7 +2,7 @@
 <html lang="en" class="h-full bg-slate-950 text-slate-100">
     <head>
         <script>
-            const version = "1.0d";
+            const version = "1.0e";
         </script>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -147,10 +147,7 @@
         <header
             class="h-16 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between z-20 shrink-0">
             <div class="flex items-center space-x-3">
-                <button
-                    id="toggle-sidebar-btn"
-                    class="p-2 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition lg:hidden"
-                    title="Toggle Sidebar">
+                <button id="toggle-sidebar-btn" class="p-2 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition" title="Toggle Sidebar">
                     <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
                 <div class="flex items-center space-x-2">
@@ -189,6 +186,12 @@
                     class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700"
                     title="Open Stage Secondary Display Window">
                     <i data-lucide="monitor-play" class="w-5 h-5"></i>
+                </button>
+
+                <button id="fullscreen-toggle-btn"
+                     class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700"
+                    title="Fullscreen toggle">
+                    <i data-lucide="maximise" class="w-5 h-5"></i>
                 </button>
 
                 <button
@@ -301,10 +304,8 @@
             </aside>
 
             <!-- Main Viewport Container -->
-            <main
-                id="main-scroll-container"
-                class="flex-1 bg-slate-950 overflow-y-auto p-0 flex flex-col relative scroll-smooth">
-                <div id="song-display-area" class="w-full max-w-4xl min-h-full flex flex-col relative">
+            <main id="main-scroll-container" class="flex-1 bg-slate-950 overflow-y-auto p-0 flex flex-col relative scroll-smooth">
+                <div id="song-display-area" class="w-full max-w-none min-h-full flex flex-col relative">
                     <div
                         id="empty-state"
                         class="my-auto flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-slate-800 rounded-2xl bg-slate-900/30">
@@ -861,6 +862,7 @@
                             ><span>Restore Permission to Saved Folder</span>
                         </button>
                     </div>
+
                     <button
                         id="modal-select-folder-btn"
                         class="w-full py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition flex items-center justify-center space-x-2">
@@ -2850,27 +2852,25 @@
             }
 
             function setupSidebarInteractions() {
+                const toggleSidebarBtn = document.getElementById("toggle-sidebar-btn");
                 const sidebar = document.getElementById("sidebar");
                 const backdrop = document.getElementById("sidebar-backdrop");
-                const toggleSidebarBtn = document.getElementById("toggle-sidebar-btn"); // Main header hamburger button
 
-                // 1. Mobile Sidebar Open / Close Toggle & Backdrop
-                if (toggleSidebarBtn && sidebar && backdrop) {
-                    const toggleDrawer = (e) => {
+                if (toggleSidebarBtn && sidebar) {
+                    toggleSidebarBtn.addEventListener("click", (e) => {
                         e.preventDefault();
                         e.stopPropagation();
+
+                        // Toggle the translate class
                         sidebar.classList.toggle("-translate-x-full");
-                        backdrop.classList.toggle("hidden");
-                    };
 
-                    toggleSidebarBtn.addEventListener("click", toggleDrawer);
-                    toggleSidebarBtn.addEventListener("touchend", toggleDrawer);
-
-                    backdrop.addEventListener("click", () => {
-                        sidebar.classList.add("-translate-x-full");
-                        backdrop.classList.add("hidden");
+                        // If screen is smaller than large, toggle backdrop too
+                        if (window.innerWidth < 1024 && backdrop) {
+                            backdrop.classList.toggle("hidden");
+                        }
                     });
                 }
+
 
                 // Helper to auto-close sidebar on mobile after selecting a song/set
                 window.closeMobileSidebar = function () {
@@ -3209,14 +3209,14 @@
                         sidebarModalTitle.textContent = "Song Actions";
                         const options = [
                             {
-    label: "Create new song",
-    icon: "file-plus",
-    color: "text-amber-400",
-    action: () => {
-        closeSidebarModal();
-        openNewSongEditor(); // Directly calls your setup logic and opens the editor modal
-    }
-},
+                                label: "Create new song",
+                                icon: "file-plus",
+                                color: "text-amber-400",
+                                action: () => {
+                                    closeSidebarModal();
+                                    openNewSongEditor(); // Directly calls your setup logic and opens the editor modal
+                                }
+                            },
                             {
                                 label: "Import song",
                                 icon: "file-input",
@@ -3335,18 +3335,40 @@
             }
 
             // Share Modal Close Button
-if (elements.closeShareModal && elements.shareModal) {
-    elements.closeShareModal.addEventListener("click", () => {
-        elements.shareModal.classList.add("hidden");
-    });
+            if (elements.closeShareModal && elements.shareModal) {
+                elements.closeShareModal.addEventListener("click", () => {
+                    elements.shareModal.classList.add("hidden");
+                });
 
-    // Optional: also close if clicking the dark backdrop outside the modal card
-    elements.shareModal.addEventListener("click", (e) => {
-        if (e.target === elements.shareModal) {
-            elements.shareModal.classList.add("hidden");
-        }
-    });
-}
+                // Optional: also close if clicking the dark backdrop outside the modal card
+                elements.shareModal.addEventListener("click", (e) => {
+                    if (e.target === elements.shareModal) {
+                        elements.shareModal.classList.add("hidden");
+                    }
+                });
+            }
+
+            document.getElementById('fullscreen-toggle-btn').addEventListener('click', toggleAppFullscreen);
+            function toggleAppFullscreen() {
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                    // Enter fullscreen on the root document element
+                    const docEl = document.documentElement;
+                    if (docEl.requestFullscreen) {
+                        docEl.requestFullscreen().catch(err => {
+                            console.warn(`Fullscreen request failed: ${err.message}`);
+                        });
+                    } else if (docEl.webkitRequestFullscreen) { // Safari compatibility fallback
+                        docEl.webkitRequestFullscreen();
+                    }
+                } else {
+                    // Exit fullscreen
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    }
+                }
+            }
         </script>
     </body>
 </html>
