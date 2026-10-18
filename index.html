@@ -140,7 +140,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4j</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4k</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1522,6 +1522,101 @@
             }
         }
 
+        function parseOpenSongXML(xmlString, filename, folderPath) {
+            try {
+                const doc = new DOMParser().parseFromString(xmlString, "text/xml");
+                if (doc.querySelector("parsererror")) return null;
+                const song = doc.querySelector("song");
+                if (!song) return null;
+                
+                const getVal = (tagName) => {
+                    for (let child of song.children) {
+                        if (child.nodeName.toLowerCase() === tagName.toLowerCase()) {
+                            return child.textContent.trim();
+                        }
+                    }
+                    return '';
+                };
+                
+                const parsedKey = getVal("key");
+                const cleanFilename = filename.endsWith('.ost') ? filename.slice(0, -4) : filename;
+                
+                return {
+                    id: 'song_' + Math.random().toString(36).substring(2, 8),
+                    filename: cleanFilename, 
+                    folderPath: folderPath || 'MAIN',
+                    title: getVal("title") || cleanFilename,
+                    author: getVal("author"),
+                    copyright: getVal("copyright"),
+                    presentation: getVal("presentation"),
+                    key: parsedKey || '',
+                    keyoriginal: getVal("keyoriginal"),
+                    capo: getVal("capo"),
+                    tempo: getVal("tempo") || 120,
+                    time_sig: getVal("time_sig") || '4/4',
+                    hymn_number: getVal("hymn_number"),
+                    duration: getVal("duration"),
+                    predelay: getVal("predelay"),
+                    ccli: getVal("ccli"),
+                    theme: getVal("theme"),
+                    altheme: getVal("altheme"),
+                    user1: getVal("user1"),
+                    user2: getVal("user2"),
+                    user3: getVal("user3"),
+                    beatbuddysong: getVal("beatbuddysong"),
+                    beatbuddykit: getVal("beatbuddykit"),
+                    drummer: getVal("drummer"),
+                    drummerkit: getVal("drummerkit"),
+                    preferedinstrument: getVal("preferedinstrument"),
+                    previewoverride: getVal("previewoverride"),
+                    aka: getVal("aka"),
+                    midi: getVal("midi"),
+                    midi_index: getVal("midi_index"),
+                    notes: getVal("notes"),
+                    pad_file: getVal("pad_file"),
+                    custom_chords: getVal("custom_chords"),
+                    link_web: getVal("link_web"),
+                    link_audio: getVal("link_audio"),
+                    loop_audio: getVal("loop_audio") === 'true',
+                    abc_notation: getVal("abc_notation"),
+                    abc_transpose: getVal("abc_transpose"),
+                    uuid: getVal("uuid") || generateUUID(),
+                    modified: getVal("modified") || new Date().toISOString(),
+                    lyrics: getVal("lyrics")
+                };
+            } catch (e) { return null; }
+        }
+
+        function parseSetFilename(filename) {
+            let clean = filename.endsWith('.osts') ? filename.slice(0, -5) : (filename.endsWith('.ost') ? filename.slice(0, -4) : filename);
+            if (clean.includes('___')) {
+                const parts = clean.split('___');
+                return { category: parts[0], title: parts.slice(1).join('___'), filename: clean };
+            }
+            return { category: 'MAIN', title: clean, filename: clean };
+        }
+        
+        function parseOpenSongSetXML(xmlString, filename) {
+            try {
+                const doc = new DOMParser().parseFromString(xmlString, "text/xml");
+                const setNode = doc.querySelector("set");
+                if (!setNode) return null;
+                const songTitles = [];
+                doc.querySelectorAll("slide_group").forEach(g => {
+                    const name = g.getAttribute("name");
+                    if (name) songTitles.push(name);
+                });
+                const parsed = parseSetFilename(filename);
+                return { 
+                    id: 'set_' + Math.random().toString(36).substring(2, 8), 
+                    filename: parsed.filename, 
+                    title: setNode.getAttribute("name") || parsed.title, 
+                    category: parsed.category,
+                    songTitles 
+                };
+            } catch (e) { return null; }
+        }
+        
         async function loadSongFromActiveSet(index) {
             if (!activeSet || !activeSet.songTitles[index]) return;
             const songTitle = activeSet.songTitles[index];
