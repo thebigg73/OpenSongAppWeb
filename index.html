@@ -140,7 +140,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4f</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4g</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1097,18 +1097,28 @@
 
             try {
                 let foundSongsDir = false;
+                
+                // Safe iterator for root handle
                 for await (const entry of handle.values()) {
-                    if (entry.kind === 'directory' && entry.name.toLowerCase() === 'songs') {
-                        foundSongsDir = true;
-                        await scanSongDir(entry, '');
-                    } else if (entry.kind === 'directory' && entry.name.toLowerCase() === 'sets') {
-                        for await (const setFile of entry.values()) {
-                            if (setFile.kind === 'file') {
-                                const f = await setFile.getFile();
-                                const setObj = parseOpenSongSetXML(await f.text(), f.name);
-                                if (setObj) loadedSets.push(setObj);
+                    try {
+                        if (entry.kind === 'directory' && entry.name.toLowerCase() === 'songs') {
+                            foundSongsDir = true;
+                            await scanSongDir(entry, '');
+                        } else if (entry.kind === 'directory' && entry.name.toLowerCase() === 'sets') {
+                            for await (const setFile of entry.values()) {
+                                try {
+                                    if (setFile.kind === 'file') {
+                                        const f = await setFile.getFile();
+                                        const setObj = parseOpenSongSetXML(await f.text(), f.name);
+                                        if (setObj) loadedSets.push(setObj);
+                                    }
+                                } catch (innerSetErr) {
+                                    console.warn("Skipped unreadable set file:", innerSetErr);
+                                }
                             }
                         }
+                    } catch (entryErr) {
+                        console.warn("Skipped unreadable root entry:", entry.name, entryErr);
                     }
                 }
 
@@ -1116,19 +1126,30 @@
                     await scanSongDir(handle, '');
                 }
             } catch (e) {
-                console.error("Directory scan error:", e);
-                showToast("Error scanning directory.");
+                console.error("Directory scan fatal error:", e);
+                showToast("Directory scan encountered permissions restrictions.");
             } finally {
                 elements.modalProgressContainer.classList.add('hidden');
                 elements.modalActionsContainer.classList.remove('hidden');
                 elements.modal.classList.add('hidden');
+                
                 const banner = document.getElementById('reconnect-banner');
-                if (banner) banner.classList.add('hidden');
+                if (banner) {
+                    banner.classList.add('hidden');
+                    banner.style.display = 'none';
+                }
                 
                 selectedFolderFilter = 'ALL';
                 updateTabCounts();
                 updateFolderFilterDropdown();
                 renderSidebarList();
+                
+                // Explicitly force DOM refresh
+                setTimeout(() => {
+                    updateTabCounts();
+                    renderSidebarList();
+                }, 100);
+
                 showToast(`Loaded ${loadedSongs.length} songs & ${loadedSets.length} sets!`);
             }
         }
@@ -1136,24 +1157,38 @@
         async function scanSongDir(dirHandle, prefix) {
             try {
                 for await (const entry of dirHandle.values()) {
-                    if (entry.kind === 'file') {
-                        const f = await entry.getFile();
-                        const lowerName = f.name.toLowerCase();
-                        if (lowerName.endsWith('.pdf')) {
-                            const blobUrl = URL.createObjectURL(f);
-                            pdfBlobsMap[f.name] = blobUrl;
-                            addOrUpdateSong({ id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: f.name, folderPath: prefix || 'PDFs', title: f.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: 'C', uuid: generateUUID(), modified: new Date().toISOString() });
-                        } else {
-                            const song = parseOpenSongXML(await f.text(), f.name, prefix || 'MAIN');
-                            if (song) addOrUpdateSong(song);
+                    try {
+                        if (entry.kind === 'file') {
+                            const f = await entry.getFile();
+                            const lowerName = f.name.toLowerCase();
+                            if (lowerName.endsWith('.pdf')) {
+                                const blobUrl = URL.createObjectURL(f);
+                                pdfBlobsMap[f.name] = blobUrl;
+                                addOrUpdateSong({ 
+                                    id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), 
+                                    filename: f.name, 
+                                    folderPath: prefix || 'PDFs', 
+                                    title: f.name.replace(/\.[^/.]+$/, ""), 
+                                    isPdf: true, 
+                                    pdfUrl: blobUrl, 
+                                    key: 'C', 
+                                    uuid: generateUUID(), 
+                                    modified: new Date().toISOString() 
+                                });
+                            } else {
+                                const song = parseOpenSongXML(await f.text(), f.name, prefix || 'MAIN');
+                                if (song) addOrUpdateSong(song);
+                            }
+                        } else if (entry.kind === 'directory') {
+                            const subFolderName = prefix ? `${prefix}/${entry.name}` : entry.name;
+                            await scanSongDir(entry, subFolderName);
                         }
-                    } else if (entry.kind === 'directory') {
-                        const subFolderName = prefix ? `${prefix}/${entry.name}` : entry.name;
-                        await scanSongDir(entry, subFolderName);
+                    } catch (fileErr) {
+                        console.warn("Skipped subfile/subfolder due to mobile permission limit:", fileErr);
                     }
                 }
             } catch (err) {
-                console.error("Scan subfolder error:", err);
+                console.warn("Scan directory iteration warning:", err);
             }
         }
 
