@@ -140,7 +140,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4c</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4d</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -718,6 +718,7 @@
     </div>
 
     <!-- Application Logic Script -->
+    <!-- Application Logic Script -->
     <script>
         let loadedSongs = [];
         let loadedSets = [];
@@ -728,7 +729,7 @@
         let activeSetSongIndex = -1;
         let capoDisplayMode = 'native';
         let currentTransposeOffset = 0;
-        let castWindow = null; // <-- Moved to the very top here!
+        let castWindow = null;
 
         let currentSet = {
             category: 'MAIN',
@@ -742,11 +743,6 @@
         let pendingImportItems = [];
         let shareTarget = null;
         let castSettings = { showChords: true, fontScale: 1.4 };
-
-
-
-        // Remove if duplicated
-        
 
         const elements = {
             modal: document.getElementById('folder-modal'),
@@ -828,22 +824,29 @@
             floatingMainBtn: document.getElementById('floating-main-btn'),
             songEditorModal: document.getElementById('song-editor-modal'),
             closeSongEditor: document.getElementById('close-song-editor'),
+            
+            editSongPresentationInput: document.getElementById('edit-song-presentation-input'),
+            editSongLyricsInput: document.getElementById('edit-song-lyrics-input'),
             editSongTitleInput: document.getElementById('edit-song-title-input'),
-            editSongAuthorInput: document.getElementById('edit-song-author-input'),
-            editSongCopyrightInput: document.getElementById('edit-song-copyright-input'),
             editSongFolderSelect: document.getElementById('edit-song-folder-select'),
             editSongNewFolderInput: document.getElementById('edit-song-new-folder-input'),
             editSongFilenameInput: document.getElementById('edit-song-filename-input'),
-            editSongLyricsInput: document.getElementById('edit-song-lyrics-input'),
+            editSongAuthorInput: document.getElementById('edit-song-author-input'),
+            editSongCopyrightInput: document.getElementById('edit-song-copyright-input'),
             editSongKeyInput: document.getElementById('edit-song-key-input'),
             editSongCapoInput: document.getElementById('edit-song-capo-input'),
             editSongTempoInput: document.getElementById('edit-song-tempo-input'),
+            editSongTimesigInput: document.getElementById('edit-song-timesig-input'),
+            editSongNotesInput: document.getElementById('edit-song-notes-input'),
+            editSongThemesInput: document.getElementById('edit-song-themes-input'),
+            editSongBeatbuddyInput: document.getElementById('edit-song-beatbuddy-input'),
             saveSongBtn: document.getElementById('save-song-btn')
         };
 
         window.addEventListener('DOMContentLoaded', async () => {
             lucide.createIcons();
             setupEventListeners();
+            setupSetNavigationListeners();
 
             const savedHandle = await getStoredDirectoryHandle();
             if (savedHandle) {
@@ -902,9 +905,7 @@
                 const tx = db.transaction(STORE_NAME, 'readwrite');
                 tx.objectStore(STORE_NAME).put(handle, 'rootFolder');
                 return tx.complete;
-            } catch (err) {
-                console.error("Failed to save handle:", err);
-            }
+            } catch (err) { console.error("Failed to save handle:", err); }
         }
         async function getStoredDirectoryHandle() {
             try {
@@ -1074,6 +1075,171 @@
             saveAs(content, "OpenSong_Sets_Backup.osbs");
         });
 
+        async function processRootDirectory(handle) {
+            elements.modalProgressContainer.classList.remove('hidden');
+            elements.modalActionsContainer.classList.add('hidden');
+            elements.folderStatus.textContent = handle.name;
+            
+            loadedSongs = [];
+            loadedSets = [];
+
+            try {
+                let foundSongsDir = false;
+                for await (const entry of handle.values()) {
+                    if (entry.kind === 'directory' && entry.name.toLowerCase() === 'songs') {
+                        foundSongsDir = true;
+                        await scanSongDir(entry, '');
+                    } else if (entry.kind === 'directory' && entry.name.toLowerCase() === 'sets') {
+                        for await (const setFile of entry.values()) {
+                            if (setFile.kind === 'file') {
+                                const f = await setFile.getFile();
+                                const setObj = parseOpenSongSetXML(await f.text(), f.name);
+                                if (setObj) loadedSets.push(setObj);
+                            }
+                        }
+                    }
+                }
+
+                if (!foundSongsDir && loadedSongs.length === 0) {
+                    await scanSongDir(handle, '');
+                }
+            } catch (e) {
+                console.error("Directory scan error:", e);
+                showToast("Error scanning directory.");
+            } finally {
+                elements.modalProgressContainer.classList.add('hidden');
+                elements.modalActionsContainer.classList.remove('hidden');
+                elements.modal.classList.add('hidden');
+                const banner = document.getElementById('reconnect-banner');
+                if (banner) banner.classList.add('hidden');
+                
+                selectedFolderFilter = 'ALL';
+                updateTabCounts();
+                updateFolderFilterDropdown();
+                renderSidebarList();
+                showToast(`Loaded ${loadedSongs.length} songs & ${loadedSets.length} sets!`);
+            }
+        }
+
+        async function scanSongDir(dirHandle, prefix) {
+            try {
+                for await (const entry of dirHandle.values()) {
+                    if (entry.kind === 'file') {
+                        const f = await entry.getFile();
+                        const lowerName = f.name.toLowerCase();
+                        if (lowerName.endsWith('.pdf')) {
+                            const blobUrl = URL.createObjectURL(f);
+                            pdfBlobsMap[f.name] = blobUrl;
+                            addOrUpdateSong({ id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: f.name, folderPath: prefix || 'PDFs', title: f.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: 'C', uuid: generateUUID(), modified: new Date().toISOString() });
+                        } else {
+                            const song = parseOpenSongXML(await f.text(), f.name, prefix || 'MAIN');
+                            if (song) addOrUpdateSong(song);
+                        }
+                    } else if (entry.kind === 'directory') {
+                        const subFolderName = prefix ? `${prefix}/${entry.name}` : entry.name;
+                        await scanSongDir(entry, subFolderName);
+                    }
+                }
+            } catch (err) {
+                console.error("Scan subfolder error:", err);
+            }
+        }
+
+        function parseOpenSongXML(xmlString, filename, folderPath) {
+            try {
+                const doc = new DOMParser().parseFromString(xmlString, "text/xml");
+                if (doc.querySelector("parsererror")) return null;
+                const song = doc.querySelector("song");
+                if (!song) return null;
+                
+                const getVal = (tagName) => {
+                    for (let child of song.children) {
+                        if (child.nodeName.toLowerCase() === tagName.toLowerCase()) {
+                            return child.textContent.trim();
+                        }
+                    }
+                    return '';
+                };
+                
+                const parsedKey = getVal("key");
+                const cleanFilename = filename.endsWith('.ost') ? filename.slice(0, -4) : filename;
+                
+                return {
+                    id: 'song_' + Math.random().toString(36).substring(2, 8),
+                    filename: cleanFilename, 
+                    folderPath: folderPath || 'MAIN',
+                    title: getVal("title") || cleanFilename,
+                    author: getVal("author"),
+                    copyright: getVal("copyright"),
+                    presentation: getVal("presentation"),
+                    key: parsedKey || 'C',
+                    keyoriginal: getVal("keyoriginal"),
+                    capo: getVal("capo"),
+                    tempo: getVal("tempo") || 120,
+                    time_sig: getVal("time_sig") || '4/4',
+                    hymn_number: getVal("hymn_number"),
+                    duration: getVal("duration"),
+                    predelay: getVal("predelay"),
+                    ccli: getVal("ccli"),
+                    theme: getVal("theme"),
+                    altheme: getVal("altheme"),
+                    user1: getVal("user1"),
+                    user2: getVal("user2"),
+                    user3: getVal("user3"),
+                    beatbuddysong: getVal("beatbuddysong"),
+                    beatbuddykit: getVal("beatbuddykit"),
+                    drummer: getVal("drummer"),
+                    drummerkit: getVal("drummerkit"),
+                    preferedinstrument: getVal("preferedinstrument"),
+                    previewoverride: getVal("previewoverride"),
+                    aka: getVal("aka"),
+                    midi: getVal("midi"),
+                    midi_index: getVal("midi_index"),
+                    notes: getVal("notes"),
+                    pad_file: getVal("pad_file"),
+                    custom_chords: getVal("custom_chords"),
+                    link_web: getVal("link_web"),
+                    link_audio: getVal("link_audio"),
+                    loop_audio: getVal("loop_audio") === 'true',
+                    abc_notation: getVal("abc_notation"),
+                    abc_transpose: getVal("abc_transpose"),
+                    uuid: getVal("uuid") || generateUUID(),
+                    modified: getVal("modified") || new Date().toISOString(),
+                    lyrics: getVal("lyrics")
+                };
+            } catch (e) { return null; }
+        }
+
+        function parseSetFilename(filename) {
+            let clean = filename.endsWith('.osts') ? filename.slice(0, -5) : (filename.endsWith('.ost') ? filename.slice(0, -4) : filename);
+            if (clean.includes('___')) {
+                const parts = clean.split('___');
+                return { category: parts[0], title: parts.slice(1).join('___'), filename: clean };
+            }
+            return { category: 'MAIN', title: clean, filename: clean };
+        }
+
+        function parseOpenSongSetXML(xmlString, filename) {
+            try {
+                const doc = new DOMParser().parseFromString(xmlString, "text/xml");
+                const setNode = doc.querySelector("set");
+                if (!setNode) return null;
+                const songTitles = [];
+                doc.querySelectorAll("slide_group").forEach(g => {
+                    const name = g.getAttribute("name");
+                    if (name) songTitles.push(name);
+                });
+                const parsed = parseSetFilename(filename);
+                return { 
+                    id: 'set_' + Math.random().toString(36).substring(2, 8), 
+                    filename: parsed.filename, 
+                    title: setNode.getAttribute("name") || parsed.title, 
+                    category: parsed.category,
+                    songTitles 
+                };
+            } catch (e) { return null; }
+        }
+
         function generateOpenSongXML(song) {
             return `<?xml version="1.0" encoding="UTF-8"?>
 <song>
@@ -1157,10 +1323,7 @@
                 await writable.write(generateOpenSongXML(songObj));
                 await writable.close();
                 return true;
-            } catch (err) {
-                console.error("Error writing song to disk:", err);
-                return false;
-            }
+            } catch (err) { return false; }
         }
 
         async function writeSetToDisk(setObj) {
@@ -1176,10 +1339,7 @@
                 await writable.write(generateOpenSongSetXML(setObj));
                 await writable.close();
                 return true;
-            } catch (err) {
-                console.error("Error writing set to disk:", err);
-                return false;
-            }
+            } catch (err) { return false; }
         }
 
         const notesList = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -1203,7 +1363,6 @@
             const transposedLines = lines.map(line => {
                 if (line.startsWith('.')) {
                     const chordLine = line.slice(1);
-                    // Match and transpose every chord token in the chord line
                     const transposedChordLine = chordLine.replace(/([A-G][b#]?[^\s]*)/g, (match) => {
                         return transposeChord(match, semitones);
                     });
@@ -1213,7 +1372,7 @@
             });
             return transposedLines.join('\n');
         }
-        
+
         elements.archiveFileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files || []);
             if (files.length === 0) return;
@@ -1375,12 +1534,6 @@
             if (pendingImportItems.length > 0) showConflictModal(pendingImportItems);
         });
 
-        function addOrUpdateSong(songObj) {
-            const existingIdx = loadedSongs.findIndex(s => s.filename.toLowerCase() === songObj.filename.toLowerCase() && (s.folderPath || 'MAIN') === (songObj.folderPath || 'MAIN'));
-            if (existingIdx !== -1) loadedSongs[existingIdx] = { ...loadedSongs[existingIdx], ...songObj };
-            else loadedSongs.push(songObj);
-        }
-
         async function parseNonOpenSongSQLite(uint8ArrayData) {
             try {
                 const SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
@@ -1455,196 +1608,11 @@
             }
             elements.folderStatus.textContent = "Root Folder Loaded";
             elements.modal.classList.add('hidden');
+            selectedFolderFilter = 'ALL';
             updateTabCounts();
             updateFolderFilterDropdown();
             renderSidebarList();
             showToast("Folder scanned successfully!");
-        });
-
-        async function processRootDirectory(handle) {
-            elements.modalProgressContainer.classList.remove('hidden');
-            elements.modalActionsContainer.classList.add('hidden');
-            elements.folderStatus.textContent = handle.name;
-            
-            loadedSongs = [];
-            loadedSets = [];
-
-            try {
-                let foundSongsDir = false;
-                for await (const entry of handle.values()) {
-                    if (entry.kind === 'directory' && entry.name.toLowerCase() === 'songs') {
-                        foundSongsDir = true;
-                        await scanSongDir(entry, '');
-                    } else if (entry.kind === 'directory' && entry.name.toLowerCase() === 'sets') {
-                        for await (const setFile of entry.values()) {
-                            if (setFile.kind === 'file') {
-                                const f = await setFile.getFile();
-                                const setObj = parseOpenSongSetXML(await f.text(), f.name);
-                                if (setObj) loadedSets.push(setObj);
-                            }
-                        }
-                    }
-                }
-
-                if (!foundSongsDir && loadedSongs.length === 0) {
-                    await scanSongDir(handle, '');
-                }
-            } catch (e) {
-                console.error("Directory scan error:", e);
-                showToast("Error scanning directory.");
-            } finally {
-                elements.modalProgressContainer.classList.add('hidden');
-                elements.modalActionsContainer.classList.remove('hidden');
-                elements.modal.classList.add('hidden');
-                const banner = document.getElementById('reconnect-banner');
-                if (banner) banner.classList.add('hidden');
-                
-                updateTabCounts();
-                updateFolderFilterDropdown();
-                renderSidebarList();
-                showToast(`Loaded ${loadedSongs.length} songs & ${loadedSets.length} sets!`);
-            }
-        }
-
-        async function scanSongDir(dirHandle, prefix) {
-            for await (const entry of dirHandle.values()) {
-                if (entry.kind === 'file') {
-                    const f = await entry.getFile();
-                    const lowerName = f.name.toLowerCase();
-                    if (lowerName.endsWith('.pdf')) {
-                        const blobUrl = URL.createObjectURL(f);
-                        pdfBlobsMap[f.name] = blobUrl;
-                        addOrUpdateSong({ id: 'song_pdf_' + Math.random().toString(36).substring(2, 8), filename: f.name, folderPath: prefix || 'PDFs', title: f.name.replace(/\.[^/.]+$/, ""), isPdf: true, pdfUrl: blobUrl, key: 'C', uuid: generateUUID(), modified: new Date().toISOString() });
-                    } else {
-                        const song = parseOpenSongXML(await f.text(), f.name, prefix || 'MAIN');
-                        if (song) addOrUpdateSong(song);
-                    }
-                } else if (entry.kind === 'directory') {
-                    const subFolderName = prefix ? `${prefix}/${entry.name}` : entry.name;
-                    await scanSongDir(entry, subFolderName);
-                }
-            }
-        }
-
-        function parseOpenSongXML(xmlString, filename, folderPath) {
-            try {
-                const doc = new DOMParser().parseFromString(xmlString, "text/xml");
-                if (doc.querySelector("parsererror")) return null;
-                const song = doc.querySelector("song");
-                if (!song) return null;
-                
-                const getVal = (tagName) => {
-                    for (let child of song.children) {
-                        if (child.nodeName.toLowerCase() === tagName.toLowerCase()) {
-                            return child.textContent.trim();
-                        }
-                    }
-                    return '';
-                };
-                
-                const parsedKey = getVal("key");
-                const cleanFilename = filename.endsWith('.ost') ? filename.slice(0, -4) : filename;
-                
-                return {
-                    id: 'song_' + Math.random().toString(36).substring(2, 8),
-                    filename: cleanFilename, 
-                    folderPath: folderPath || 'MAIN',
-                    title: getVal("title") || cleanFilename,
-                    author: getVal("author"),
-                    copyright: getVal("copyright"),
-                    presentation: getVal("presentation"),
-                    key: parsedKey || 'C',
-                    keyoriginal: getVal("keyoriginal"),
-                    capo: getVal("capo"),
-                    tempo: getVal("tempo") || 120,
-                    time_sig: getVal("time_sig") || '4/4',
-                    hymn_number: getVal("hymn_number"),
-                    duration: getVal("duration"),
-                    predelay: getVal("predelay"),
-                    ccli: getVal("ccli"),
-                    theme: getVal("theme"),
-                    altheme: getVal("altheme"),
-                    user1: getVal("user1"),
-                    user2: getVal("user2"),
-                    user3: getVal("user3"),
-                    beatbuddysong: getVal("beatbuddysong"),
-                    beatbuddykit: getVal("beatbuddykit"),
-                    drummer: getVal("drummer"),
-                    drummerkit: getVal("drummerkit"),
-                    preferedinstrument: getVal("preferedinstrument"),
-                    previewoverride: getVal("previewoverride"),
-                    aka: getVal("aka"),
-                    midi: getVal("midi"),
-                    midi_index: getVal("midi_index"),
-                    notes: getVal("notes"),
-                    pad_file: getVal("pad_file"),
-                    custom_chords: getVal("custom_chords"),
-                    link_web: getVal("link_web"),
-                    link_audio: getVal("link_audio"),
-                    loop_audio: getVal("loop_audio") === 'true',
-                    abc_notation: getVal("abc_notation"),
-                    abc_transpose: getVal("abc_transpose"),
-                    uuid: getVal("uuid") || generateUUID(),
-                    modified: getVal("modified") || new Date().toISOString(),
-                    lyrics: getVal("lyrics")
-                };
-            } catch (e) { 
-                console.error("XML parse error:", e);
-                return null; 
-            }
-        }
-
-        function parseSetFilename(filename) {
-            let clean = filename.endsWith('.osts') ? filename.slice(0, -5) : (filename.endsWith('.ost') ? filename.slice(0, -4) : filename);
-            if (clean.includes('___')) {
-                const parts = clean.split('___');
-                return {
-                    category: parts[0],
-                    title: parts.slice(1).join('___'),
-                    filename: clean
-                };
-            }
-            return {
-                category: 'MAIN',
-                title: clean,
-                filename: clean
-            };
-        }
-
-        function parseOpenSongSetXML(xmlString, filename) {
-            try {
-                const doc = new DOMParser().parseFromString(xmlString, "text/xml");
-                const setNode = doc.querySelector("set");
-                if (!setNode) return null;
-                const songTitles = [];
-                doc.querySelectorAll("slide_group").forEach(g => {
-                    const name = g.getAttribute("name");
-                    if (name) songTitles.push(name);
-                });
-                const parsed = parseSetFilename(filename);
-                return { 
-                    id: 'set_' + Math.random().toString(36).substring(2, 8), 
-                    filename: parsed.filename, 
-                    title: setNode.getAttribute("name") || parsed.title, 
-                    category: parsed.category,
-                    songTitles 
-                };
-            } catch (e) { return null; }
-        }
-
-        elements.editSongFolderSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'NEW_FOLDER') {
-                elements.editSongNewFolderInput.classList.remove('hidden');
-                elements.editSongNewFolderInput.focus();
-            } else {
-                elements.editSongNewFolderInput.classList.add('hidden');
-            }
-        });
-
-        elements.editSongTitleInput.addEventListener('input', (e) => {
-            if (!activeSong || elements.editSongFilenameInput.value === (activeSong.title || '')) {
-                elements.editSongFilenameInput.value = e.target.value;
-            }
         });
 
         elements.newSongBtn.addEventListener('click', () => {
@@ -1652,6 +1620,14 @@
             elements.editSongAuthorInput.value = '';
             elements.editSongCopyrightInput.value = '';
             elements.editSongFilenameInput.value = '';
+            elements.editSongPresentationInput.value = '';
+            elements.editSongKeyInput.value = 'C';
+            elements.editSongCapoInput.value = '';
+            elements.editSongTempoInput.value = '120';
+            elements.editSongTimesigInput.value = '4/4';
+            elements.editSongNotesInput.value = '';
+            elements.editSongThemesInput.value = '';
+            elements.editSongBeatbuddyInput.value = '';
             elements.editSongNewFolderInput.value = '';
             elements.editSongNewFolderInput.classList.add('hidden');
             updateFolderFilterDropdown();
@@ -1662,10 +1638,19 @@
 
         elements.editSongBtn.addEventListener('click', () => {
             if (!activeSong) return;
-            elements.editSongTitleInput.value = activeSong.title;
+            elements.editSongTitleInput.value = activeSong.title || '';
             elements.editSongAuthorInput.value = activeSong.author || '';
             elements.editSongCopyrightInput.value = activeSong.copyright || '';
-            elements.editSongFilenameInput.value = activeSong.filename || activeSong.title;
+            elements.editSongFilenameInput.value = activeSong.filename || activeSong.title || '';
+            elements.editSongPresentationInput.value = activeSong.presentation || '';
+            elements.editSongKeyInput.value = activeSong.key || 'C';
+            elements.editSongCapoInput.value = activeSong.capo || '';
+            elements.editSongTempoInput.value = activeSong.tempo || 120;
+            elements.editSongTimesigInput.value = activeSong.time_sig || '4/4';
+            elements.editSongNotesInput.value = activeSong.notes || '';
+            elements.editSongThemesInput.value = activeSong.theme || '';
+            elements.editSongBeatbuddyInput.value = activeSong.beatbuddysong || '';
+            
             updateFolderFilterDropdown();
             elements.editSongFolderSelect.value = activeSong.folderPath || 'MAIN';
             elements.editSongNewFolderInput.classList.add('hidden');
@@ -1692,9 +1677,14 @@
                 title: title,
                 author: elements.editSongAuthorInput.value,
                 copyright: elements.editSongCopyrightInput.value,
+                presentation: elements.editSongPresentationInput.value,
                 key: elements.editSongKeyInput.value,
                 capo: elements.editSongCapoInput.value,
                 tempo: elements.editSongTempoInput.value,
+                time_sig: elements.editSongTimesigInput.value,
+                notes: elements.editSongNotesInput.value,
+                theme: elements.editSongThemesInput.value,
+                beatbuddysong: elements.editSongBeatbuddyInput.value,
                 uuid: activeSong ? (activeSong.uuid || generateUUID()) : generateUUID(),
                 modified: new Date().toISOString(),
                 lyrics: elements.editSongLyricsInput.value
@@ -1707,41 +1697,52 @@
             renderSongSheet(newSongData);
 
             const written = await writeSongToDisk(newSongData);
-            if (written) {
-                showToast("Song saved and written to disk!");
-            } else {
-                showToast("Song saved in memory (Disk write skipped/denied).");
-            }
+            showToast(written ? "Song saved and written to disk!" : "Song saved in memory.");
         });
 
-        elements.floatingCapoBtn.addEventListener('click', () => {
-            if (!activeSong || !activeSong.capo) return;
-            if (capoDisplayMode === 'native') {
-                capoDisplayMode = 'capo';
-                showToast(`Capo Display Mode: Capo Chords (${activeSong.capo})`);
-            } else if (capoDisplayMode === 'capo') {
-                capoDisplayMode = 'both';
-                showToast("Capo Display Mode: Both (Two-Line Chords)");
-            } else {
-                capoDisplayMode = 'native';
-                showToast("Capo Display Mode: Native Chords");
-            }
-            updateFloatingCapoButtonState();
-            renderSongLyrics(activeSong.lyrics, activeSong.capo);
-        });
+        function addOrUpdateSong(songObj) {
+            const existingIdx = loadedSongs.findIndex(s => s.filename.toLowerCase() === songObj.filename.toLowerCase() && (s.folderPath || 'MAIN') === (songObj.folderPath || 'MAIN'));
+            if (existingIdx !== -1) loadedSongs[existingIdx] = { ...loadedSongs[existingIdx], ...songObj };
+            else loadedSongs.push(songObj);
+        }
 
-        function updateFloatingCapoButtonState() {
-            if (!activeSong || !activeSong.capo) {
-                elements.floatingCapoBtn.classList.add('hidden');
-                return;
+        // Set Navigation Wiring (<, >, Back to Set)
+        function setupSetNavigationListeners() {
+            const backToSetBtn = document.getElementById('back-to-set-btn');
+            const prevBtn = document.getElementById('prev-set-song-btn');
+            const nextBtn = document.getElementById('next-set-song-btn');
+
+            if (backToSetBtn) {
+                backToSetBtn.addEventListener('click', () => {
+                    if (activeSet) renderSetSheet(activeSet);
+                });
             }
-            elements.floatingCapoBtn.classList.remove('hidden');
-            if (capoDisplayMode === 'native') {
-                elements.floatingCapoLabel.textContent = `Capo ${activeSong.capo} (Native)`;
-            } else if (capoDisplayMode === 'capo') {
-                elements.floatingCapoLabel.textContent = `Capo ${activeSong.capo} (Capo Chords)`;
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    if (!activeSet || activeSetSongIndex <= 0) return;
+                    activeSetSongIndex--;
+                    loadSongFromActiveSet(activeSetSongIndex);
+                });
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    if (!activeSet || activeSetSongIndex >= activeSet.songTitles.length - 1) return;
+                    activeSetSongIndex++;
+                    loadSongFromActiveSet(activeSetSongIndex);
+                });
+            }
+        }
+
+        function loadSongFromActiveSet(index) {
+            if (!activeSet || !activeSet.songTitles[index]) return;
+            const songTitle = activeSet.songTitles[index];
+            const foundSong = loadedSongs.find(s => s.title.toLowerCase() === songTitle.toLowerCase());
+            if (foundSong) {
+                renderSongSheet(foundSong, activeSet, index);
             } else {
-                elements.floatingCapoLabel.textContent = `Capo ${activeSong.capo} (Both Lines)`;
+                showToast(`Song "${songTitle}" not found in loaded library.`);
             }
         }
 
@@ -1763,7 +1764,6 @@
                 document.getElementById('set-navigation-banner').classList.add('hidden');
             }
 
-            // Calculate current transposed key in real-time
             const currentOffset = song.transposeOffset || 0;
             const displayedKey = currentOffset !== 0 ? transposeChord(song.key || 'C', currentOffset) : (song.key || 'C');
 
@@ -1785,21 +1785,14 @@
             elements.metaTempo.textContent = song.tempo || '--';
 
             updateFloatingCapoButtonState();
-
-            if (song.isPdf && song.pdfUrl) {
-                elements.sheetContent.innerHTML = `<div class="w-full h-[75vh] bg-slate-900 border border-slate-800 rounded-xl overflow-hidden"><embed src="${song.pdfUrl}" type="application/pdf" width="100%" height="100%"/></div>`;
-                elements.floatingCapoBtn.classList.add('hidden');
-            } else {
-                renderSongLyrics(song.lyrics, song.capo, currentOffset);
-            }
+            renderSongLyrics(song.lyrics, song.capo, currentOffset);
             updateCastWindow(song);
         }
 
-        // Drag and Drop & Swipe-to-Remove for Set Songs
         function renderSetSheet(setObj) {
             activeSet = setObj;
             activeSong = null;
-            currentSet = JSON.parse(JSON.stringify(setObj)); // Clone for tracking changes
+            currentSet = JSON.parse(JSON.stringify(setObj));
             elements.emptyState.classList.add('hidden');
             elements.songSheet.classList.add('hidden');
             document.getElementById('set-view-sheet').classList.remove('hidden');
@@ -1828,7 +1821,6 @@
                     </div>
                 `;
 
-                // Click title to open song
                 if (foundSong) {
                     itemDiv.addEventListener('click', (e) => {
                         if (e.target.closest('button') || e.target.closest('svg')) return;
@@ -1836,7 +1828,6 @@
                     });
                 }
 
-                // Swipe / Remove song
                 itemDiv.querySelector('.remove-set-song').addEventListener('click', (e) => {
                     e.stopPropagation();
                     activeSet.songTitles.splice(idx, 1);
@@ -1845,7 +1836,6 @@
                     showToast(`Removed "${t}" from set`);
                 });
 
-                // Drag and Drop Reordering Handlers
                 itemDiv.addEventListener('dragstart', (e) => {
                     e.dataTransfer.setData('text/plain', idx);
                     itemDiv.classList.add('opacity-50', 'border-indigo-500');
@@ -1873,48 +1863,35 @@
 
         function checkSetDirtyState() {
             const isChanged = JSON.stringify(activeSet.songTitles) !== JSON.stringify(currentSet.songTitles);
-            const saveBtn = document.getElementById('edit-set-save-indicator');
-            if (isChanged && !saveBtn) {
-                // Show dynamic save icon in set header if modified
-                const headerActions = document.querySelector('#set-view-sheet .flex.items-center.gap-2');
-                if (headerActions && !document.getElementById('dynamic-save-set-btn')) {
-                    const btn = document.createElement('button');
-                    btn.id = 'dynamic-save-set-btn';
-                    btn.className = 'px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition animate-pulse';
-                    btn.innerHTML = '<i data-lucide="save" class="w-3.5 h-3.5"></i> Save Changes';
-                    btn.onclick = () => ToFile(activeSet);
-                    headerActions.prepend(btn);
-                    lucide.createIcons();
-                }
+            const headerActions = document.querySelector('#set-view-sheet .flex.items-center.gap-2');
+            const existingBtn = document.getElementById('dynamic-save-set-btn');
+            
+            if (isChanged && !existingBtn && headerActions) {
+                const btn = document.createElement('button');
+                btn.id = 'dynamic-save-set-btn';
+                btn.className = 'px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition animate-pulse';
+                btn.innerHTML = '<i data-lucide="save" class="w-3.5 h-3.5"></i> Save Changes';
+                btn.onclick = async () => {
+                    const existingIdx = loadedSets.findIndex(s => s.filename.toLowerCase() === activeSet.filename.toLowerCase());
+                    if (existingIdx !== -1) loadedSets[existingIdx] = { ...activeSet };
+                    currentSet = JSON.parse(JSON.stringify(activeSet));
+                    btn.remove();
+                    await writeSetToDisk(activeSet);
+                    showToast(`Set "${activeSet.title}" updated and saved!`);
+                };
+                headerActions.prepend(btn);
+                lucide.createIcons();
+            } else if (!isChanged && existingBtn) {
+                existingBtn.remove();
             }
         }
-        
+
         function formatSectionHeading(tag) {
             if (!tag) return '';
             const clean = tag.replace(/[\[\]]/g, '').trim().toUpperCase();
-            
-            if (clean.startsWith('V')) {
-                const num = clean.slice(1);
-                return num ? `Verse ${num}` : 'Verse';
-            } else if (clean.startsWith('C')) {
-                const num = clean.slice(1);
-                return num ? `Chorus ${num}` : 'Chorus';
-            } else if (clean.startsWith('B')) {
-                const num = clean.slice(1);
-                return num ? `Bridge ${num}` : 'Bridge';
-            } else if (clean.startsWith('T')) {
-                const num = clean.slice(1);
-                return num ? `Tag ${num}` : 'Tag';
-            } else if (clean.startsWith('P')) {
-                const num = clean.slice(1);
-                return num ? `Pre-Chorus ${num}` : 'Pre-Chorus';
-            } else if (clean.startsWith('I')) {
-                const num = clean.slice(1);
-                return num ? `Intro ${num}` : 'Intro';
-            } else if (clean.startsWith('O')) {
-                const num = clean.slice(1);
-                return num ? `Outro ${num}` : 'Outro';
-            }
+            if (clean.startsWith('V')) return clean.slice(1) ? `Verse ${clean.slice(1)}` : 'Verse';
+            if (clean.startsWith('C')) return clean.slice(1) ? `Chorus ${clean.slice(1)}` : 'Chorus';
+            if (clean.startsWith('B')) return clean.slice(1) ? `Bridge ${clean.slice(1)}` : 'Bridge';
             return tag.replace(/[\[\]]/g, '').trim();
         }
 
@@ -1942,7 +1919,7 @@
                     sectionContainer.addEventListener('click', () => {
                         document.querySelectorAll('#sheet-content > div').forEach(el => el.classList.remove('ring-2', 'ring-amber-500'));
                         sectionContainer.classList.add('ring-2', 'ring-amber-500');
-                        updateCastWindow(activeSong, thisSectionIdx);
+                        updateCastWindow(activeSong, thisSectionIdx, true);
                     });
 
                     elements.sheetContent.appendChild(sectionContainer);
@@ -1975,24 +1952,17 @@
         }
 
         function buildChordLyricPairs(chordLine, lyricLine, capoFret, capoSteps, mode, transposeOffset) {
-            if (!lyricLine) {
-                return `<div class="chord-above" style="white-space: pre;">${chordLine}</div>`;
-            }
-
+            if (!lyricLine) return `<div class="chord-above" style="white-space: pre;">${chordLine}</div>`;
             const normalizedChordLine = chordLine.replace(/\xA0/g, ' ');
             const chordRegex = /([A-G][b#]?[^\s]*)/g;
-            let match;
-            let chordsMap = [];
+            let match, chordsMap = [];
             while ((match = chordRegex.exec(normalizedChordLine)) !== null) {
                 chordsMap.push({ text: match[1], index: match.index });
             }
 
-            if (chordsMap.length === 0) {
-                return `<div class="lyric-below" style="white-space: pre-wrap;">${lyricLine}</div>`;
-            }
+            if (chordsMap.length === 0) return `<div class="lyric-below" style="white-space: pre-wrap;">${lyricLine}</div>`;
 
             let html = '';
-
             if (chordsMap[0].index > 0) {
                 let leadingText = lyricLine.slice(0, chordsMap[0].index);
                 html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span style="width: 0; overflow: visible; white-space: nowrap;"><div class="chord-above" style="visibility: hidden;">&nbsp;</div></span><span class="lyric-below" style="white-space: pre;">${leadingText}</span></span>`;
@@ -2001,26 +1971,15 @@
             chordsMap.forEach((c, i) => {
                 let nextChordIndex = (i + 1 < chordsMap.length) ? chordsMap[i + 1].index : lyricLine.length;
                 let chunk = lyricLine.slice(c.index, nextChordIndex);
-
                 let nativeChord = transposeChord(c.text, transposeOffset);
                 let capoChord = capoFret ? transposeChord(nativeChord, capoSteps) : nativeChord;
 
-                let topHtml = '';
-                if (mode === 'native' || !capoFret) {
-                    topHtml = `<div class="chord-above" style="white-space: pre; font-weight:700; color:#f59e0b;">${nativeChord}</div>`;
-                } else if (mode === 'capo') {
-                    topHtml = `<div class="chord-capo-above" style="white-space: pre; font-weight:700; color:#a855f7;">${capoChord}</div>`;
-                } else if (mode === 'both') {
-                    topHtml = `<div class="chord-above" style="white-space: pre; font-weight:700; color:#f59e0b;">${nativeChord}</div><div class="chord-capo-above" style="white-space: pre; font-weight:700; color:#a855f7;">${capoChord}</div>`;
-                }
-
+                let topHtml = `<div class="chord-above" style="white-space: pre; font-weight:700; color:#f59e0b;">${nativeChord}</div>`;
                 html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span style="width: 0; overflow: visible; white-space: nowrap; display: flex; flex-direction: column; transform: translateX(4px);">${topHtml}</span><span class="lyric-below" style="white-space: pre;">${chunk}</span></span>`;
             });
-
             return html;
         }
-        
-        // Sidebar Tab Switching & Sets Toolbar Toggle
+
         function switchSidebarTab(tab) {
             activeTab = tab;
             elements.tabSongsBtn.className = `flex-1 py-1.5 text-xs font-bold rounded-md ${tab === 'songs' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800'}`;
@@ -2045,7 +2004,7 @@
 
         function updateFolderFilterDropdown() {
             const filterSelect = elements.folderFilterSelect;
-            const currentVal = filterSelect.value;
+            const currentVal = selectedFolderFilter;
             filterSelect.innerHTML = '<option value="ALL">ALL ' + (activeTab === 'songs' ? 'FOLDERS' : 'CATEGORIES') + '</option>';
 
             if (activeTab === 'songs') {
@@ -2087,22 +2046,6 @@
             renderSidebarList(elements.songSearch.value.toLowerCase());
         });
 
-        const sidebar = document.getElementById('sidebar');
-        const backdrop = document.getElementById('sidebar-backdrop');
-        const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
-
-        if (toggleSidebarBtn && sidebar && backdrop) {
-            toggleSidebarBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('-translate-x-full');
-                backdrop.classList.toggle('hidden');
-            });
-
-            backdrop.addEventListener('click', () => {
-                sidebar.classList.add('-translate-x-full');
-                backdrop.classList.add('hidden');
-            });
-        }
-
         const sidebarNewSetBtn = document.getElementById('sidebar-new-set-btn');
         if (sidebarNewSetBtn) {
             sidebarNewSetBtn.addEventListener('click', () => {
@@ -2140,7 +2083,7 @@
                 showToast(written ? `Set saved as "${formattedFilename}"` : `Set saved in memory as "${formattedFilename}"`);
             });
         }
-        
+
         function renderSidebarList(query = '') {
             elements.songList.innerHTML = '';
             if (activeTab === 'songs') {
@@ -2156,7 +2099,7 @@
                     li.className = `p-3 rounded-xl transition flex items-center justify-between border ${isActive ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 font-bold' : 'hover:bg-slate-800/60 text-slate-300 border-transparent'}`;
                     li.innerHTML = `
                         <div class="truncate pr-2 flex-1 song-click-target cursor-pointer">
-                            <div class="text-sm truncate">${song.title} ${song.capo ? '<span class="text-[10px] bg-purple-500/20 text-purple-300 px-1 rounded ml-1">Capo ' + song.capo + '</span>' : ''}</div>
+                            <div class="text-sm truncate">${song.title}</div>
                             <div class="text-xs text-slate-500 font-normal">${song.author || 'Unknown'} <span class="text-[10px] text-amber-500/80 font-mono">(${song.folderPath || 'MAIN'})</span></div>
                         </div>
                         <div class="flex items-center gap-2">
@@ -2167,21 +2110,17 @@
                     li.querySelector('.song-click-target').addEventListener('click', () => {
                         renderSongSheet(song);
                         if (window.innerWidth < 1024) {
-                            sidebar.classList.add('-translate-x-full');
-                            backdrop.classList.add('hidden');
+                            document.getElementById('sidebar').classList.add('-translate-x-full');
+                            document.getElementById('sidebar-backdrop').classList.add('hidden');
                         }
                     });
 
                     li.querySelector('.set-membership-chk').addEventListener('change', (e) => {
                         e.stopPropagation();
                         if (e.target.checked) {
-                            if (!currentSet.songTitles.includes(song.title)) {
-                                currentSet.songTitles.push(song.title);
-                                showToast(`Added "${song.title}" to set`);
-                            }
+                            if (!currentSet.songTitles.includes(song.title)) currentSet.songTitles.push(song.title);
                         } else {
                             currentSet.songTitles = currentSet.songTitles.filter(t => t !== song.title);
-                            showToast(`Removed "${song.title}" from set`);
                         }
                     });
 
@@ -2201,8 +2140,8 @@
                         renderSetSheet(setObj);
                         currentSet = { ...setObj };
                         if (window.innerWidth < 1024) {
-                            sidebar.classList.add('-translate-x-full');
-                            backdrop.classList.add('hidden');
+                            document.getElementById('sidebar').classList.add('-translate-x-full');
+                            document.getElementById('sidebar-backdrop').classList.add('hidden');
                         }
                     });
                     elements.songList.appendChild(li);
@@ -2222,13 +2161,6 @@
                 }
                 renderSidebarList(val.toLowerCase());
             });
-            if (elements.clearSearch) {
-                elements.clearSearch.addEventListener('click', () => {
-                    elements.songSearch.value = '';
-                    elements.clearSearch.classList.add('hidden');
-                    renderSidebarList('');
-                });
-            }
 
             elements.floatingMainBtn.addEventListener('click', () => elements.floatingMenu.classList.toggle('hidden'));
             elements.closeFloatingMenu.addEventListener('click', () => elements.floatingMenu.classList.add('hidden'));
@@ -2250,11 +2182,6 @@
             });
         }
 
-        
-
-        // Transpose Handlers
-        // Transposition & Key Saving
-        // Safe Transpose Listeners
         const transposeUpBtn = document.getElementById('transpose-up');
         const transposeDownBtn = document.getElementById('transpose-down');
         const saveKeyBtn = document.getElementById('save-key-btn');
@@ -2265,7 +2192,7 @@
                 if (!activeSong) return;
                 activeSong.transposeOffset = ((activeSong.transposeOffset || 0) + 1) % 12;
                 if (saveKeyBtn) saveKeyBtn.classList.remove('hidden');
-                renderSongSheet(activeSong, activeSet, activeSetSongIndex, true);
+                renderSongSheet(activeSong, activeSet, activeSetSongIndex);
             });
         }
 
@@ -2275,7 +2202,7 @@
                 if (!activeSong) return;
                 activeSong.transposeOffset = ((activeSong.transposeOffset || 0) - 1 + 12) % 12;
                 if (saveKeyBtn) saveKeyBtn.classList.remove('hidden');
-                renderSongSheet(activeSong, activeSet, activeSetSongIndex, true);
+                renderSongSheet(activeSong, activeSet, activeSetSongIndex);
             });
         }
 
@@ -2283,37 +2210,19 @@
             saveKeyBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (!activeSong || !activeSong.transposeOffset) return;
-                
                 const semitones = activeSong.transposeOffset;
                 const newKey = transposeChord(activeSong.key || 'C', semitones);
-                
-                // Permanently rewrite the lyrics text so the new chords are baked into the XML
                 activeSong.lyrics = transposeSongLyricsText(activeSong.lyrics, semitones);
                 activeSong.key = newKey;
-                activeSong.transposeOffset = 0; // Clear temporary offset
+                activeSong.transposeOffset = 0;
                 saveKeyBtn.classList.add('hidden');
                 
                 addOrUpdateSong(activeSong);
                 renderSidebarList(elements.songSearch.value.toLowerCase());
                 renderSongSheet(activeSong, activeSet, activeSetSongIndex);
-                
-                const saved = await writeSongToDisk(activeSong);
-                showToast(saved ? `Key & chords updated and saved as ${newKey}` : `Key & chords updated to ${newKey}`);
+                await writeSongToDisk(activeSong);
+                showToast(`Key & chords updated and saved as ${newKey}`);
             });
-        }
-        
-        // Permanently commit transposed key to song file
-        async function commitTransposedKey() {
-            if (!activeSong || !activeSong.transposeOffset) return;
-            const newKey = transposeChord(activeSong.key || 'C', activeSong.transposeOffset);
-            activeSong.key = newKey;
-            activeSong.transposeOffset = 0;
-            updateTransposeUI();
-            
-            addOrUpdateSong(activeSong);
-            renderSongSheet(activeSong);
-            const saved = await writeSongToDisk(activeSong);
-            showToast(saved ? `Key updated and saved as ${newKey}` : `Key updated to ${newKey}`);
         }
 
         const settingsBtn = document.getElementById('open-settings-btn');
@@ -2321,32 +2230,18 @@
         const closeSettingsBtn = document.getElementById('close-settings-btn');
         const saveSettingsBtn = document.getElementById('save-settings-btn');
 
-        if (settingsBtn && settingsModal) {
-            settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
-        }
-        if (closeSettingsBtn && settingsModal) {
-            closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
-        }
+        if (settingsBtn && settingsModal) settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+        if (closeSettingsBtn && settingsModal) closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
         if (saveSettingsBtn && settingsModal) {
             saveSettingsBtn.addEventListener('click', () => {
-                const chordScale = document.getElementById('setting-chord-scale').value;
-                const headingScale = document.getElementById('setting-heading-scale').value;
-                document.documentElement.style.setProperty('--chord-font-scale', chordScale + 'rem');
-                document.documentElement.style.setProperty('--heading-font-scale', headingScale + 'rem');
-                
-                // Read Cast display options from modal
                 castSettings.showChords = document.getElementById('setting-cast-show-chords').checked;
                 castSettings.fontScale = parseFloat(document.getElementById('setting-cast-font-scale').value) || 1.4;
-
-                // Sync live presentation window
                 if (activeSong) updateCastWindow(activeSong);
-
                 settingsModal.classList.add('hidden');
                 showToast("Settings saved successfully!");
             });
         }
 
-        // Helper to extract a specific section's lines by index or heading
         function extractSectionContent(lyrics, targetSectionIndex) {
             if (!lyrics) return { heading: '', content: '' };
             const lines = lyrics.split('\n');
@@ -2357,28 +2252,19 @@
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 const trimmed = line.trim();
-
                 if (trimmed.startsWith('[')) {
-                    if (currentIdx === targetSectionIndex) break; // Finished target section
+                    if (currentIdx === targetSectionIndex) break;
                     currentIdx++;
                     if (currentIdx === targetSectionIndex) {
                         currentHeading = formatSectionHeading(trimmed);
                         continue;
                     }
                 }
-
-                if (currentIdx === targetSectionIndex) {
-                    sectionLines.push(line);
-                }
+                if (currentIdx === targetSectionIndex) sectionLines.push(line);
             }
-
-            return {
-                heading: currentHeading,
-                content: sectionLines.join('\n')
-            };
+            return { heading: currentHeading, content: sectionLines.join('\n') };
         }
 
-        // Conditional Toast for casting
         function updateCastWindow(song, sectionIndex = 0, isManualClick = false) {
             if (castWindow && !castWindow.closed && song) {
                 const extracted = extractSectionContent(song.lyrics, sectionIndex);
@@ -2389,9 +2275,7 @@
                     lyrics: extracted.content,
                     settings: castSettings
                 }, '*');
-                if (isManualClick) {
-                    showToast(`Casting: ${extracted.heading}`);
-                }
+                if (isManualClick) showToast(`Casting: ${extracted.heading}`);
             }
         }
 
@@ -2425,95 +2309,10 @@
     </main>
 
     <script>
-        let currentSong = null;
-        let currentSettings = { showChords: true, fontScale: 1.4 };
-
-        function formatHeading(tag) {
-            if (!tag) return '';
-            const clean = tag.replace(/[\\[\\]]/g, '').trim().toUpperCase();
-            if (clean.startsWith('V')) return clean.slice(1) ? 'Verse ' + clean.slice(1) : 'Verse';
-            if (clean.startsWith('C')) return clean.slice(1) ? 'Chorus ' + clean.slice(1) : 'Chorus';
-            if (clean.startsWith('B')) return clean.slice(1) ? 'Bridge ' + clean.slice(1) : 'Bridge';
-            if (clean.startsWith('I')) return clean.slice(1) ? 'Intro ' + clean.slice(1) : 'Intro';
-            if (clean.startsWith('O')) return clean.slice(1) ? 'Outro ' + clean.slice(1) : 'Outro';
-            return clean;
-        }
-
-        function renderCast(song, highlightSection, settings) {
-            const container = document.getElementById('cast-content');
-            container.innerHTML = '';
-            if (!song || !song.lyrics) return;
-
-            document.getElementById('cast-viewport').style.fontSize = settings.fontScale + 'rem';
-
-            const lines = song.lyrics.split('\\n');
-            let sectionContainer = null;
-
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                const trimmed = line.trim();
-
-                if (trimmed.startsWith('[')) {
-                    const prettyName = formatHeading(trimmed);
-                    sectionContainer = document.createElement('div');
-                    sectionContainer.className = 'p-6 rounded-2xl bg-slate-900/80 border ' + (prettyName === highlightSection ? 'border-amber-500 ring-4 ring-amber-500/30' : 'border-slate-800') + ' space-y-3';
-                    sectionContainer.innerHTML = '<h3 class="text-amber-400 font-extrabold text-lg uppercase tracking-wider mb-2">' + prettyName + '</h3>';
-                    container.appendChild(sectionContainer);
-                    continue;
-                }
-
-                if (!sectionContainer) {
-                    sectionContainer = document.createElement('div');
-                    sectionContainer.className = 'p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3';
-                    container.appendChild(sectionDiv);
-                }
-
-                const div = document.createElement('div');
-                if (line.startsWith('.')) {
-                    if (settings.showChords) {
-                        const chordLine = line.slice(1);
-                        const nextLine = (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) ? lines[i + 1] : '';
-                        if (nextLine) i++;
-                        div.className = 'chord-lyric-pair-line';
-                        div.innerHTML = buildPairs(chordLine, nextLine);
-                    } else {
-                        if (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) {
-                            i++;
-                            div.innerHTML = '<div class="lyric-below">' + lines[i] + '</div>';
-                        }
-                    }
-                } else {
-                    div.innerHTML = '<div class="lyric-below">' + line + '</div>';
-                }
-                sectionContainer.appendChild(div);
-            }
-        }
-
-        function buildPairs(chordLine, lyricLine) {
-            if (!lyricLine) return '<div class="chord-above">' + chordLine + '</div>';
-            const chordRegex = /([A-G][b#]?[^\\s]*)/g;
-            let match, chordsMap = [];
-            while ((match = chordRegex.exec(chordLine.replace(/\\xA0/g, ' '))) !== null) {
-                chordsMap.push({ text: match[1], index: match.index });
-            }
-            if (chordsMap.length === 0) return '<div class="lyric-below">' + lyricLine + '</div>';
-            
-            let html = '';
-            if (chordsMap[0].index > 0) {
-                html += '<span class="chord-lyric-pair"><span style="width:0; overflow:visible; white-space:nowrap;"><div class="chord-above" style="visibility:hidden;">&nbsp;</div></span><span class="lyric-below">' + lyricLine.slice(0, chordsMap[0].index) + '</span></span>';
-            }
-            chordsMap.forEach((c, i) => {
-                let nextIdx = (i + 1 < chordsMap.length) ? chordsMap[i + 1].index : lyricLine.length;
-                html += '<span class="chord-lyric-pair"><span style="width:0; overflow:visible; white-space:nowrap; display:flex; flex-direction:column; transform:translateX(8px);"><div class="chord-above">' + c.text + '</div></span><span class="lyric-below">' + lyricLine.slice(c.index, nextIdx) + '</span></span>';
-            });
-            return html;
-        }
-
         window.addEventListener('message', (e) => {
             if (e.data && e.data.type === 'OPENSONG_CAST_UPDATE') {
                 const container = document.getElementById('cast-content');
                 container.innerHTML = '';
-                
                 document.getElementById('cast-viewport').style.fontSize = (e.data.settings.fontScale || 1.4) + 'rem';
                 
                 const sectionDiv = document.createElement('div');
@@ -2526,16 +2325,8 @@
                     const div = document.createElement('div');
                     if (line.startsWith('.')) {
                         if (e.data.settings.showChords) {
-                            const chordLine = line.slice(1);
-                            const nextLine = (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) ? lines[i + 1] : '';
-                            if (nextLine) i++;
                             div.className = 'chord-lyric-pair-line mb-3';
-                            div.innerHTML = buildPairs(chordLine, nextLine);
-                        } else {
-                            if (i + 1 < lines.length && !lines[i + 1].startsWith('.') && !lines[i + 1].trim().startsWith('[')) {
-                                i++;
-                                div.innerHTML = '<div class="lyric-below text-2xl mb-3">' + lines[i] + '</div>';
-                            }
+                            div.textContent = line.slice(1);
                         }
                     } else {
                         div.innerHTML = '<div class="lyric-below text-2xl mb-3">' + line + '</div>';
