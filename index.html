@@ -140,7 +140,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4l</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4m</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -2153,6 +2153,44 @@
         const transposeDownBtn = document.getElementById('transpose-down');
         const saveKeyBtn = document.getElementById('save-key-btn');
 
+function transposeChord(chord, semitones) {
+    if (!chord) return '';
+    const notesSharp = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const notesFlat = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+    
+    // Simple regex to match root note and any accidental/extension
+    const match = chord.match(/^([A-G][b#]?)(.*)$/);
+    if (!match) return chord;
+
+    let root = match[1];
+    let extension = match[2];
+
+    let index = notesSharp.indexOf(root);
+    if (index === -1) index = notesFlat.indexOf(root);
+    if (index === -1) return chord;
+
+    let newIndex = (index + semitones) % 12;
+    if (newIndex < 0) newIndex += 12;
+
+    // Use flat or sharp based on original root preference
+    let newRoot = root.includes('b') ? notesFlat[newIndex] : notesSharp[newIndex];
+    return newRoot + extension;
+}
+
+function transposeSongLyricsText(lyrics, semitones) {
+    if (!lyrics) return '';
+    const lines = lyrics.split('\n');
+    return lines.map(line => {
+        if (line.startsWith('.')) {
+            const chordLine = line.slice(1);
+            const transposed = chordLine.replace(/([A-G][b#]?[^\s]*)/g, (match) => {
+                return transposeChord(match, semitones);
+            });
+            return '.' + transposed;
+        }
+        return line;
+    }).join('\n');
+}
         if (transposeUpBtn) {
             transposeUpBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
