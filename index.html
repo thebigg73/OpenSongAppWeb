@@ -140,7 +140,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4e</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4f</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -957,7 +957,6 @@
                 }
                 rootDirectoryHandle = savedHandle;
                 
-                // Immediately hide the banner so it doesn't block touch events
                 const banner = document.getElementById('reconnect-banner');
                 if (banner) {
                     banner.classList.add('hidden');
@@ -965,7 +964,13 @@
                 }
 
                 await processRootDirectory(savedHandle);
-                showToast("Folder reconnected successfully!");
+                
+                // Force immediate UI refresh for mobile sync
+                updateTabCounts();
+                updateFolderFilterDropdown();
+                renderSidebarList();
+                
+                showToast(`Folder reconnected! Loaded ${loadedSongs.length} songs.`);
             } catch (err) {
                 console.error("Reconnect failed:", err);
                 showToast("Could not reconnect folder. Please reselect.");
@@ -2005,8 +2010,8 @@
         }
 
         function updateTabCounts() {
-            elements.tabSongsCount.textContent = `(${loadedSongs.length})`;
-            elements.tabSetsCount.textContent = `(${loadedSets.length})`;
+            if (elements.tabSongsCount) elements.tabSongsCount.textContent = `(${loadedSongs.length})`;
+            if (elements.tabSetsCount) elements.tabSetsCount.textContent = `(${loadedSets.length})`;
         }
 
         function updateFolderFilterDropdown() {
