@@ -2,7 +2,7 @@
 <html lang="en" class="h-full bg-slate-950 text-slate-100">
     <head>
         <script>
-            const version = "1.0";
+            const version = "1.0a";
         </script>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -68,7 +68,7 @@
             .chord-capo-above {
                 font-weight: 700;
                 color: #a855f7;
-                line-height: 1.;
+                line-height: 1.0;
                 user-select: none;
                 white-space: pre;
                 font-size: var(--chord-font-scale, 1rem);
@@ -157,21 +157,6 @@
                     <div class="p-2 bg-amber-500/10 text-amber-500 rounded-lg">
                         <i data-lucide="music" class="w-6 h-6"></i>
                     </div>
-                    <div>
-                        <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
-                            OpenSongApp<span
-                                class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded"
-                                >Web</span
-                            >
-                            <span
-                                id="app-version-badge"
-                                class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">
-                            </span>
-                        </h1>
-                        <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">
-                            No root directory loaded
-                        </p>
-                    </div>
                 </div>
             </div>
 
@@ -199,20 +184,6 @@
             <!-- Top Control Bar Container -->
             <!-- Updated Top Control Bar (New/Save Set moved to sidebar) -->
             <div class="flex items-center gap-2 overflow-x-auto py-2 shrink-0 no-scrollbar">
-                <div class="hidden sm:flex items-center gap-1 bg-slate-800/80 p-1 rounded-lg border border-slate-700">
-                    <button
-                        id="new-song-btn"
-                        class="px-2 py-1 text-xs font-bold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 rounded transition flex items-center gap-1">
-                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Song
-                    </button>
-                    <button
-                        id="open-import-modal-btn"
-                        class="px-2 py-1 text-xs font-bold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 rounded transition flex items-center gap-1"
-                        title="Import / Export Archives">
-                        <i data-lucide="repeat" class="w-3.5 h-3.5"></i> Import/Export
-                    </button>
-                </div>
-
                 <button
                     id="cast-display-btn"
                     class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700"
@@ -245,6 +216,16 @@
             <aside
                 id="sidebar"
                 class="w-80 bg-slate-900/95 backdrop-blur-md border-r border-slate-800 flex flex-col transition-all duration-300 absolute lg:relative inset-y-0 left-0 z-10 -translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none">
+                <div class="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="music" class="w-4 h-4 text-amber-400"></i>
+                        <span class="font-extrabold text-slate-200 text-sm tracking-wide">OpenSongApp Web</span>
+                    </div>
+                    <span
+                        id="app-version-badge"
+                        class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">
+                    </span>
+                </div>
                 <div
                     id="sidebar-header-action"
                     class="p-2 bg-slate-950 border-b border-slate-800 flex rounded-lg m-2 gap-1">
@@ -314,7 +295,7 @@
             <!-- Main Viewport Container -->
             <main
                 id="main-scroll-container"
-                class="flex-1 bg-slate-950 overflow-y-auto py-4 px-2 flex flex-col relative scroll-smooth">
+                class="flex-1 bg-slate-950 overflow-y-auto p-0 flex flex-col relative scroll-smooth">
                 <div id="song-display-area" class="w-full max-w-4xl min-h-full flex flex-col relative">
                     <div
                         id="empty-state"
@@ -404,7 +385,7 @@
 
                     <article
                         id="song-sheet"
-                        class="hidden flex-1 flex flex-col h-full w-full overflow-y-auto px-4 py-4 bg-slate-950">
+                        class="hidden flex-1 flex flex-col h-full w-full overflow-y-auto p-4 bg-slate-950">
                         <div
                             id="set-navigation-banner"
                             class="hidden bg-indigo-950/40 border border-indigo-800/60 rounded-xl p-3 flex items-center justify-between mb-4">
@@ -489,6 +470,19 @@
                             <div id="sheet-copyright"></div>
                             <div id="sheet-ccli"></div>
                         </footer>
+                        <!-- Place this FAB directly inside your active content container (e.g., right inside your #song-sheet or set view container) -->
+                        <div class="relative w-full flex-1 flex flex-col">
+                            <!-- Your Song/Set Content Goes Here -->
+                            <div id="sheet-content" class="w-full flex-1 space-y-4 pb-20"></div>
+
+                            <!-- Scoped Floating Action Button (FAB) anchored to the bottom-right of the content area -->
+                            <button
+                                id="fab-actions-btn"
+                                class="absolute bottom-6 right-6 z-30 w-12 h-12 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-full shadow-2xl flex items-center justify-center transition transform hover:scale-105"
+                                title="Song & Set Actions">
+                                <i data-lucide="plus" class="w-6 h-6"></i>
+                            </button>
+                        </div>
                     </article>
                 </div>
 
@@ -1378,7 +1372,7 @@
                 await initSqlDatabase();
 
                 // Set the version
-                document.getElementById('app-version-badge').textContent = version;
+                document.getElementById("app-version-badge").textContent = version;
 
                 const savedHandle = await getStoredDirectoryHandle();
                 if (savedHandle) {
@@ -2230,6 +2224,22 @@
                 const container = elements.setSongsContainer;
                 container.innerHTML = "";
 
+                // If there is an active/temporary set being built or viewed, pin it to the top
+                if (window.currentActiveSet) {
+                    const tempItem = document.createElement("li");
+                    tempItem.className = "p-3 bg-indigo-950/60 border border-indigo-700/60 rounded-xl space-y-2 mb-2";
+                    tempItem.innerHTML = `
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-indigo-300 uppercase tracking-wider">Current set (temporary)</span>
+                <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full font-mono">${window.currentActiveSet.songs.length} songs</span>
+            </div>
+            <div class="text-xs text-slate-300 font-medium truncate">${window.currentActiveSet.title || "Untitled Set"}</div>
+            <div class="space-y-1 pl-2 border-l border-indigo-800/60 pt-1">
+                ${window.currentActiveSet.songs.map((s, idx) => `<div class="text-[11px] text-slate-400 truncate">${idx + 1}.${s.title}</div>`).join("")}
+            </div>
+        `;
+                    container.appendChild(tempItem);
+                }
                 setObj.songTitles.forEach((t, idx) => {
                     const foundSong = loadedSongs.find((s) => s.title.toLowerCase() === t.toLowerCase());
                     const itemDiv = document.createElement("div");
@@ -3171,6 +3181,19 @@
                         castWindow.document.close();
                         if (activeSong) updateCastWindow(activeSong);
                     }
+                });
+            }
+
+            // FAB Toggle logic
+            const fabBtn = document.getElementById("fab-actions-btn");
+            const actionModal = document.getElementById("action-modal");
+            const closeActionModal = document.getElementById("close-action-modal");
+
+            if (fabBtn && actionModal) {
+                fabBtn.addEventListener("click", () => actionModal.classList.remove("hidden"));
+                closeActionModal.addEventListener("click", () => actionModal.classList.add("hidden"));
+                actionModal.addEventListener("click", (e) => {
+                    if (e.target === actionModal) actionModal.classList.add("hidden");
                 });
             }
         </script>
