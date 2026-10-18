@@ -140,7 +140,7 @@
                <div>
                     <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-400">
                         OpenSongApp<span class="text-xs font-normal px-1.5 py-0.5 ml-1 bg-amber-500/20 text-amber-300 rounded">Web</span>
-                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4g</span>
+                        <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 ml-1 bg-slate-800 text-slate-400 border border-slate-700 rounded">v1.4h</span>
                     </h1>
                     <p id="folder-status-text" class="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">No root directory loaded</p>
                 </div>
@@ -1094,16 +1094,17 @@
             
             loadedSongs = [];
             loadedSets = [];
+            let scannedCount = 0;
+
+            console.log(`[OpenSongApp] Starting scan of root directory: ${handle.name}`);
 
             try {
                 let foundSongsDir = false;
-                
-                // Safe iterator for root handle
                 for await (const entry of handle.values()) {
                     try {
                         if (entry.kind === 'directory' && entry.name.toLowerCase() === 'songs') {
                             foundSongsDir = true;
-                            await scanSongDir(entry, '');
+                            scannedCount += await scanSongDir(entry, '');
                         } else if (entry.kind === 'directory' && entry.name.toLowerCase() === 'sets') {
                             for await (const setFile of entry.values()) {
                                 try {
@@ -1123,7 +1124,7 @@
                 }
 
                 if (!foundSongsDir && loadedSongs.length === 0) {
-                    await scanSongDir(handle, '');
+                    scannedCount += await scanSongDir(handle, '');
                 }
             } catch (e) {
                 console.error("Directory scan fatal error:", e);
@@ -1144,17 +1145,13 @@
                 updateFolderFilterDropdown();
                 renderSidebarList();
                 
-                // Explicitly force DOM refresh
-                setTimeout(() => {
-                    updateTabCounts();
-                    renderSidebarList();
-                }, 100);
-
+                console.log(`[OpenSongApp] Scan complete. Total loaded songs: ${loadedSongs.length}, sets: ${loadedSets.length}`);
                 showToast(`Loaded ${loadedSongs.length} songs & ${loadedSets.length} sets!`);
             }
         }
 
         async function scanSongDir(dirHandle, prefix) {
+            let count = 0;
             try {
                 for await (const entry of dirHandle.values()) {
                     try {
@@ -1175,13 +1172,24 @@
                                     uuid: generateUUID(), 
                                     modified: new Date().toISOString() 
                                 });
+                                count++;
                             } else {
                                 const song = parseOpenSongXML(await f.text(), f.name, prefix || 'MAIN');
-                                if (song) addOrUpdateSong(song);
+                                if (song) {
+                                    addOrUpdateSong(song);
+                                    count++;
+                                }
+                            }
+                            
+                            // Every 10 songs, update the UI and log progress so mobile users see feedback
+                            if (count % 10 === 0) {
+                                updateTabCounts();
+                                renderSidebarList();
+                                console.log(`[OpenSongApp] Progress: Loaded ${loadedSongs.length} songs so far...`);
                             }
                         } else if (entry.kind === 'directory') {
                             const subFolderName = prefix ? `${prefix}/${entry.name}` : entry.name;
-                            await scanSongDir(entry, subFolderName);
+                            count += await scanSongDir(entry, subFolderName);
                         }
                     } catch (fileErr) {
                         console.warn("Skipped subfile/subfolder due to mobile permission limit:", fileErr);
@@ -1190,8 +1198,8 @@
             } catch (err) {
                 console.warn("Scan directory iteration warning:", err);
             }
+            return count;
         }
-
         function parseOpenSongXML(xmlString, filename, folderPath) {
             try {
                 const doc = new DOMParser().parseFromString(xmlString, "text/xml");
