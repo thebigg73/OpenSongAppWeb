@@ -2,7 +2,7 @@
 <html lang="en" class="h-full bg-[var(--bg-primary)] text-[var(--text-color)]">
     <head>
         <script>
-            const version = "1.0g";
+            const version = "1.0";
         </script>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -58,136 +58,145 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
         <!-- sql.js for reading NonOpenSongSongs.db SQLite databases -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
-        <!-- Lucide Icons -->
+        <!-- Lucioe Icons -->
         <script src="https://unpkg.com/lucide@latest"></script>
         <style>
-            /* Default / Dark Theme (Matches Android Dark Palette) */
-            :root, [data-theme="dark"] {
-                --bg-primary: #141b22;
-                --bg-primary-variant: #1A222C;
-                --bg-surface: #183441;
-                --bg-surface-variant: #203640;
+                                    /* Default / Dark Theme (Matches Android Dark Palette) */
+                                    :root, [data-theme="dark"] {
+                                        --bg-primary: #141b22;
+                                        --bg-primary-variant: #1A222C;
+                                        --bg-surface: #183441;
+                                        --bg-surface-variant: #203640;
 
-                --color-secondary: #294959;
-                --color-secondary-variant: #365c6e;
-                --color-secondary-fixed: #3C667A;
+                                        --color-secondary: #294959;
+                                        --color-secondary-variant: #365c6e;
+                                        --color-secondary-fixed: #3C667A;
 
-                --text-color: #f1faff;
-                --chord-color: #ffff00;
-                --capo-color: #ff0000;
-                --text-hint: #adb6bf;
-                --color-error: #AA0000;
+                                        --text-color: #f1faff;
+                                        --chord-color: #ffff00;
+                                        --capo-color: #ff0000;
+                                        --text-hint: #adb6bf;
+                                        --color-error: #AA0000;
 
-                --border-color: #203640;
+                                        --border-color: #203640;
+                                    }
+
+                                    /* Light Theme (Matches Android Light Palette) */
+                                    [data-theme="light"] {
+                                        --bg-primary: #FFFFFF;
+                                        --bg-primary-variant: #FAFAFF;
+                                        --bg-surface: #fafaff;
+                                        --bg-surface-variant: #E2D9DA;
+
+                                        --color-secondary: #C8E4EF;
+                                        --color-secondary-variant: #B0C5CA;
+                                        --color-secondary-fixed: #94AAB1;
+
+                                        --text-color: #141b22;
+                                        --chord-color: #0000ff;
+                                        --capo-color: #ff0000;
+                                        --text-hint: #8e969f;
+                                        --color-error: #F46262;
+
+                                        --border-color: #E2D9DA;
+                                    }
+
+                                    /* Core Element Overrides */
+                                    body {
+                                      background-color: var(--bg-primary);
+                                      color: var(--text-color);
+                                      transition: background-color 0.2s ease, color 0.2s ease;
+                                    }
+
+                                    /* Forces the sidebar closed even on desktop screens */
+                        /* Sidebar collapsed state: shrinks width to 0 and hides content smoothly */
+            #sidebar.closed {
+                width: 0 !important;
+                min-width: 0 !important;
+                overflow: hidden;
+                border-right-width: 0 !important;
             }
 
-            /* Light Theme (Matches Android Light Palette) */
-            [data-theme="light"] {
-                --bg-primary: #FFFFFF;
-                --bg-primary-variant: #FAFAFF;
-                --bg-surface: #fafaff;
-                --bg-surface-variant: #E2D9DA;
+                                    .app-surface { background-color: var(--bg-surface); }
+                                    .app-surface-variant { background-color: var(--bg-surface-variant); }
+                                    .app-card { background-color: var(--bg-primary-variant); border-color: var(--border-color); }
+                                    .app-accent-btn { background-color: var(--color-secondary); color: var(--text-color); }
+                                    .app-accent-btn:hover { background-color: var(--color-secondary-variant); }
+                                    .app-hint-text { color: var(--text-hint); }
 
-                --color-secondary: #C8E4EF;
-                --color-secondary-variant: #B0C5CA;
-                --color-secondary-fixed: #94AAB1;
+                                    .chord-lyric-pair-line {
+                                        display: flex;
+                                        flex-wrap: nowrap;
+                                        white-space: nowrap;
+                                        width: 100%;
+                                        max-width: 100%;
+                                        word-break: break-word;
+                                        /* Base font size gets adjusted dynamically by auto-scale */
+                                        font-size: 20px;
+                                    }
 
-                --text-color: #141b22;
-                --chord-color: #0000ff;
-                --capo-color: #ff0000;
-                --text-hint: #8e969f;
-                --color-error: #F46262;
+                                    .chord-lyric-pair {
+                                        display: inline-flex;
+                                        flex-direction: column;
+                                        vertical-align: top;
+                                        position: relative;
+                                    }
 
-                --border-color: #E2D9DA;
-            }
+                                    .chord-above {
+                                        font-weight: 700;
+                                        var(--chord-color, #ffff00);
+                                        line-height: 1.0;
+                                        user-select: none;
+                                        white-space: pre;
+                                        font-size: var(--chord-font-scale, 1rem);
+                                    }
 
-            /* Core Element Overrides */
-            body {
-              background-color: var(--bg-primary);
-              color: var(--text-color);
-              transition: background-color 0.2s ease, color 0.2s ease;
-            }
+                                    .chord-capo-above {
+                                        font-weight: 700;
+                                        var(--capo-color, #0000ff);
+                                        line-height: 1.0;
+                                        user-select: none;
+                                        white-space: pre;
+                                        font-size: var(--chord-font-scale, 1rem);
+                                    }
 
-            .app-surface { background-color: var(--bg-surface); }
-            .app-surface-variant { background-color: var(--bg-surface-variant); }
-            .app-card { background-color: var(--bg-primary-variant); border-color: var(--border-color); }
-            .app-accent-btn { background-color: var(--color-secondary); color: var(--text-color); }
-            .app-accent-btn:hover { background-color: var(--color-secondary-variant); }
-            .app-hint-text { color: var(--text-hint); }
+                                    .lyric-below {
+                                        color: #f1f5f9;
+                                        white-space: pre-wrap;
+                                        word-break: break-word;
+                                    }
 
-            .chord-lyric-pair-line {
-                display: flex;
-                flex-wrap: nowrap;
-                white-space: nowrap;
-                width: 100%;
-                max-width: 100%;
-                word-break: break-word;
-                /* Base font size gets adjusted dynamically by auto-scale */
-                font-size: 20px;
-            }
+                                    .chord-above:empty, .chord-capo-above:empty {
+                                        display: none;
+                                    }
 
-            .chord-lyric-pair {
-                display: inline-flex;
-                flex-direction: column;
-                vertical-align: top;
-                position: relative;
-            }
+                                    .section-heading {
+                                        font-size: var(--heading-font-scale, 0.85rem);
+                                        font-weight: 800;
+                                        text-transform: uppercase;
+                                        letter-spacing: 0.05em;
+                                    }
 
-            .chord-above {
-                font-weight: 700;
-                var(--chord-color, #ffff00);
-                line-height: 1.0;
-                user-select: none;
-                white-space: pre;
-                font-size: var(--chord-font-scale, 1rem);
-            }
+                                    .draggable-popup {
+                                        position: absolute;
+                                        z-index: 50;
+                                        cursor: move;
+                                        resize: both;
+                                        overflow: auto;
+                                    }
 
-            .chord-capo-above {
-                font-weight: 700;
-                var(--capo-color, #0000ff);
-                line-height: 1.0;
-                user-select: none;
-                white-space: pre;
-                font-size: var(--chord-font-scale, 1rem);
-            }
+                                    #toast-notification {
+                                        transition: transform 0.3s ease, opacity 0.3s ease;
+                                        pointer-events-none;
+                                    }
 
-            .lyric-below {
-                color: #f1f5f9;
-                white-space: pre-wrap;
-                word-break: break-word;
-            }
+                                    ::-webkit-scrollbar { width: 6px; height: 6px; }
+                                    ::-webkit-scrollbar-track { background: #0f172a; }
+                                    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+                                    ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-            .chord-above:empty, .chord-capo-above:empty {
-                display: none;
-            }
-
-            .section-heading {
-                font-size: var(--heading-font-scale, 0.85rem);
-                font-weight: 800;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-            }
-
-            .draggable-popup {
-                position: absolute;
-                z-index: 50;
-                cursor: move;
-                resize: both;
-                overflow: auto;
-            }
-
-            #toast-notification {
-                transition: transform 0.3s ease, opacity 0.3s ease;
-                pointer-events-none;
-            }
-
-            ::-webkit-scrollbar { width: 6px; height: 6px; }
-            ::-webkit-scrollbar-track { background: #0f172a; }
-            ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-            ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
-            .no-scrollbar::-webkit-scrollbar { display: none; }
-            .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                                    .no-scrollbar::-webkit-scrollbar { display: none; }
+                                    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         </style>
     </head>
     <body
@@ -237,7 +246,7 @@
                 </button>
                 <div class="flex items-center space-x-2">
                     <div class="p-2 bg-[var(--color-secondary)]/20 text-[var(--text-color)] rounded-lg">
-                        <i data-lucide="music" class="w-6 h-6"></i>
+                        <i data-lucide="music" class="w-6 h-6"></i>BETA
                     </div>
                 </div>
             </div>
@@ -308,7 +317,8 @@
                 class="fixed inset-0 bg-[var(--bg-primary)]/80 backdrop-blur-sm z-10 hidden lg:hidden transition-opacity"></div>
             <aside
                 id="sidebar"
-                class="w-80 bg-[var(--bg-primary-variant)] backdrop-blur-md border-r border-[var(--border-color)] bg-[var(--bg-primary-variant)]bg-[var(--bg-primary-variant)] flex flex-col transition-all duration-300 absolute lg:relative inset-y-0 left-0 z-10 -translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none">
+                class="w-80 bg-[var(--bg-primary-variant)] backdrop-blur-md border-r border-[var(--border-color)] flex flex-col transition-all duration-300 shrink-0 z-10 shadow-xl lg:shadow-none">
+                <!-- Sidebar content items remain exactly the same -->
                 <div
                     class="p-3 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-primary)]/50">
                     <div class="flex flex-col">
@@ -393,7 +403,8 @@
             <!-- Main Viewport Container -->
             <main
                 id="main-scroll-container"
-                class="flex-1 bg-[var(--bg-primary)] overflow-y-auto p-0 flex flex-col relative scroll-smooth">
+                class="flex-1 bg-[var(--bg-primary)] overflow-y-auto p-0 flex flex-col relative scroll-smooth transition-all duration-300">
+                <!-- Main content items remain exactly the same -->
                 <div id="song-display-area" class="w-full max-w-none min-h-full flex flex-col relative">
                     <div
                         id="empty-state"
@@ -491,7 +502,8 @@
 
                     <article
                         id="song-sheet"
-                        class="hidden flex-1 flex flex-col h-full w-full overflow-y-auto p-4 bg-[var(--bg-primary)]">
+                        class="hidden flex-1 flex flex-col h-full w-full overflow-y-auto p-4 bg-[var(--bg-primary)]"
+                        style="touch-action: pan-y">
                         <div
                             id="set-navigation-banner"
                             class="hidden bg-[var(--bg-surface-variant)] border border-[var(--border-color)] rounded-xl p-3 flex items-center justify-between mb-4">
@@ -1181,6 +1193,75 @@
             </div>
         </div>
 
+        <!-- Save Set Modal Dialog -->
+        <div
+            id="save-set-modal"
+            class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+            <div
+                class="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
+                <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+                    <h3
+                        id="save-modal-title"
+                        class="text-base font-extrabold text-[var(--text-color)] uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="save" class="w-4 h-4 text-[var(--color-secondary)]"></i> Save Set
+                    </h3>
+                    <button
+                        id="close-save-modal-btn"
+                        class="text-[var(--text-hint)] hover:text-[var(--text-color)] transition p-1">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-[var(--text-hint)] mb-1.5"
+                            >Set Title</label
+                        >
+                        <input
+                            type="text"
+                            id="save-modal-title-input"
+                            class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl px-3.5 py-2.5 text-sm text-[var(--text-color)] focus:outline-none focus:border-[var(--color-secondary)] transition"
+                            placeholder="e.g., Sunday Morning Worship" />
+                        <p id="save-modal-warning" class="text-xs text-amber-400 mt-1.5 hidden">
+                            A set with this name already exists. Saving will overwrite it.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-[var(--text-hint)] mb-1.5"
+                            >Category / Folder</label
+                        >
+                        <select
+                            id="save-modal-category-select"
+                            class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl px-3.5 py-2.5 text-sm text-[var(--text-color)] focus:outline-none focus:border-[var(--color-secondary)] transition mb-2">
+                            <option value="">(No Category)</option>
+                            <!-- Populated dynamically -->
+                            <option value="__new__">+ New Category...</option>
+                        </select>
+                        <!-- Hidden input that shows up only if "+ New Category..." is selected -->
+                        <input
+                            type="text"
+                            id="save-modal-new-category-input"
+                            class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl px-3.5 py-2.5 text-sm text-[var(--text-color)] focus:outline-none focus:border-[var(--color-secondary)] transition hidden"
+                            placeholder="Enter new category name..." />
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2 border-t border-[var(--border-color)]">
+                    <button
+                        id="cancel-save-modal-btn"
+                        class="px-4 py-2 bg-[var(--bg-primary)] hover:bg-[var(--bg-primary-variant)] text-[var(--text-color)] text-xs font-bold rounded-xl border border-[var(--border-color)] transition">
+                        Cancel
+                    </button>
+                    <button
+                        id="confirm-save-modal-btn"
+                        class="px-4 py-2 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5">
+                        <i data-lucide="check" class="w-4 h-4"></i> Save Set
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Manage Sets Modal -->
         <div
             id="manage-sets-modal"
@@ -1439,11 +1520,11 @@
             let loadedSongs = [];
             let loadedSets = [];
             let activeTab = "songs";
-            let selectedFolderFilter = "ALL";
+            let selectedFolderFilter = localStorage.getItem("selectedFolderFilter") || "ALL";
             let activeSong = null;
             let activeSet = null;
             let activeSetSongIndex = -1;
-            let capoDisplayMode = "native";
+            let capoDisplayMode = localStorage.getItem("capoDisplayMode") || "both";
             let currentTransposeOffset = 0;
             let castWindow = null;
 
@@ -1569,8 +1650,21 @@
                 setupEventListeners();
                 setupSetNavigationListeners();
                 setupSidebarInteractions();
-                loadCurrentSetFromStorage();
+                loadActiveSetFromStorage();
                 await initSqlDatabase();
+
+                // Ensure it defaults to Songs tab on boot
+                switchSidebarTab("songs");
+
+                // Default state: Open on desktop (>=1024px), Closed on mobile (<1024px)
+                const sidebar = document.getElementById("sidebar");
+                if (sidebar) {
+                    if (window.innerWidth < 1024) {
+                        sidebar.classList.add("closed");
+                    } else {
+                        sidebar.classList.remove("closed");
+                    }
+                }
 
                 // Set the version
                 document.getElementById("app-version-badge").textContent = version;
@@ -1823,10 +1917,12 @@
                                 banner.style.display = "none";
                             }
 
-                            selectedFolderFilter = "ALL";
+                            switchSidebarTab("songs"); // Force default to songs tab on scan/reconnect
                             updateTabCounts();
                             updateFolderFilterDropdown();
                             renderSidebarList();
+                            // Restore the last active song when loading from cache
+                            await restoreLastLoadedSong();
                             showToast(`Loaded ${loadedSongs.length} songs from cache!`);
                             return;
                         }
@@ -1920,10 +2016,12 @@
                         }
                     }
 
-                    selectedFolderFilter = "ALL";
                     updateTabCounts();
                     updateFolderFilterDropdown();
                     renderSidebarList();
+
+                    // Restore the last active song if available
+                    await restoreLastLoadedSong();
 
                     elements.modalProgressContainer.classList.add("hidden");
                     elements.modalActionsContainer.classList.remove("hidden");
@@ -2330,9 +2428,39 @@
                 const prevBtn = document.getElementById("prev-set-song-btn");
                 const nextBtn = document.getElementById("next-set-song-btn");
 
+                // Hook up your "Back to set" button click handler
                 if (backToSetBtn) {
                     backToSetBtn.addEventListener("click", () => {
-                        if (activeSet) renderSetSheet(activeSet);
+                        // 1. Switch the sidebar tab state to "sets"
+                        activeTab = "sets";
+
+                        // Update tab button UI classes
+                        const songsTabBtn = document.getElementById("tab-songs-btn");
+                        const setsTabBtn = document.getElementById("tab-sets-btn");
+                        if (songsTabBtn && setsTabBtn) {
+                            songsTabBtn.className =
+                                "flex-1 py-1.5 text-xs font-bold rounded-md text-[var(--text-hint)] hover:text-[var(--text-color)] hover:bg-[var(--bg-surface-variant)]/60 flex items-center justify-center gap-1.5 transition";
+                            setsTabBtn.className =
+                                "flex-1 py-1.5 text-xs font-bold rounded-md bg-[var(--color-secondary)] text-[var(--text-color)] flex items-center justify-center gap-1.5 transition";
+                        }
+
+                        // 2. Properly open the sidebar and remove closed/off-screen classes
+                        const sidebar = document.getElementById("sidebar");
+                        const backdrop = document.getElementById("sidebar-backdrop");
+                        if (sidebar) {
+                            sidebar.classList.remove("closed", "-translate-x-full");
+                            sidebar.style.width = ""; // Reset inline width override if any
+                        }
+                        if (backdrop) {
+                            backdrop.classList.remove("hidden");
+                        }
+
+                        // 3. Render the current active set inside the sidebar
+                        if (typeof currentSet !== "undefined" && currentSet) {
+                            renderSetSheet(currentSet);
+                        } else if (typeof renderSidebarList === "function") {
+                            renderSidebarList();
+                        }
                     });
                 }
 
@@ -2354,9 +2482,41 @@
             }
 
             async function loadSongFromActiveSet(index) {
-                if (!activeSet || !activeSet.songTitles[index]) return;
-                const songTitle = activeSet.songTitles[index];
-                let foundSong = loadedSongs.find((s) => s.title.toLowerCase() === songTitle.toLowerCase());
+                if (!activeSet) return;
+
+                // Make sure set is clean
+                sanitizeSet(activeSet);
+
+                const setSongs = activeSet.songs || [];
+                const targetEntry = setSongs[index] || (activeSet.songTitles ? activeSet.songTitles[index] : null);
+                if (!targetEntry) return;
+
+                activeSetSongIndex = index;
+
+                // Check if the target item is a custom Divider or Note
+                if (typeof targetEntry === "object" && targetEntry.type === "custom") {
+                    if (targetEntry.name === "# Divider #") {
+                        showToast("Skipped Divider");
+                        return;
+                    } else if (targetEntry.name === "# Note #") {
+                        renderNoteSheet(targetEntry, activeSet, index);
+                        return;
+                    }
+                }
+
+                const songTitle = typeof targetEntry === "object" ? targetEntry.title : targetEntry;
+                if (!songTitle) return;
+
+                const songFolder = typeof targetEntry === "object" ? targetEntry.folder : "";
+
+                let foundSong =
+                    loadedSongs.find(
+                        (s) =>
+                            s.title &&
+                            s.title.toLowerCase() === songTitle.toLowerCase() &&
+                            (!songFolder || (s.folderPath || s.folder) === songFolder)
+                    ) || loadedSongs.find((s) => s.title && s.title.toLowerCase() === songTitle.toLowerCase());
+
                 if (foundSong) {
                     await ensureSongContentLoaded(foundSong);
                     renderSongSheet(foundSong, activeSet, index);
@@ -2365,11 +2525,106 @@
                 }
             }
 
+            function renderNoteSheet(noteObj, setObj, index) {
+                activeSong = null;
+                activeSet = setObj;
+                activeSetSongIndex = index;
+
+                // Hide floating capo button since it's a note
+                if (elements.floatingCapoBtn) elements.floatingCapoBtn.classList.add("hidden");
+
+                elements.emptyState.classList.add("hidden");
+                document.getElementById("set-view-sheet").classList.add("hidden");
+                elements.songSheet.classList.remove("hidden");
+
+                // Set navigation banner setup
+                document.getElementById("banner-set-title").textContent = activeSet.title;
+                const totalSetSongs =
+                    activeSet.songs && activeSet.songs.length > 0
+                        ? activeSet.songs.length
+                        : activeSet.songTitles
+                          ? activeSet.songTitles.length
+                          : 0;
+                document.getElementById("set-song-index-label").textContent =
+                    `${activeSetSongIndex + 1} / ${totalSetSongs}`;
+                document.getElementById("set-navigation-banner").classList.remove("hidden");
+
+                // Header info matching song sheet style
+                elements.sheetTitle.textContent = "Note";
+                elements.sheetAuthor.textContent = activeSet.title ? `Set: ${activeSet.title}` : "";
+                elements.sheetFolderPath.textContent = "NOTE";
+                elements.sheetKeyBadge.textContent = "—";
+                elements.sheetCapoBadge.classList.add("hidden");
+
+                elements.currentSongTitle.textContent = "Note";
+                elements.currentSongAuthor.textContent = activeSet.title || "";
+                elements.metaKey.textContent = "—";
+                elements.metaTempo.textContent = "—";
+
+                // Render note content nicely in the main sheet area
+                elements.sheetContent.innerHTML = `
+        <div class="w-full p-6 md:p-8 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-4 shadow-xl">
+            <div class="flex items-center gap-2.5 text-amber-400 font-extrabold text-sm uppercase tracking-wide">
+                <i data-lucide="file-text" class="w-5 h-5"></i>
+                <span>Set Note</span>
+            </div>
+            <div class="text-[var(--text-color)] text-base md:text-lg whitespace-pre-wrap leading-relaxed">${noteObj.notes || ""}</div>
+        </div>
+    `;
+
+                lucide.createIcons();
+            }
+
+            function saveLastLoadedSong(song) {
+                if (!song) return;
+                const songData = {
+                    title: song.title,
+                    filename: song.filename || "",
+                    folder: song.folderPath || song.folder || ""
+                };
+                localStorage.setItem("lastSong", JSON.stringify(songData));
+            }
+
+            async function restoreLastLoadedSong() {
+                const saved = localStorage.getItem("lastSong");
+                if (!saved || !loadedSongs || loadedSongs.length === 0) return;
+
+                try {
+                    const target = JSON.parse(saved);
+
+                    // Match by filename and folder first, with fallback to title
+                    let foundSong = loadedSongs.find(
+                        (s) =>
+                            s.filename === target.filename && (s.folderPath || s.folder || "") === (target.folder || "")
+                    );
+
+                    if (!foundSong) {
+                        foundSong = loadedSongs.find(
+                            (s) => s.title.toLowerCase() === (target.title || "").toLowerCase()
+                        );
+                    }
+
+                    // If the song still exists in the library, load it up!
+                    if (foundSong) {
+                        if (typeof ensureSongContentLoaded === "function") {
+                            await ensureSongContentLoaded(foundSong);
+                        }
+                        renderSongSheet(foundSong);
+                    }
+                } catch (e) {
+                    console.error("Failed to restore last loaded song:", e);
+                }
+            }
+
             async function renderSongSheet(song, fromSetContext = null, songIndexInSet = -1) {
                 await ensureSongContentLoaded(song);
                 activeSong = song;
+                saveLastLoadedSong(song);
                 activeSet = null;
-                capoDisplayMode = "native";
+
+                // Update the floating capo button text/state to match the user setting
+                updateFloatingCapoButtonState();
+
                 elements.emptyState.classList.add("hidden");
                 document.getElementById("set-view-sheet").classList.add("hidden");
                 elements.songSheet.classList.remove("hidden");
@@ -2378,8 +2633,17 @@
                     activeSet = fromSetContext;
                     activeSetSongIndex = songIndexInSet;
                     document.getElementById("banner-set-title").textContent = activeSet.title;
+
+                    // Use the true length of songs or songTitles (whichever is larger/populated)
+                    const totalSetSongs =
+                        activeSet.songs && activeSet.songs.length > 0
+                            ? activeSet.songs.length
+                            : activeSet.songTitles
+                              ? activeSet.songTitles.length
+                              : 0;
+
                     document.getElementById("set-song-index-label").textContent =
-                        `${activeSetSongIndex + 1} / ${activeSet.songTitles.length}`;
+                        `${activeSetSongIndex + 1} / ${totalSetSongs}`;
                     document.getElementById("set-navigation-banner").classList.remove("hidden");
                 } else {
                     document.getElementById("set-navigation-banner").classList.add("hidden");
@@ -2406,78 +2670,149 @@
                 elements.metaKey.textContent = displayedKey;
                 elements.metaTempo.textContent = song.tempo || "--";
 
-                updateFloatingCapoButtonState();
                 renderSongLyrics(song.lyrics, song.capo, currentOffset);
-                applyTextScaling();
+                // Delay scaling slightly to let sidebar close & screen layout finish expanding
+                setTimeout(() => {
+                    applyTextScaling();
+                }, 320);
+
                 updateCastWindow(song);
             }
 
             function renderSetSheet(setObj) {
                 activeSet = setObj;
-                activeSong = null;
                 currentSet = JSON.parse(JSON.stringify(setObj));
-                elements.emptyState.classList.add("hidden");
-                elements.songSheet.classList.add("hidden");
-                document.getElementById("set-view-sheet").classList.remove("hidden");
-                elements.setTitle.textContent = setObj.title;
-                document.getElementById("set-count-info").textContent = `${setObj.songTitles.length} songs in this set`;
 
-                const container = elements.setSongsContainer;
+                // Persist active set state to localStorage whenever it is rendered/modified
+                saveActiveSetToStorage(setObj);
+
+                // Target the sidebar set list container
+                const container = elements.songList;
                 container.innerHTML = "";
 
-                // If there is an active/temporary set being built or viewed, pin it to the top
-                if (window.currentActiveSet) {
-                    const tempItem = document.createElement("li");
-                    tempItem.className =
-                        "p-3 bg-[var(--bg-primary-variant)]/60 border border-[var(--border-color)] rounded-xl space-y-2 mb-2";
-                    tempItem.innerHTML = `
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-[var(--text-color)] uppercase tracking-wider">Current set (temporary)</span>
-                <span class="text-[10px] bg-[var(--color-secondary)]/20 text-[var(--text-color)] px-2 py-0.5 rounded-full font-mono">${window.currentActiveSet.songs.length} songs</span>
+                // 1. Render Current Set Header Card with Save Button inside Sidebar
+                const setHeaderCard = document.createElement("li");
+                setHeaderCard.className =
+                    "p-3 bg-[var(--bg-primary-variant)]/90 border border-[var(--border-color)] rounded-2xl space-y-3 mb-3 shadow-lg";
+
+                setHeaderCard.innerHTML = `
+        <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-2.5">
+            <div>
+                <div class="text-xs font-extrabold text-[var(--text-color)] uppercase tracking-wide">${setObj.title || "Untitled Set"}</div>
+                <div id="set-count-info" class="text-[11px] text-[var(--text-hint)]">${(setObj.songs || []).length} songs in this set</div>
             </div>
-            <div class="text-xs text-[var(--text-color)] font-medium truncate">${window.currentActiveSet.title || "Untitled Set"}</div>
-            <div class="space-y-1 pl-2 border-l border-[var(--border-color)] pt-1">
-                ${window.currentActiveSet.songs.map((s, idx) => `<div class="text-[11px] text-[var(--text-hint)] truncate">${idx + 1}.${s.title}</div>`).join("")}
-            </div>
-        `;
-                    container.appendChild(tempItem);
+            <button id="sidebar-set-save-btn" class="px-3.5 py-1.5 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] font-extrabold text-xs rounded-xl shadow-md flex items-center gap-1.5 transition">
+                <i data-lucide="save" class="w-3.5 h-3.5"></i> SAVE
+            </button>
+        </div>
+    `;
+
+                setHeaderCard.querySelector("#sidebar-set-save-btn").addEventListener("click", () => {
+                    document.getElementById("sidebar-save-set-btn")?.click();
+                });
+
+                container.appendChild(setHeaderCard);
+
+                // 2. Render Songs inside the Sidebar Set List
+                if (!setObj.songs || setObj.songs.length === 0) {
+                    const emptyItem = document.createElement("li");
+                    emptyItem.className = "text-xs text-[var(--text-hint)] italic p-3 text-center";
+                    emptyItem.textContent = "No songs in current set. Tick songs in the Song tab!";
+                    container.appendChild(emptyItem);
+                    lucide.createIcons();
+                    return;
                 }
-                setObj.songTitles.forEach((t, idx) => {
-                    const foundSong = loadedSongs.find((s) => s.title.toLowerCase() === t.toLowerCase());
-                    const itemDiv = document.createElement("div");
+
+                setObj.songs.forEach((songObj, idx) => {
+                    // If it's a custom divider or note, handle it safely or skip song-matching
+                    const isCustom = songObj && songObj.type === "custom";
+
+                    const foundSong = isCustom
+                        ? null
+                        : loadedSongs.find(
+                              (s) =>
+                                  (songObj.filename && s.filename === songObj.filename) ||
+                                  (s.title &&
+                                      songObj.title &&
+                                      s.title.toLowerCase() === songObj.title.toLowerCase() &&
+                                      (!songObj.folder || (s.folderPath || s.folder) === songObj.folder))
+                          );
+
+                    const itemDiv = document.createElement("li");
                     itemDiv.className =
-                        "p-3 rounded-xl bg-[var(--bg-primary-variant)]/60 border border-[var(--border-color)] flex items-center justify-between cursor-grab hover:border-[var(--color-secondary)]/40 transition select-none";
+                        "p-3 mb-2 rounded-xl bg-[var(--bg-primary-variant)]/60 border border-[var(--border-color)] flex items-center justify-between cursor-grab hover:border-[var(--color-secondary)]/40 transition select-none";
                     itemDiv.draggable = true;
                     itemDiv.dataset.index = idx;
 
-                    itemDiv.innerHTML = `
-            <div class="flex items-center space-x-3 flex-1 truncate">
-                <i data-lucide="grip-vertical" class="w-4 h-4 text-[var(--text-hint)]"></i>
-                <span class="text-xs font-mono text-[var(--text-hint)]">${idx + 1}</span>
-                <span class="font-bold text-[var(--text-color)] text-sm truncate">${t}</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="text-xs text-[var(--text-color)] font-semibold">${foundSong ? foundSong.key || "" : "Not Found"}</span>
-                <button class="text-[var(--text-hint)] hover:text-[var(--text-color)] transition remove-set-song"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-            </div>
-        `;
+                    if (isCustom) {
+                        if (songObj.name === "# Divider #") {
+                            itemDiv.className =
+                                "p-2.5 my-1 rounded-xl bg-[var(--bg-primary)]/40 border border-dashed border-[var(--border-color)] flex items-center justify-between cursor-grab hover:border-[var(--color-secondary)]/40 transition select-none";
+                            itemDiv.innerHTML = `
+                                <div class="flex items-center gap-2.5 flex-1">
+                                    <i data-lucide="grip-vertical" class="w-4 h-4 text-[var(--text-hint)] flex-shrink-0"></i>
+                                    <i data-lucide="minus" class="w-4 h-4 text-[var(--text-hint)]"></i>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-[var(--text-hint)]">Divider</span>
+                                </div>
+                                <button class="text-[var(--text-hint)] hover:text-red-400 transition remove-set-song p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            `;
+                        } else if (songObj.name === "# Note #") {
+                            itemDiv.className =
+                                "p-3 my-1 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start justify-between cursor-grab hover:border-amber-500/60 transition select-none";
+                            itemDiv.innerHTML = `
+                                <div class="flex items-start gap-2.5 flex-1 pr-2">
+                                    <i data-lucide="grip-vertical" class="w-4 h-4 text-[var(--text-hint)] flex-shrink-0 mt-0.5"></i>
+                                    <i data-lucide="file-text" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+                                    <div>
+                                        <div class="text-xs font-bold text-[var(--text-color)]">Note</div>
+                                        <div class="text-[11px] text-[var(--text-hint)] mt-0.5 whitespace-pre-wrap">${songObj.notes || ""}</div>
+                                    </div>
+                                </div>
+                                <button class="text-[var(--text-hint)] hover:text-red-400 transition remove-set-song p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            `;
+                        }
+                    } else {
+                        const subtitleText = [songObj.folder, songObj.filename].filter(Boolean).join(" • ");
+                        const displayKey = songObj.prefKey || (foundSong ? foundSong.key : "") || "";
 
-                    if (foundSong) {
-                        itemDiv.addEventListener("click", async (e) => {
-                            if (e.target.closest("button") || e.target.closest("svg")) return;
-                            await ensureSongContentLoaded(foundSong);
-                            renderSongSheet(foundSong, setObj, idx);
-                        });
+                        itemDiv.innerHTML = `
+                            <div class="flex items-center space-x-3 flex-1 truncate song-click-target cursor-pointer">
+                                <i data-lucide="grip-vertical" class="w-4 h-4 text-[var(--text-hint)] flex-shrink-0"></i>
+                                <span class="text-xs font-mono text-[var(--text-hint)] flex-shrink-0">${idx + 1}</span>
+                                <div class="truncate flex flex-col">
+                                    <span class="font-bold text-[var(--text-color)] text-sm truncate">${songObj.title}</span>
+                                    ${subtitleText ? `<span class="text-[10px] text-[var(--text-hint)] truncate">${subtitleText}</span>` : ""}
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 flex-shrink-0">
+                                <span class="text-xs font-mono px-2 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--color-secondary)] font-semibold border border-[var(--border-color)]">${displayKey || "—"}</span>
+                                <button class="text-[var(--text-hint)] hover:text-red-400 transition remove-set-song p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        `;
+
+                        if (foundSong) {
+                            itemDiv.querySelector(".song-click-target").addEventListener("click", async () => {
+                                await ensureSongContentLoaded(foundSong);
+                                renderSongSheet(foundSong, setObj, idx);
+                                if (window.innerWidth < 1024) {
+                                    closeMobileSidebar();
+                                }
+                            });
+                        }
                     }
 
                     itemDiv.querySelector(".remove-set-song").addEventListener("click", (e) => {
                         e.stopPropagation();
-                        activeSet.songTitles.splice(idx, 1);
+                        activeSet.songs.splice(idx, 1);
+                        if (activeSet.songTitles) {
+                            activeSet.songTitles.splice(idx, 1);
+                        }
                         checkSetDirtyState();
                         renderSetSheet(activeSet);
-                        showToast(`Removed "${t}" from set`);
+                        showToast(`Removed "${songObj.title}" from set`);
                     });
 
+                    // Sidebar Drag-and-Drop Handlers
                     itemDiv.addEventListener("dragstart", (e) => {
                         e.dataTransfer.setData("text/plain", idx);
                         itemDiv.classList.add("opacity-50", "border-[var(--color-secondary)]");
@@ -2491,8 +2826,12 @@
                         const fromIdx = parseInt(e.dataTransfer.getData("text/plain"), 10);
                         const toIdx = idx;
                         if (fromIdx !== toIdx) {
-                            const moved = activeSet.songTitles.splice(fromIdx, 1)[0];
-                            activeSet.songTitles.splice(toIdx, 0, moved);
+                            const moved = activeSet.songs.splice(fromIdx, 1)[0];
+                            activeSet.songs.splice(toIdx, 0, moved);
+                            if (activeSet.songTitles) {
+                                const movedTitle = activeSet.songTitles.splice(fromIdx, 1)[0];
+                                activeSet.songTitles.splice(toIdx, 0, movedTitle);
+                            }
                             checkSetDirtyState();
                             renderSetSheet(activeSet);
                         }
@@ -2500,11 +2839,20 @@
 
                     container.appendChild(itemDiv);
                 });
+
                 lucide.createIcons();
             }
 
             function checkSetDirtyState() {
-                const isChanged = JSON.stringify(activeSet.songTitles) !== JSON.stringify(currentSet.songTitles);
+                // Safely fallback if activeSet or currentSet is null/uninitialized
+                if (!activeSet) activeSet = currentSet;
+                if (!currentSet) return;
+
+                const activeItems = activeSet.songs || activeSet.items || activeSet.songTitles || [];
+                const currentItems = currentSet.songs || currentSet.items || currentSet.songTitles || [];
+
+                const isChanged = JSON.stringify(activeItems) !== JSON.stringify(currentItems);
+
                 const headerActions = document.querySelector("#set-view-sheet .flex.items-center.gap-2");
                 const existingBtn = document.getElementById("dynamic-save-set-btn");
 
@@ -2518,9 +2866,17 @@
                         const existingIdx = loadedSets.findIndex(
                             (s) => s.filename.toLowerCase() === activeSet.filename.toLowerCase()
                         );
+
+                        // Sync activeSet to currentSet before saving
+                        activeSet = JSON.parse(JSON.stringify(currentSet));
                         if (existingIdx !== -1) loadedSets[existingIdx] = { ...activeSet };
-                        currentSet = JSON.parse(JSON.stringify(activeSet));
+
                         btn.remove();
+
+                        // Save to LocalStorage / cache for reconnects
+                        saveActiveSetToStorage(activeSet);
+
+                        // Write to disk/file system
                         await writeSetToDisk(activeSet);
                         showToast(`Set "${activeSet.title}" updated and saved!`);
                     };
@@ -2797,11 +3153,19 @@
             }
 
             function buildChordLyricPairs(chordLine, lyricLine, capoFret, capoSteps, mode, transposeOffset) {
+                // Define clean display rules
+                const showNative = !capoFret || mode === "native" || mode === "both";
+                const showCapo = capoFret && (mode === "capo" || mode === "both");
+
                 if (!lyricLine) {
                     let nativeChordLine = chordLine;
-                    let html = `<div class="chord-above" style="white-space: pre; font-weight:700; color: var(--chord-color, #ffff00);">${nativeChordLine}</div>`;
-                    if (capoFret) {
-                        html += `<div class="chord-above" style="white-space: pre; font-weight:700; color: var(--capo-color, #ff0000);">${nativeChordLine}</div>`;
+                    let html = "";
+                    if (showNative) {
+                        html += `<div class="chord-above" style="white-space: pre; font-weight:700; color: var(--chord-color, #ffff00);">${nativeChordLine}</div>`;
+                    }
+                    if (showCapo) {
+                        let capoChordLine = capoFret ? transposeChord(nativeChordLine, capoSteps) : nativeChordLine;
+                        html += `<div class="chord-above" style="white-space: pre; font-weight:700; color: var(--capo-color, #ff0000);">${capoChordLine}</div>`;
                     }
                     return html;
                 }
@@ -2820,8 +3184,11 @@
                 let html = "";
                 if (chordsMap[0].index > 0) {
                     let leadingText = lyricLine.slice(0, chordsMap[0].index);
-                    let hiddenPlaceholders = `<div class="chord-above" style="visibility: hidden;">&nbsp;</div>`;
-                    if (capoFret) {
+                    let hiddenPlaceholders = "";
+                    if (showNative) {
+                        hiddenPlaceholders += `<div class="chord-above" style="visibility: hidden;">&nbsp;</div>`;
+                    }
+                    if (showCapo) {
                         hiddenPlaceholders += `<div class="chord-above" style="visibility: hidden;">&nbsp;</div>`;
                     }
                     html += `<span class="chord-lyric-pair" style="display: inline-flex; flex-direction: column; vertical-align: top;"><span style="width: 0; overflow: visible; white-space: nowrap; display: flex; flex-direction: column;">${hiddenPlaceholders}</span><span class="lyric-below text-[var(--text-color)]" style="white-space: pre;">${leadingText}</span></span>`;
@@ -2833,8 +3200,11 @@
                     let nativeChord = transposeChord(c.text, transposeOffset);
                     let capoChord = capoFret ? transposeChord(nativeChord, capoSteps) : nativeChord;
 
-                    let topHtml = `<div class="chord-above" style="white-space: pre; font-weight:700; color: var(--chord-color, #ffff00);">${nativeChord}</div>`;
-                    if (capoFret) {
+                    let topHtml = "";
+                    if (showNative) {
+                        topHtml += `<div class="chord-above" style="white-space: pre; font-weight:700; color: var(--chord-color, #ffff00);">${nativeChord}</div>`;
+                    }
+                    if (showCapo) {
                         topHtml += `<div class="chord-above" style="white-space: pre; font-weight:700; color: var(--capo-color, #ff0000);">${capoChord}</div>`;
                     }
 
@@ -2843,7 +3213,10 @@
                 return html;
             }
 
-            elements.floatingCapoBtn.addEventListener("click", () => {
+            elements.floatingCapoBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+
+                // Cycle modes
                 if (capoDisplayMode === "native") {
                     capoDisplayMode = "capo";
                 } else if (capoDisplayMode === "capo") {
@@ -2852,26 +3225,41 @@
                     capoDisplayMode = "native";
                 }
 
-                // Update the button label/state
-                updateFloatingCapoButtonState();
+                // Persist globally so it's remembered for future songs
+                localStorage.setItem("capoDisplayMode", capoDisplayMode);
 
-                // Re-render the song sheet so the chords update immediately
+                // Update the button and re-render
+                updateFloatingCapoButtonState();
                 if (typeof renderSongSheet === "function" && activeSong) {
                     renderSongSheet(activeSong);
                 }
             });
+
             function updateFloatingCapoButtonState() {
+                // Re-query label element directly if elements object cache lost the reference
+                const labelEl = elements.floatingCapoLabel || document.getElementById("floating-capo-label");
+                const btnEl = elements.floatingCapoBtn || document.getElementById("floating-capo-btn");
+
+                if (!btnEl) return;
+
                 if (!activeSong || !activeSong.capo) {
-                    elements.floatingCapoBtn.classList.add("hidden");
+                    btnEl.classList.add("hidden");
                     return;
                 }
-                elements.floatingCapoBtn.classList.remove("hidden");
+
+                btnEl.classList.remove("hidden");
+
+                let text = `Capo ${activeSong.capo}`;
                 if (capoDisplayMode === "native") {
-                    elements.floatingCapoLabel.textContent = `Capo ${activeSong.capo} (Native)`;
+                    text += " (Native)";
                 } else if (capoDisplayMode === "capo") {
-                    elements.floatingCapoLabel.textContent = `Capo ${activeSong.capo} (Capo Chords)`;
+                    text += " (Capo Chords)";
                 } else {
-                    elements.floatingCapoLabel.textContent = `Capo ${activeSong.capo} (Both Lines)`;
+                    text += " (Both Lines)";
+                }
+
+                if (labelEl) {
+                    labelEl.textContent = text;
                 }
             }
 
@@ -2916,12 +3304,20 @@
 
             function updateTabCounts() {
                 elements.tabSongsCount.textContent = `(${loadedSongs.length})`;
-                elements.tabSetsCount.textContent = `(${loadedSets.length})`;
+                // Count items in the current active/working set instead of loadedSets.length
+                const currentSetCount =
+                    currentSet && currentSet.songs
+                        ? currentSet.songs.length
+                        : currentSet && currentSet.songTitles
+                          ? currentSet.songTitles.length
+                          : 0;
+                elements.tabSetsCount.textContent = `(${currentSetCount})`;
             }
 
             function updateFolderFilterDropdown() {
                 const filterSelect = elements.folderFilterSelect;
                 const currentVal = selectedFolderFilter;
+
                 filterSelect.innerHTML =
                     '<option value="ALL">ALL ' + (activeTab === "songs" ? "FOLDERS" : "CATEGORIES") + "</option>";
 
@@ -2962,62 +3358,41 @@
                             filterSelect.appendChild(opt);
                         });
                 }
-                filterSelect.value = currentVal;
+
+                // Check if the saved/current folder option exists in the newly generated list
+                const optionExists = Array.from(filterSelect.options).some((opt) => opt.value === currentVal);
+
+                if (optionExists) {
+                    filterSelect.value = currentVal;
+                    selectedFolderFilter = currentVal;
+                } else {
+                    // Gracefully fallback to ALL if the stored folder/category doesn't exist
+                    filterSelect.value = "ALL";
+                    selectedFolderFilter = "ALL";
+                    localStorage.setItem("selectedFolderFilter", "ALL");
+                }
             }
 
             elements.folderFilterSelect.addEventListener("change", (e) => {
                 selectedFolderFilter = e.target.value;
-                renderSidebarList(elements.songSearch.value.toLowerCase());
+                // Save to user storage using your preferred storage key
+                localStorage.setItem("selectedFolderFilter", selectedFolderFilter);
+
+                const query = searchInput ? searchInput.value.toLowerCase() : "";
+                renderSidebarList(query);
             });
 
             const sidebarNewSetBtn = document.getElementById("sidebar-new-set-btn");
             if (sidebarNewSetBtn) {
                 sidebarNewSetBtn.addEventListener("click", () => {
-                    currentSet = { category: "MAIN", title: "New Set", filename: "New Set", songTitles: [] };
-                    showToast("New set created. Select checkboxes next to songs to add them.");
-                    renderSidebarList();
+                    openSaveSetModal();
                 });
             }
 
             const sidebarSaveSetBtn = document.getElementById("sidebar-save-set-btn");
             if (sidebarSaveSetBtn) {
                 sidebarSaveSetBtn.addEventListener("click", async () => {
-                    const setName = prompt("Enter Set Name:", currentSet.title || "My Set");
-                    if (!setName) return;
-                    const category = prompt(
-                        "Enter Set Category (e.g. Gareth, MAIN, Worship):",
-                        currentSet.category || "MAIN"
-                    );
-                    if (category === null) return;
-
-                    const cleanCat =
-                        !category || category.trim() === "" || category.trim().toUpperCase() === "MAIN"
-                            ? ""
-                            : category.trim();
-                    const formattedFilename = cleanCat ? `${cleanCat}___${setName.trim()}` : setName.trim();
-
-                    currentSet.title = setName.trim();
-                    currentSet.category = cleanCat || "MAIN";
-                    currentSet.filename = formattedFilename;
-
-                    const existingIdx = loadedSets.findIndex(
-                        (s) => s.filename.toLowerCase() === formattedFilename.toLowerCase()
-                    );
-                    if (existingIdx !== -1) {
-                        loadedSets[existingIdx] = { ...currentSet };
-                    } else {
-                        loadedSets.push({ ...currentSet });
-                    }
-
-                    updateTabCounts();
-                    renderSidebarList();
-                    saveCurrentSetToStorage();
-                    const written = await writeSetToDisk({ ...currentSet });
-                    showToast(
-                        written
-                            ? `Set saved as "${formattedFilename}"`
-                            : `Set saved in memory as "${formattedFilename}"`
-                    );
+                    openSaveSetModal();
                 });
             }
 
@@ -3037,7 +3412,20 @@
                         .forEach((song) => {
                             const li = document.createElement("li");
                             const isActive = activeSong && activeSong.id === song.id;
-                            const isInSet = currentSet.songTitles.includes(song.title);
+
+                            // Check if song is in current set using filename/folder/title uniqueness (ignoring custom divider/note objects)
+                            const isInSet =
+                                currentSet.songs &&
+                                currentSet.songs.some(
+                                    (s) =>
+                                        s &&
+                                        s.type !== "custom" &&
+                                        ((song.filename &&
+                                            s.filename === song.filename &&
+                                            s.folder === (song.folderPath || song.folder || "")) ||
+                                            (s.title && s.title.toLowerCase() === song.title.toLowerCase()))
+                                );
+
                             li.className = `p-3 rounded-xl transition flex items-center justify-between border ${isActive ? "bg-[var(--color-secondary)]/10 border-[var(--color-secondary)]/40 text-[var(--text-color)] font-bold" : "hover:bg-[var(--bg-surface-variant)]/60 text-[var(--text-color)] border-transparent"}`;
                             li.innerHTML = `
                 <div class="truncate pr-2 flex-1 song-click-target cursor-pointer">
@@ -3060,82 +3448,222 @@
 
                             li.querySelector(".set-membership-chk").addEventListener("change", (e) => {
                                 e.stopPropagation();
-                                if (e.target.checked) {
-                                    if (!currentSet.songTitles.includes(song.title))
-                                        currentSet.songTitles.push(song.title);
-                                } else {
-                                    currentSet.songTitles = currentSet.songTitles.filter((t) => t !== song.title);
+
+                                // Safely initialize currentSet and activeSet if they are null/undefined
+                                if (!currentSet) {
+                                    currentSet = { title: "Untitled Set", songs: [], songTitles: [] };
                                 }
-                                saveCurrentSetToStorage();
+                                if (!activeSet) {
+                                    activeSet = currentSet;
+                                }
+
+                                if (!currentSet.songs) currentSet.songs = [];
+                                if (!activeSet.songs) activeSet.songs = [];
+
+                                const songItem = {
+                                    title: song.title,
+                                    filename: song.filename || "",
+                                    folder: song.folderPath || song.folder || "",
+                                    prefKey: song.prefKey || song.key || ""
+                                };
+
+                                if (e.target.checked) {
+                                    const exists = currentSet.songs.some(
+                                        (s) => s.filename === songItem.filename && s.folder === songItem.folder
+                                    );
+                                    if (!exists) {
+                                        currentSet.songs.push(songItem);
+                                        activeSet.songs.push(songItem);
+                                    }
+                                    // Keep legacy songTitles in sync if other parts of the app rely on it
+                                    if (!currentSet.songTitles) currentSet.songTitles = [];
+                                    if (!currentSet.songTitles.includes(song.title)) {
+                                        currentSet.songTitles.push(song.title);
+                                    }
+                                } else {
+                                    currentSet.songs = currentSet.songs.filter(
+                                        (s) => !(s.filename === songItem.filename && s.folder === songItem.folder)
+                                    );
+                                    activeSet.songs = activeSet.songs.filter(
+                                        (s) => !(s.filename === songItem.filename && s.folder === songItem.folder)
+                                    );
+                                    if (currentSet.songTitles) {
+                                        currentSet.songTitles = currentSet.songTitles.filter((t) => t !== song.title);
+                                    }
+                                }
+
+                                checkSetDirtyState();
+                                saveActiveSetToStorage(activeSet);
                             });
 
                             elements.songList.appendChild(li);
                         });
                 } else {
-                    // Sets Tab Active (Android Native Layout Style)
+                    // Sets Tab Active: Render the rich draggable active set sheet directly in the sidebar list container
                     elements.songList.innerHTML = "";
 
-                    // 1. Current Set Header Card with Save Button
-                    const currentSetCard = document.createElement("li");
-                    currentSetCard.className =
-                        "p-3 bg-[var(--bg-primary-variant)]/90 border border-[var(--border-color)] rounded-2xl space-y-3 mb-3 shadow-lg";
+                    // If we have an active/current set, render its rich draggable song list
+                    if (typeof currentSet !== "undefined" && currentSet) {
+                        // Ensure currentSet has the rich songs array normalized
+                        if (!currentSet.songs && currentSet.songTitles) {
+                            currentSet.songs = currentSet.songTitles.map((t) => {
+                                const found = loadedSongs.find((s) => s.title.toLowerCase() === t.toLowerCase());
+                                return {
+                                    title: t,
+                                    filename: found ? found.filename || "" : "",
+                                    folder: found ? found.folderPath || found.folder || "" : "",
+                                    prefKey: found ? found.key || "" : ""
+                                };
+                            });
+                        }
 
-                    let songItemsHtml =
-                        currentSet.songTitles && currentSet.songTitles.length > 0
-                            ? currentSet.songTitles
-                                  .map(
-                                      (t, idx) => `
-            <div class="flex items-center justify-between p-2 bg-[var(--bg-primary)]/60 rounded-xl border border-[var(--border-color)]">
-                <div class="flex items-center space-x-2 truncate pr-2">
-                    <span class="text-xs font-mono text-[var(--text-hint)]">${idx + 1}.</span>
-                    <span class="text-xs font-bold text-[var(--text-color)] truncate">${t}</span>
-                </div>
-                <button class="text-[var(--text-hint)] hover:text-[var(--text-color)] p-1 transition edit-set-song-item" title="View Song">
-                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                </button>
-            </div>`
-                                  )
-                                  .join("")
-                            : '<div class="text-xs text-[var(--text-hint)] italic p-2 text-center">No songs in current set. Tick songs in the Song tab!</div>';
+                        // 1. Render Current Set Header Card with Save Button inside Sidebar
+                        const setHeaderCard = document.createElement("li");
+                        setHeaderCard.className =
+                            "p-3 bg-[var(--bg-primary-variant)]/90 border border-[var(--border-color)] rounded-2xl space-y-3 mb-3 shadow-lg";
 
-                    currentSetCard.innerHTML = `
-        <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-2.5">
-            <div>
-                <div class="text-xs font-extrabold text-[var(--text-color)] uppercase tracking-wide">Current set</div>
-                <div class="text-[11px] text-[var(--text-hint)]">${currentSet.title ? "(" + currentSet.title + ")" : "(Not saved)"}</div>
-            </div>
-            <button id="sidebar-set-save-btn" class="px-3.5 py-1.5 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] font-extrabold text-xs rounded-xl shadow-md flex items-center gap-1.5 transition">
-                <i data-lucide="save" class="w-3.5 h-3.5"></i> SAVE
-            </button>
-        </div>
-        <div class="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-            ${songItemsHtml}
-        </div>
-    `;
+                        setHeaderCard.innerHTML = `
+                            <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-2.5">
+                                <div>
+                                    <div class="text-xs font-extrabold text-[var(--text-color)] uppercase tracking-wide">${currentSet.title || "Untitled Set"}</div>
+                                    <div id="set-count-info" class="text-[11px] text-[var(--text-hint)]">${(currentSet.songs || []).length} items in this set</div>
+                                </div>
+                                <button id="sidebar-set-save-btn" class="px-3.5 py-1.5 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-variant)] text-[var(--text-color)] border border-[var(--border-color)] font-extrabold text-xs rounded-xl shadow-md flex items-center gap-1.5 transition">
+                                    <i data-lucide="save" class="w-3.5 h-3.5"></i> SAVE
+                                </button>
+                            </div>
+                        `;
 
-                    // Wire up save button inside the card
-                    currentSetCard.querySelector("#sidebar-set-save-btn").addEventListener("click", () => {
-                        document.getElementById("sidebar-save-set-btn")?.click();
-                    });
-
-                    // Wire up song item clicks to open them
-                    currentSetCard.querySelectorAll(".edit-set-song-item").forEach((btn, idx) => {
-                        btn.addEventListener("click", async () => {
-                            const songTitle = currentSet.songTitles[idx];
-                            const foundSong = loadedSongs.find(
-                                (s) => s.title.toLowerCase() === songTitle.toLowerCase()
-                            );
-                            if (foundSong) {
-                                await ensureSongContentLoaded(foundSong);
-                                renderSongSheet(foundSong, currentSet, idx);
-                                closeMobileSidebar();
-                            } else {
-                                showToast(`Song "${songTitle}" not found in library.`);
-                            }
+                        setHeaderCard.querySelector("#sidebar-set-save-btn").addEventListener("click", () => {
+                            openSaveSetModal();
                         });
-                    });
 
-                    elements.songList.appendChild(currentSetCard);
+                        elements.songList.appendChild(setHeaderCard);
+
+                        const setSongs = currentSet.songs || currentSet.songTitles || [];
+                        if (setSongs.length === 0) {
+                            const emptyItem = document.createElement("li");
+                            emptyItem.className = "text-xs text-[var(--text-hint)] italic p-3 text-center";
+                            emptyItem.textContent = "No items in current set. Add songs, dividers, or notes!";
+                            elements.songList.appendChild(emptyItem);
+                        } else {
+                            setSongs.forEach((songObj, idx) => {
+                                const itemDiv = document.createElement("li");
+                                itemDiv.className =
+                                    "p-3 mb-2 rounded-xl bg-[var(--bg-primary-variant)]/60 border border-[var(--border-color)] flex items-center justify-between cursor-grab hover:border-[var(--color-secondary)]/40 transition select-none";
+                                itemDiv.draggable = true;
+                                itemDiv.dataset.index = idx;
+
+                                // 1. Check if the item is a custom Divider or Note
+                                if (typeof songObj === "object" && songObj.type === "custom") {
+                                    if (songObj.name === "# Divider #") {
+                                        itemDiv.className =
+                                            "p-2.5 my-1 rounded-xl bg-[var(--bg-primary)]/40 border border-dashed border-[var(--border-color)] flex items-center justify-between cursor-grab hover:border-[var(--color-secondary)]/40 transition select-none";
+                                        itemDiv.innerHTML = `
+                                            <div class="flex items-center gap-2.5 flex-1">
+                                                <i data-lucide="grip-vertical" class="w-4 h-4 text-[var(--text-hint)] flex-shrink-0"></i>
+                                                <i data-lucide="minus" class="w-4 h-4 text-[var(--text-hint)]"></i>
+                                                <span class="text-xs font-bold uppercase tracking-wider text-[var(--text-hint)]">Divider</span>
+                                            </div>
+                                            <button class="text-[var(--text-hint)] hover:text-red-400 transition remove-set-song p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                        `;
+                                    } else if (songObj.name === "# Note #") {
+                                        itemDiv.className =
+                                            "p-3 my-1 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start justify-between cursor-grab hover:border-amber-500/60 transition select-none";
+                                        itemDiv.innerHTML = `
+                                            <div class="flex items-start gap-2.5 flex-1 pr-2">
+                                                <i data-lucide="grip-vertical" class="w-4 h-4 text-[var(--text-hint)] flex-shrink-0 mt-0.5"></i>
+                                                <i data-lucide="file-text" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+                                                <div>
+                                                    <div class="text-xs font-bold text-[var(--text-color)]">Note</div>
+                                                    <div class="text-[11px] text-[var(--text-hint)] mt-0.5 whitespace-pre-wrap">${songObj.notes || ""}</div>
+                                                </div>
+                                            </div>
+                                            <button class="text-[var(--text-hint)] hover:text-red-400 transition remove-set-song p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                        `;
+                                    }
+                                } else {
+                                    // 2. Standard Song item rendering
+                                    const songTitle = typeof songObj === "object" ? songObj.title : songObj;
+                                    const foundSong = loadedSongs.find(
+                                        (s) => s.title.toLowerCase() === songTitle.toLowerCase()
+                                    );
+                                    const subtitleText = [songObj.folder, songObj.filename].filter(Boolean).join(" • ");
+                                    const displayKey = songObj.prefKey || (foundSong ? foundSong.key : "") || "";
+
+                                    itemDiv.innerHTML = `
+                                        <div class="flex items-center space-x-3 flex-1 truncate song-click-target cursor-pointer">
+                                            <i data-lucide="grip-vertical" class="w-4 h-4 text-[var(--text-hint)] flex-shrink-0"></i>
+                                            <span class="text-xs font-mono text-[var(--text-hint)] flex-shrink-0">${idx + 1}</span>
+                                            <div class="truncate flex flex-col">
+                                                <span class="font-bold text-[var(--text-color)] text-sm truncate">${songTitle}</span>
+                                                ${subtitleText ? `<span class="text-[10px] text-[var(--text-hint)] truncate">${subtitleText}</span>` : ""}
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-2 flex-shrink-0">
+                                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--color-secondary)] font-semibold border border-[var(--border-color)]">${displayKey || "—"}</span>
+                                            <button class="text-[var(--text-hint)] hover:text-red-400 transition remove-set-song p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                        </div>
+                                    `;
+
+                                    if (foundSong) {
+                                        itemDiv
+                                            .querySelector(".song-click-target")
+                                            .addEventListener("click", async () => {
+                                                await ensureSongContentLoaded(foundSong);
+                                                renderSongSheet(foundSong, currentSet, idx);
+                                                if (window.innerWidth < 1024) closeMobileSidebar();
+                                            });
+                                    }
+                                }
+
+                                // 3. Shared Removal Handler
+                                itemDiv.querySelector(".remove-set-song").addEventListener("click", (e) => {
+                                    e.stopPropagation();
+                                    if (currentSet.songs && currentSet.songs.length > idx)
+                                        currentSet.songs.splice(idx, 1);
+                                    if (currentSet.songTitles && currentSet.songTitles.length > idx)
+                                        currentSet.songTitles.splice(idx, 1);
+                                    checkSetDirtyState();
+                                    saveActiveSetToStorage(currentSet);
+                                    renderSidebarList();
+                                    showToast("Item removed from set");
+                                });
+
+                                // 4. Shared Universal Drag-and-Drop Handlers (Works for Songs, Dividers, and Notes)
+                                itemDiv.addEventListener("dragstart", (e) => {
+                                    e.dataTransfer.setData("text/plain", idx);
+                                    itemDiv.classList.add("opacity-50", "border-[var(--color-secondary)]");
+                                });
+                                itemDiv.addEventListener("dragend", () => {
+                                    itemDiv.classList.remove("opacity-50", "border-[var(--color-secondary)]");
+                                });
+                                itemDiv.addEventListener("dragover", (e) => e.preventDefault());
+                                itemDiv.addEventListener("drop", (e) => {
+                                    e.preventDefault();
+                                    const fromIdx = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                    const toIdx = idx;
+                                    if (fromIdx !== toIdx) {
+                                        // Reorder in currentSet.songs array
+                                        const moved = currentSet.songs.splice(fromIdx, 1)[0];
+                                        currentSet.songs.splice(toIdx, 0, moved);
+
+                                        // Keep currentSet.songTitles array in sync
+                                        if (currentSet.songTitles) {
+                                            const movedTitle = currentSet.songTitles.splice(fromIdx, 1)[0];
+                                            currentSet.songTitles.splice(toIdx, 0, movedTitle);
+                                        }
+
+                                        checkSetDirtyState();
+                                        saveActiveSetToStorage(currentSet);
+                                        renderSidebarList();
+                                    }
+                                });
+
+                                elements.songList.appendChild(itemDiv);
+                            });
+                        }
+                    }
                 }
                 lucide.createIcons();
             }
@@ -3145,30 +3673,45 @@
                 const sidebar = document.getElementById("sidebar");
                 const backdrop = document.getElementById("sidebar-backdrop");
 
+                // Toggle Open/Close from the top navigation menu button
                 if (toggleSidebarBtn && sidebar) {
                     toggleSidebarBtn.addEventListener("click", (e) => {
-                        e.preventDefault();
                         e.stopPropagation();
+                        sidebar.classList.toggle("closed");
 
-                        // Toggle the translate class
-                        sidebar.classList.toggle("-translate-x-full");
-
-                        // If screen is smaller than large, toggle backdrop too
-                        if (window.innerWidth < 1024 && backdrop) {
+                        if (backdrop && window.innerWidth < 1024) {
                             backdrop.classList.toggle("hidden");
                         }
+
+                        // Wait for the 300ms transition to finish, then recalculate width and scale text
+                        setTimeout(() => {
+                            if (typeof applyTextScaling === "function" && activeSong) {
+                                // Force a quick double-check frame to ensure clientWidth is fully updated
+                                requestAnimationFrame(() => {
+                                    applyTextScaling();
+                                });
+                            }
+                        }, 320); // Slightly over 300ms to ensure CSS layout settles
+                    });
+                }
+
+                // Close sidebar when clicking backdrop (Mobile view)
+                if (backdrop) {
+                    backdrop.addEventListener("click", () => {
+                        sidebar.classList.add("closed");
+                        backdrop.classList.add("hidden");
                     });
                 }
 
                 // Helper to auto-close sidebar on mobile after selecting a song/set
                 window.closeMobileSidebar = function () {
                     if (window.innerWidth < 1024 && sidebar && backdrop) {
-                        sidebar.classList.add("-translate-x-full");
+                        sidebar.classList.add("closed");
                         backdrop.classList.add("hidden");
                     }
                 };
 
-                // 2. Search Input & Clear Button Logic
+                // Search & Filter listeners...
                 const searchInput = document.getElementById("song-search-input");
                 const clearSearchBtn = document.getElementById("clear-search");
 
@@ -3191,7 +3734,6 @@
                     });
                 }
 
-                // 3. Folder / Category Filter Dropdown Change
                 const filterSelect = document.getElementById("folder-filter-select");
                 if (filterSelect) {
                     filterSelect.addEventListener("change", (e) => {
@@ -3509,7 +4051,7 @@
                                 color: "text-[var(--text-color)]",
                                 action: () => {
                                     closeSidebarModal();
-                                    openNewSongEditor(); // Directly calls your setup logic and opens the editor modal
+                                    openNewSongEditor();
                                 }
                             },
                             {
@@ -3590,10 +4132,80 @@
                                         category: "MAIN",
                                         title: "New Set",
                                         filename: "New Set",
-                                        songTitles: []
+                                        songTitles: [],
+                                        items: [] // Ensure your set items array is initialized
                                     };
                                     showToast("New set created. Select checkboxes next to songs to add them.");
+                                    saveActiveSetToStorage();
                                     renderSidebarList();
+                                }
+                            },
+                            {
+                                label: "Add Divider",
+                                icon: "minus",
+                                color: "text-[var(--text-color)]",
+                                action: () => {
+                                    closeSidebarModal();
+                                    if (!currentSet) {
+                                        showToast("No active set to add a divider to.");
+                                        return;
+                                    }
+                                    if (!currentSet.songTitles) currentSet.songTitles = [];
+
+                                    // Push the custom divider object into the set's entries array
+                                    currentSet.songTitles.push({
+                                        type: "custom",
+                                        name: "# Divider #"
+                                    });
+
+                                    showToast("Divider added to set.");
+
+                                    // Refresh the UI and trigger the dirty state check so the Save button appears
+                                    saveActiveSetToStorage();
+                                    if (typeof renderSetEditor === "function") renderSetEditor();
+                                    if (typeof renderSidebarList === "function") renderSidebarList();
+                                    if (typeof checkSetDirtyState === "function") checkSetDirtyState();
+                                }
+                            },
+                            {
+                                label: "Add Note",
+                                icon: "file-text",
+                                color: "text-[var(--text-color)]",
+                                action: () => {
+                                    closeSidebarModal();
+                                    if (!currentSet) {
+                                        showToast("No active set to add a note to.");
+                                        return;
+                                    }
+
+                                    const noteText = prompt("Enter note text:");
+                                    if (noteText && noteText.trim() !== "") {
+                                        if (!currentSet.songTitles) currentSet.songTitles = [];
+
+                                        // Push the custom note object into the set's entries array
+                                        currentSet.songTitles.push({
+                                            type: "custom",
+                                            name: "# Note #",
+                                            notes: noteText.trim()
+                                        });
+
+                                        showToast("Note added to set.");
+
+                                        // Refresh the UI and trigger the dirty state check so the Save button appears
+                                        saveActiveSetToStorage();
+                                        if (typeof renderSetEditor === "function") renderSetEditor();
+                                        if (typeof renderSidebarList === "function") renderSidebarList();
+                                        if (typeof checkSetDirtyState === "function") checkSetDirtyState();
+                                    }
+                                }
+                            },
+                            {
+                                label: "Save current set",
+                                icon: "save",
+                                color: "text-[var(--text-color)]",
+                                action: () => {
+                                    closeSidebarModal();
+                                    openSaveSetModal();
                                 }
                             },
                             {
@@ -3612,15 +4224,6 @@
                                 action: () => {
                                     closeSidebarModal();
                                     elements.importModal.classList.remove("hidden");
-                                }
-                            },
-                            {
-                                label: "Save current set",
-                                icon: "save",
-                                color: "text-[var(--text-color)]",
-                                action: () => {
-                                    closeSidebarModal();
-                                    document.getElementById("sidebar-save-set-btn")?.click();
                                 }
                             },
                             {
@@ -3710,22 +4313,49 @@
             `;
 
                         card.addEventListener("click", () => {
-                            // Load target set into active working memory
+                            // 1. Resolve raw items array (supporting .songs, .items, or .songTitles)
+                            const rawItems = setObj.songs || setObj.items || setObj.songTitles || [];
+
+                            // 2. Map items safely into currentSet
+                            const processedSongs = rawItems.map((item) => {
+                                // If it's a custom Divider or Note object, preserve it
+                                if (item && typeof item === "object" && item.type === "custom") {
+                                    return { ...item };
+                                }
+
+                                // Handle object or string representation
+                                const titleStr = typeof item === "string" ? item : item.title || item.name || "";
+                                const folderStr = typeof item === "object" ? item.folder || "" : "";
+
+                                const found = loadedSongs.find(
+                                    (s) => s.title && s.title.toLowerCase() === titleStr.toLowerCase()
+                                );
+
+                                return {
+                                    title: titleStr,
+                                    folder: folderStr,
+                                    prefKey: item.prefKey || item.overrideKey || (found ? found.key : "") || "",
+                                    overrideKey: item.overrideKey || item.prefKey || (found ? found.key : "") || ""
+                                };
+                            });
+
+                            // 3. Set currentSet and activeSet
                             currentSet = {
                                 ...setObj,
-                                items: setObj.songTitles.map((t) => {
-                                    const found = loadedSongs.find((s) => s.title.toLowerCase() === t.toLowerCase());
-                                    return { title: t, overrideKey: found ? found.key || "C" : "C" };
-                                })
+                                songs: processedSongs,
+                                items: processedSongs
                             };
 
-                            // Render main sheet set view & refresh sidebar current set
-                            renderSetSheet(setObj);
-                            renderSidebarList();
+                            activeSet = currentSet;
+
+                            // 4. Render main sheet set view & refresh sidebar current set
+                            renderSetSheet(currentSet);
+                            if (typeof renderSidebarList === "function") renderSidebarList();
 
                             modal.classList.add("hidden");
-                            closeMobileSidebar();
-                            showToast(`Loaded set: ${setObj.title}`);
+                            if (typeof closeMobileSidebar === "function") closeMobileSidebar();
+
+                            showToast(`Loaded set: ${setObj.title || setObj.name || "Untitled Set"}`);
                         });
 
                         listContainer.appendChild(card);
@@ -3797,11 +4427,16 @@
 
             // Universal Song Navigation Helper (supports Sets & Filtered Library Lists)
             function navigateSong(direction) {
-                // direction: -1 for previous, 1 for next
                 if (activeSet) {
-                    // Navigate within the active set
+                    const totalSongs =
+                        activeSet.songs && activeSet.songs.length > 0
+                            ? activeSet.songs.length
+                            : activeSet.songTitles
+                              ? activeSet.songTitles.length
+                              : 0;
+
                     const newIndex = activeSetSongIndex + direction;
-                    if (newIndex >= 0 && newIndex < activeSet.songTitles.length) {
+                    if (newIndex >= 0 && newIndex < totalSongs) {
                         activeSetSongIndex = newIndex;
                         loadSongFromActiveSet(activeSetSongIndex);
                     } else {
@@ -3851,40 +4486,122 @@
                 }
             });
 
-            // 2. Mobile / Touch Swipe Gesture Listeners on the Song Sheet
-            let touchStartX = 0;
-            let touchStartY = 0;
+            // Universal Pointer Event Listeners (Drag-to-scroll only on active click/press)
+            let pointerStartX = 0;
+            let pointerStartY = 0;
+            let lastPointerY = 0;
+            let lastPointerTime = 0;
+            let scrollVelocity = 0;
+            let isDraggingVertically = false;
+            let isPointerDown = false;
+            let flingAnimationId = null;
+
             const songSheetElement = document.getElementById("song-sheet");
 
             if (songSheetElement) {
                 songSheetElement.addEventListener(
-                    "touchstart",
+                    "pointerdown",
                     (e) => {
-                        touchStartX = e.touches[0].clientX;
-                        touchStartY = e.touches[0].clientY;
+                        // For mouse inputs, ensure only the primary (left) click initiates the drag
+                        if (e.pointerType === "mouse" && e.buttons !== 1) return;
+
+                        // Cancel any active fling momentum when starting a new press
+                        if (flingAnimationId) {
+                            cancelAnimationFrame(flingAnimationId);
+                            flingAnimationId = null;
+                        }
+
+                        isPointerDown = true;
+                        pointerStartX = e.clientX;
+                        pointerStartY = e.clientY;
+                        lastPointerY = e.clientY;
+                        lastPointerTime = performance.now();
+                        scrollVelocity = 0;
+                        isDraggingVertically = false;
                     },
                     { passive: true }
                 );
 
                 songSheetElement.addEventListener(
-                    "touchend",
+                    "pointermove",
                     (e) => {
-                        const touchEndX = e.changedTouches[0].clientX;
-                        const touchEndY = e.changedTouches[0].clientY;
+                        // Ignore movement entirely unless the mouse button or finger is actively held down
+                        if (!isPointerDown) return;
 
-                        const deltaX = touchEndX - touchStartX;
-                        const deltaY = touchEndY - touchStartY;
+                        const deltaX = e.clientX - pointerStartX;
+                        const deltaY = e.clientY - pointerStartY;
 
-                        // Verify it's a deliberate horizontal swipe (larger horizontal delta than vertical, and > 50px)
-                        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-                            if (deltaX > 0) {
-                                // Swipe Right -> Previous Song
-                                navigateSong(-1);
-                            } else {
-                                // Swipe Left -> Next Song
-                                navigateSong(1);
+                        // Determine if this is a vertical drag gesture
+                        if (!isDraggingVertically && Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+                            isDraggingVertically = true;
+                        }
+
+                        if (isDraggingVertically) {
+                            const now = performance.now();
+                            const dt = now - lastPointerTime;
+                            const dy = e.clientY - lastPointerY;
+
+                            if (dt > 0) {
+                                // Calculate velocity for fling effect (pixels per millisecond)
+                                scrollVelocity = dy / dt;
+                            }
+
+                            // Scroll the container directly
+                            songSheetElement.scrollTop -= dy;
+
+                            lastPointerY = e.clientY;
+                            lastPointerTime = now;
+                        }
+                    },
+                    { passive: true }
+                );
+
+                songSheetElement.addEventListener(
+                    "pointerup",
+                    (e) => {
+                        if (!isPointerDown) return;
+                        isPointerDown = false;
+
+                        const deltaX = e.clientX - pointerStartX;
+                        const deltaY = e.clientY - pointerStartY;
+
+                        if (isDraggingVertically) {
+                            // Apply Fling Momentum (inertia decay)
+                            if (Math.abs(scrollVelocity) > 0.2) {
+                                const friction = 0.95; // Deceleration rate
+                                const step = () => {
+                                    scrollVelocity *= friction;
+                                    songSheetElement.scrollTop -= scrollVelocity * 16; // scale by frame interval roughly
+
+                                    if (Math.abs(scrollVelocity) > 0.05) {
+                                        flingAnimationId = requestAnimationFrame(step);
+                                    } else {
+                                        cancelAnimationFrame(flingAnimationId);
+                                        flingAnimationId = null;
+                                    }
+                                };
+                                flingAnimationId = requestAnimationFrame(step);
+                            }
+                            isDraggingVertically = false;
+                        } else {
+                            // Horizontal Swipe / Drag for Song Navigation (> 30px threshold)
+                            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30) {
+                                if (deltaX > 0) {
+                                    navigateSong(-1); // Previous Song
+                                } else {
+                                    navigateSong(1); // Next Song
+                                }
                             }
                         }
+                    },
+                    { passive: true }
+                );
+
+                songSheetElement.addEventListener(
+                    "pointercancel",
+                    () => {
+                        isPointerDown = false;
+                        isDraggingVertically = false;
                     },
                     { passive: true }
                 );
@@ -3903,27 +4620,325 @@
                 });
             }
 
-            // Save the current set state whenever it changes
-            function saveCurrentSetToStorage() {
-                if (typeof activeSet !== "undefined" && activeSet) {
-                    localStorage.setItem("open_song_active_set", JSON.stringify(activeSet));
+            // Sanitize and keep set structures in sync
+            function sanitizeSet(setObj) {
+                if (!setObj) return setObj;
+
+                if (setObj.songTitles && Array.isArray(setObj.songTitles)) {
+                    setObj.songTitles = setObj.songTitles.filter((item) => {
+                        if (!item) return false;
+                        // Keep custom objects (dividers/notes) as-is
+                        if (typeof item === "object" && item.type === "custom") return true;
+                        return typeof item === "string" && item.trim() !== "";
+                    });
+
+                    // Mirror songTitles into songs array safely preserving custom items
+                    setObj.songs = setObj.songTitles.map((item) => {
+                        if (typeof item === "object" && item.type === "custom") return item;
+                        const t = typeof item === "object" ? item.title : item;
+                        const found =
+                            typeof loadedSongs !== "undefined"
+                                ? loadedSongs.find((s) => s.title.toLowerCase() === t.toLowerCase())
+                                : null;
+                        return {
+                            title: t,
+                            filename: found ? found.filename || "" : "",
+                            folder: found ? found.folderPath || found.folder || "" : "",
+                            prefKey: found ? found.key || "" : ""
+                        };
+                    });
+                }
+                return setObj;
+            }
+
+            // Save current active set state so it persists across reboots
+            function saveActiveSetToStorage(setObj) {
+                const targetSet = setObj || currentSet;
+                if (targetSet) {
+                    // 1. Sanitize first so phantom/deleted songs are stripped out
+                    sanitizeSet(targetSet);
+
+                    // 2. Keep references in sync
+                    currentSet = targetSet;
+                    activeSet = targetSet;
+
+                    // 3. Persist clean object to localStorage
+                    localStorage.setItem("opensong_active_set", JSON.stringify(targetSet));
+                }
+
+                // 4. Update tab badge counter in real time
+                if (typeof updateTabCounts === "function") {
+                    updateTabCounts();
                 }
             }
 
-            // Load the current set upon app startup
-            function loadCurrentSetFromStorage() {
-                const saved = localStorage.getItem("open_song_active_set");
+            // Load active set on application startup
+            function loadActiveSetFromStorage() {
+                const saved = localStorage.getItem("opensong_active_set");
                 if (saved) {
                     try {
-                        activeSet = JSON.parse(saved);
-                        // Re-render your sidebar set list view here
-                        if (typeof renderSidebarSetList === "function") {
-                            renderSidebarSetList();
+                        let parsedSet = JSON.parse(saved);
+
+                        // Sanitize before rendering on boot
+                        parsedSet = sanitizeSet(parsedSet);
+                        currentSet = parsedSet;
+                        activeSet = parsedSet;
+
+                        // Render cleaned set into view
+                        if (typeof renderSetSheet === "function") {
+                            renderSetSheet(parsedSet);
                         }
                     } catch (e) {
-                        console.error("Failed to parse saved active set", e);
+                        console.error("Failed to load saved active set from storage:", e);
                     }
                 }
+
+                if (typeof updateTabCounts === "function") {
+                    updateTabCounts();
+                }
+            }
+
+            // Function to open the Save Set Modal, pre-filling data if the set already exists
+            function openSaveSetModal() {
+                if (!currentSet) {
+                    showToast("No active set to save.");
+                    return;
+                }
+
+                const modal = document.getElementById("save-set-modal");
+                const titleInput = document.getElementById("save-modal-title-input");
+                const categorySelect = document.getElementById("save-modal-category-select");
+                const newCategoryInput = document.getElementById("save-modal-new-category-input");
+                const warningEl = document.getElementById("save-modal-warning");
+
+                // Pre-fill title
+                titleInput.value = currentSet.title || currentSet.name || "";
+                warningEl.classList.add("hidden");
+
+                // 1. Gather all unique categories/folders from existing loadedSets
+                const existingCategories = [
+                    ...new Set(loadedSets.map((s) => s.category || s.folder).filter(Boolean))
+                ].sort();
+
+                // 2. Rebuild category select options
+                categorySelect.innerHTML = '<option value="">(No Category)</option>';
+                existingCategories.forEach((cat) => {
+                    const opt = document.createElement("option");
+                    opt.value = cat;
+                    opt.textContent = cat;
+                    categorySelect.appendChild(opt);
+                });
+
+                // Add the "+ New Category..." option at the end
+                const newOpt = document.createElement("option");
+                newOpt.value = "__new__";
+                newOpt.textContent = "+ New Category...";
+                categorySelect.appendChild(newOpt);
+
+                // 3. Set the current category value if it exists
+                const currentCategory = currentSet.category || currentSet.folder || "";
+                if (currentCategory && existingCategories.includes(currentCategory)) {
+                    categorySelect.value = currentCategory;
+                    newCategoryInput.value = "";
+                    newCategoryInput.classList.add("hidden");
+                } else if (currentCategory) {
+                    // If it's a category not in the list yet, add it or treat as new
+                    const opt = document.createElement("option");
+                    opt.value = currentCategory;
+                    opt.textContent = currentCategory;
+                    categorySelect.insertBefore(opt, newOpt);
+                    categorySelect.value = currentCategory;
+                    newCategoryInput.value = "";
+                    newCategoryInput.classList.add("hidden");
+                } else {
+                    categorySelect.value = "";
+                    newCategoryInput.value = "";
+                    newCategoryInput.classList.add("hidden");
+                }
+
+                // 4. Handle dropdown change for "+ New Category..."
+                categorySelect.onchange = () => {
+                    if (categorySelect.value === "__new__") {
+                        newCategoryInput.classList.remove("hidden");
+                        newCategoryInput.focus();
+                    } else {
+                        newCategoryInput.classList.add("hidden");
+                        newCategoryInput.value = "";
+                    }
+                };
+
+                // Check for duplicate titles on typing
+                titleInput.oninput = () => {
+                    const typedTitle = titleInput.value.trim().toLowerCase();
+                    const existing = loadedSets.find(
+                        (s) => (s.title || s.name || "").toLowerCase() === typedTitle && s !== currentSet
+                    );
+                    if (existing) {
+                        warningEl.classList.remove("hidden");
+                    } else {
+                        warningEl.classList.add("hidden");
+                    }
+                };
+
+                modal.classList.remove("hidden");
+                lucide.createIcons();
+            }
+
+            // Wire up modal close & confirm actions
+            document.getElementById("close-save-modal-btn")?.addEventListener("click", closeSaveModal);
+            document.getElementById("cancel-save-modal-btn")?.addEventListener("click", closeSaveModal);
+
+            function closeSaveModal() {
+                document.getElementById("save-set-modal").classList.add("hidden");
+            }
+
+            document.getElementById("confirm-save-modal-btn")?.addEventListener("click", async () => {
+                const titleInput = document.getElementById("save-modal-title-input");
+                const categorySelect = document.getElementById("save-modal-category-select");
+                const newCategoryInput = document.getElementById("save-modal-new-category-input");
+
+                if (!titleInput) {
+                    showToast("Error: Save modal title input missing from HTML.");
+                    return;
+                }
+
+                const newTitle = titleInput.value.trim();
+                if (!newTitle) {
+                    showToast("Please enter a title for the set.");
+                    titleInput.focus();
+                    return;
+                }
+
+                // Resolve category safely
+                let finalCategory = "";
+                if (categorySelect && categorySelect.value === "__new__") {
+                    finalCategory = newCategoryInput ? newCategoryInput.value.trim() : "";
+                } else if (categorySelect) {
+                    finalCategory = categorySelect.value;
+                }
+
+                // Update currentSet properties
+                currentSet.title = newTitle;
+                currentSet.name = newTitle;
+                currentSet.category = finalCategory;
+                currentSet.folder = finalCategory;
+
+                // Generate a valid filename if it doesn't have one
+                if (!currentSet.filename) {
+                    currentSet.filename = `${newTitle.toLowerCase().replace(/[^a-z0-9]/g, "_")}.xml`;
+                }
+
+                // Sync activeSet
+                activeSet = JSON.parse(JSON.stringify(currentSet));
+
+                // Ensure it's in loadedSets collection
+                const existingIdx = loadedSets.findIndex(
+                    (s) =>
+                        (s.filename && s.filename.toLowerCase() === currentSet.filename.toLowerCase()) ||
+                        (s.title || s.name || "").toLowerCase() === newTitle.toLowerCase()
+                );
+
+                if (existingIdx !== -1) {
+                    loadedSets[existingIdx] = { ...activeSet };
+                } else {
+                    loadedSets.push({ ...activeSet });
+                }
+
+                // Close modal
+                document.getElementById("save-set-modal")?.classList.add("hidden");
+
+                // Persist to storage and disk
+                saveActiveSetToStorage(activeSet);
+                await writeSetToDisk(activeSet);
+
+                // Refresh UI elements
+                if (typeof renderSidebarList === "function") renderSidebarList();
+                if (typeof checkSetDirtyState === "function") checkSetDirtyState();
+
+                showToast(`Set "${newTitle}" saved successfully!`);
+            });
+
+            // Hook up all save buttons across the UI to trigger openSaveSetModal()
+            document
+                .querySelectorAll(
+                    "#sidebar-set-save-btn, #sidebar-save-set-btn, #dynamic-save-set-btn, [data-action='save-set']"
+                )
+                .forEach((btn) => {
+                    btn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        openSaveSetModal();
+                    });
+                });
+
+            async function writeSetToDisk(setObj) {
+                if (!setObj) return false;
+
+                // Clean title and ensure NO file extension is added for the OpenSong/Sets/ folder
+                const cleanTitle = (setObj.title || setObj.name || "Untitled_Set").replace(/[\/\\?%*:|"<>]/g, "_");
+                const filename = cleanTitle; // Extensionless filename as required by OpenSong
+
+                // Construct OpenSong XML structure for sets
+                let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>\n<set name="${escapeXml(setObj.title || cleanTitle)}">\n`;
+
+                const items = setObj.songs || setObj.items || setObj.songTitles || [];
+                items.forEach((item) => {
+                    if (typeof item === "object" && item.type === "custom") {
+                        if (item.name === "# Divider #") {
+                            xmlContent += `  <slide_group name="# Divider #" />\n`;
+                        } else if (item.name === "# Note #") {
+                            xmlContent += `  <slide_group name="# Note #">\n    <notes>${escapeXml(item.notes || "")}</notes>\n  </slide_group>\n`;
+                        }
+                    } else {
+                        const title = typeof item === "string" ? item : item.title;
+                        const folder =
+                            typeof item === "object" && item.folder ? ` folder="${escapeXml(item.folder)}"` : "";
+                        xmlContent += `  <slide_group name="${escapeXml(title)}"${folder} />\n`;
+                    }
+                });
+                xmlContent += `</set>`;
+
+                // 1. Write directly to the "Sets" folder without an extension
+                if (rootDirectoryHandle) {
+                    try {
+                        let setsDirHandle = rootDirectoryHandle;
+                        try {
+                            setsDirHandle = await rootDirectoryHandle.getDirectoryHandle("Sets", { create: true });
+                        } catch (e) {}
+
+                        const fileHandle = await setsDirHandle.getFileHandle(filename, { create: true });
+                        const writable = await fileHandle.createWritable();
+                        await writable.write(xmlContent);
+                        await writable.close();
+
+                        showToast(`Saved set to Sets/${filename}`);
+                        return true;
+                    } catch (err) {
+                        console.warn("Failed to write set to disk via File System Access API:", err);
+                    }
+                }
+
+                // 2. Fallback: Download file if filesystem access isn't active
+                try {
+                    const blob = new Blob([xmlContent], { type: "text/xml;charset=utf-8" });
+                    saveAs(blob, filename);
+                    return true;
+                } catch (e) {
+                    console.warn("FileSaver fallback failed:", e);
+                }
+
+                return false;
+            }
+
+            // Simple XML entity escaper helper
+            function escapeXml(str) {
+                if (!str) return "";
+                return str
+                    .toString()
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&apos;");
             }
         </script>
     </body>
