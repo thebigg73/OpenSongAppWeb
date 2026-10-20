@@ -8,9 +8,15 @@ import { initPad } from './js/pad.js';
 import { initAutoscroll } from './js/autoscroll.js';
 import { initScaling } from './js/scaling.js';
 import { initMetronome } from '.js/metronome.js';
+import { initChords } from '.js/chords.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     initStorage();
-    initSetManager();
-    initUI();
+    initSong();
+    initSet();
+    initPad();
+    initAutoscroll();
+    initScaling();
+    initMetronome();
+    initChords();
 });
