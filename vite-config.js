@@ -5,7 +5,7 @@ export default defineConfig({
   root: './src',
   plugins: [viteSingleFile()],
   build: {
-    outDir: '',
+    outDir: '../dist',
     emptyOutDir: true,
   },
 });
