@@ -1,0 +1,163 @@
+<body
+    class="h-full flex flex-col font-sans antialiased bg-[var(--bg-primary)] text-[var(--text-color)] overflow-hidden select-none">
+
+
+    <!-- Main Workspace Layout -->
+    <div class="flex-1 flex overflow-hidden relative">
+        <!-- Main Viewport Container -->
+        <main
+            id="main-scroll-container"
+            class="flex-1 bg-[var(--bg-primary)] overflow-y-auto p-0 flex flex-col relative scroll-smooth transition-all duration-300">
+            <!-- Main content items remain exactly the same -->
+            <div id="song-display-area" class="w-full max-w-none min-h-full flex flex-col relative">
+
+
+
+
+
+
+
+
+
+
+
+
+            </div>
+
+
+        </main>
+    </div>
+
+    <!-- Application Logic Script -->
+    <!-- Application Logic Script -->
+    <script>
+
+
+
+
+
+
+        const elements = {
+            modal: document.getElementById("folder-modal"),
+            closeFolderModal: document.getElementById("close-folder-modal"),
+            importModal: document.getElementById("import-modal"),
+            openImportModalBtn: document.getElementById("open-import-modal-btn"),
+            closeImportModal: document.getElementById("close-import-modal"),
+            modalImportArchiveBtn: document.getElementById("modal-import-archive-btn"),
+            modalImportFilesBtn: document.getElementById("modal-import-files-btn"),
+            modalExportOsbBtn: document.getElementById("modal-export-osb-btn"),
+            modalExportOsbsBtn: document.getElementById("modal-export-osbs-btn"),
+            archiveFileInput: document.getElementById("archive-file-input"),
+            individualFilesInput: document.getElementById("individual-files-input"),
+
+            osbExportModal: document.getElementById("osb-export-modal"),
+            closeOsbExportModal: document.getElementById("close-osb-export-modal"),
+            osbExportCancelBtn: document.getElementById("osb-export-cancel-btn"),
+            osbExportConfirmBtn: document.getElementById("osb-export-confirm-btn"),
+            osbFoldersCheckboxList: document.getElementById("osb-folders-checkbox-list"),
+
+            conflictModal: document.getElementById("conflict-modal"),
+            closeConflictModal: document.getElementById("close-conflict-modal"),
+            conflictCancelBtn: document.getElementById("conflict-cancel-btn"),
+            conflictProceedBtn: document.getElementById("conflict-proceed-btn"),
+            conflictItemsList: document.getElementById("conflict-items-list"),
+
+            shareModal: document.getElementById("share-modal"),
+            closeShareModal: document.getElementById("close-share-modal"),
+            shareExtlessBtn: document.getElementById("share-extless-btn"),
+            shareExtBtn: document.getElementById("share-ext-btn"),
+            shareNameExtless: document.getElementById("share-name-extless"),
+            shareNameExt: document.getElementById("share-name-ext"),
+            shareExtLabel: document.getElementById("share-ext-label"),
+            shareSongBtn: document.getElementById("share-song-btn"),
+            shareSetBtn: document.getElementById("share-set-btn"),
+
+            modalProgressContainer: document.getElementById("modal-progress-container"),
+            modalActionsContainer: document.getElementById("modal-actions-container"),
+            reconnectFolderContainer: document.getElementById("reconnect-folder-container"),
+            modalReconnectBtn: document.getElementById("modal-reconnect-folder-btn"),
+            folderStatus: document.getElementById("folder-status-text"),
+            //tabSongsBtn: document.getElementById("tab-songs-btn"),
+            //tabSetsBtn: document.getElementById("tab-sets-btn"),
+            //tabSongsCount: document.getElementById("tab-songs-count"),
+            //tabSetsCount: document.getElementById("tab-sets-count"),
+            //songList: document.getElementById("song-list"),
+            //songSearch: document.getElementById("song-search-input"),
+            //clearSearch: document.getElementById("clear-search"),
+            //folderFilterSelect: document.getElementById("folder-filter-select"),
+
+            rescanBtn: document.getElementById("rescan-btn"),
+            emptyState: document.getElementById("empty-state"),
+            songSheet: document.getElementById("song-sheet"),
+            setViewSheet: document.getElementById("set-view-sheet"),
+            setTitle: document.getElementById("set-title"),
+            setSongsContainer: document.getElementById("set-songs-container"),
+            sheetTitle: document.getElementById("sheet-title"),
+            sheetAuthor: document.getElementById("sheet-author"),
+            sheetFolderPath: document.getElementById("sheet-folder-path"),
+            sheetKeyBadge: document.getElementById("sheet-key-badge"),
+            sheetCapoBadge: document.getElementById("sheet-capo-badge"),
+            sheetContent: document.getElementById("sheet-content"),
+            floatingCapoBtn: document.getElementById("floating-capo-btn"),
+            floatingCapoLabel: document.getElementById("floating-capo-label"),
+            currentSongTitle: document.getElementById("current-song-title"),
+            currentSongAuthor: document.getElementById("current-song-author"),
+            metaKey: document.getElementById("meta-key"),
+            metaTempo: document.getElementById("meta-tempo"),
+            changeFolderBtn: document.getElementById("change-folder-btn"),
+            modalSelectBtn: document.getElementById("modal-select-folder-btn"),
+            fallbackInput: document.getElementById("fallback-folder-input"),
+            editSongBtn: document.getElementById("edit-song-btn"),
+
+            //floatingMenu: document.getElementById("floating-menu"),
+            //closeFloatingMenu: document.getElementById("close-floating-menu"),
+            //floatingMainBtn: document.getElementById("floating-main-btn"),
+            songEditorModal: document.getElementById("song-editor-modal"),
+            closeSongEditor: document.getElementById("close-song-editor"),
+
+            editSongPresentationInput: document.getElementById("edit-song-presentation-input"),
+            editSongLyricsInput: document.getElementById("edit-song-lyrics-input"),
+            editSongTitleInput: document.getElementById("edit-song-title-input"),
+            //editSongFolderSelect: document.getElementById("edit-song-folder-select"),
+            editSongNewFolderInput: document.getElementById("edit-song-new-folder-input"),
+            editSongFilenameInput: document.getElementById("edit-song-filename-input"),
+            editSongAuthorInput: document.getElementById("edit-song-author-input"),
+            editSongCopyrightInput: document.getElementById("edit-song-copyright-input"),
+            editSongKeyInput: document.getElementById("edit-song-key-input"),
+            editSongCapoInput: document.getElementById("edit-song-capo-input"),
+            editSongTempoInput: document.getElementById("edit-song-tempo-input"),
+            editSongTimesigInput: document.getElementById("edit-song-timesig-input"),
+            editSongNotesInput: document.getElementById("edit-song-notes-input"),
+            editSongThemesInput: document.getElementById("edit-song-themes-input"),
+            editSongBeatbuddyInput: document.getElementById("edit-song-beatbuddy-input"),
+            saveSongBtn: document.getElementById("save-song-btn")
+        };
+
+        window.addEventListener("DOMContentLoaded", async () => {
+            lucide.createIcons();
+            setupEventListeners();
+            setupSetNavigationListeners();
+            setupSidebarInteractions();
+            loadActiveSetFromStorage();
+            await initSqlDatabase();
+
+            // Ensure it defaults to Songs tab on boot
+            switchSidebarTab("songs");
+
+            // Default state: Open on desktop (>=1024px), Closed on mobile (<1024px)
+            const sidebar = document.getElementById("sidebar");
+            if (sidebar) {
+                if (window.innerWidth < 1024) {
+                    sidebar.classList.add("closed");
+                } else {
+                    sidebar.classList.remove("closed");
+                }
+            }
+
+            // Set the version
+            document.getElementById("app-version-badge").textContent = version;
+        });
+
+
+    </script>
+</body>

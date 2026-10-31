@@ -1,1 +1,1 @@
-<!-- The Javascript to deal with song pads -->
+// The Javascript to deal with song pads

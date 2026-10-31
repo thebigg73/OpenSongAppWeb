@@ -11,5 +11,8 @@
   "devDependencies": {
     "vite": "^5.0.0",
     "vite-plugin-singlefile": "^2.0.0"
+  },
+  "dependencies": {
+    "lucide": "^1.60.0"
   }
 }

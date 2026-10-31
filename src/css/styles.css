@@ -1,1 +1,204 @@
-<-- The main themes and styles --?
+/* Default / Dark Theme (Matches Android Dark Palette) */
+:root,
+[data-theme="dark"] {
+    --bg-primary: #141b22;
+    --bg-primary-variant: #1a222c;
+    --bg-surface: #183441;
+    --bg-surface-variant: #203640;
+
+    --color-secondary: #294959;
+    --color-secondary-variant: #365c6e;
+    --color-secondary-fixed: #3c667a;
+
+    --text-color: #f1faff;
+    --chord-color: #ffff00;
+    --capo-color: #ff0000;
+    --text-hint: #adb6bf;
+    --color-error: #aa0000;
+
+    --border-color: #203640;
+}
+
+/* Light Theme (Matches Android Light Palette) */
+[data-theme="light"] {
+    --bg-primary: #ffffff;
+    --bg-primary-variant: #fafaff;
+    --bg-surface: #fafaff;
+    --bg-surface-variant: #e2d9da;
+
+    --color-secondary: #c8e4ef;
+    --color-secondary-variant: #b0c5ca;
+    --color-secondary-fixed: #94aab1;
+
+    --text-color: #141b22;
+    --chord-color: #0000ff;
+    --capo-color: #ff0000;
+    --text-hint: #8e969f;
+    --color-error: #f46262;
+
+    --border-color: #e2d9da;
+}
+
+/* Core Element Overrides */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-color);
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+/* Forces the sidebar closed even on desktop screens */
+/* Sidebar collapsed state: shrinks width to 0 and hides content smoothly */
+#sidebar.closed {
+    width: 0 !important;
+    min-width: 0 !important;
+    overflow: hidden;
+    border-right-width: 0 !important;
+}
+
+.app-surface {
+    background-color: var(--bg-surface);
+}
+.app-surface-variant {
+    background-color: var(--bg-surface-variant);
+}
+.app-card {
+    background-color: var(--bg-primary-variant);
+    border-color: var(--border-color);
+}
+.app-accent-btn {
+    background-color: var(--color-secondary);
+    color: var(--text-color);
+}
+.app-accent-btn:hover {
+    background-color: var(--color-secondary-variant);
+}
+.app-hint-text {
+    color: var(--text-hint);
+}
+.chord-lyric-pair-line {
+    display: flex;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    width: 100%;
+    max-width: 100%;
+    word-break: break-word;
+    /* Base font size gets adjusted dynamically by auto-scale */
+    font-size: 20px;
+}
+
+.chord-lyric-pair {
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: top;
+    position: relative;
+}
+
+.chord-above {
+    font-weight: 700;
+    color: var(--chord-color, #ffff00);
+    line-height: 1;
+    user-select: none;
+    white-space: pre;
+    font-size: var(--chord-font-scale, 1rem);
+}
+
+.chord-capo-above {
+    font-weight: 700;
+    color: var(--capo-color, #0000ff);
+    line-height: 1;
+    user-select: none;
+    white-space: pre;
+    font-size: var(--chord-font-scale, 1rem);
+}
+
+.lyric-below {
+    color: var(--text-color, #ffffff);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.chord-above:empty,
+.chord-capo-above:empty {
+    display: none;
+}
+
+.section-heading {
+    font-size: var(--heading-font-scale, 0.85rem);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.draggable-popup {
+    position: absolute;
+    z-index: 50;
+    cursor: move;
+    resize: both;
+    overflow: auto;
+}
+
+#toast-notification {
+    transition:
+        transform 0.3s ease,
+        opacity 0.3s ease;
+    pointer-events: none;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Reusable subtle header badge style */
+.song-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem; /* px-2.5 py-1 */
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 700; /* font-bold */
+    border-radius: 0.375rem; /* rounded-md */
+    background-color: var(--bg-surface-variant);
+    color: var(--text-color, #ffff00);
+    border: 1px solid var(--border-color);
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        opacity 0.15s ease;
+    user-select: none;
+}
+
+/* Optional hover state for interactive badges (Key, Capo, Capo Mode) */
+.song-badge-interactive {
+    cursor: pointer;
+}
+.song-badge-interactive:hover {
+    background-color: var(--bg-primary);
+    border-color: var(--color-secondary, #3b82f6);
+}
+
+/* Unset / Muted variation (e.g. Capo: 0 when unset or Author when secondary) */
+.song-badge-muted {
+    color: var(--text-hint, #888888);
+    opacity: 0.75;
+}

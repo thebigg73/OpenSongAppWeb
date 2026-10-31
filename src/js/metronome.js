@@ -1,1 +1,1 @@
-<!-- The Javascript to deal with the metronome -->
+// The Javascript to deal with the metronome
