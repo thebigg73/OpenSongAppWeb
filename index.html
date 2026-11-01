@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" />
+    <title>OpenSongApp Web</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M9 18V5l12-2v13'></path><circle cx='6' cy='18' r='3'></circle><circle cx='18' cy='16' r='3'></circle></svg>" />
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      function applyTheme(theme) {
+        if (theme === "system") {
+          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+        } else {
+          document.documentElement.setAttribute("data-theme", theme);
+        }
+      }
+
+      // Read saved preference or default to 'system'
+      const savedTheme = localStorage.getItem("app-theme") || "system";
+      applyTheme(savedTheme);
+
+      // Listen for system theme changes dynamically if on 'system' mode
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+        if ((localStorage.getItem("app-theme") || "system") === "system") {
+          applyTheme("system");
+        }
+      });
+
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              stage: {
+                bg: "#0f172a",
+                card: "#1e293b",
+                accent: "#38bdf8",
+                chord: "#f59e0b",
+                capoChord: "#a855f7",
+                chorusBg: "#1e2942"
+              }
+            }
+          }
+        }
+      };
+    </script>
+    <!-- JSZip for .osb and .osbs backup extraction & creation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FileSaver.js for triggering browser downloads -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- sql.js for reading NonOpenSongSongs.db SQLite databases -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <!-- Lucioe Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script type="module" src="/src/main.js"></script>
+  </head>
+  <body class="bg-[var(--bg-primary)] text-[var(--text-color)]">
+    <!-- App Layout -->
+    <div id="app" class="h-screen flex flex-col overflow-hidden">
+      <!-- The important notifications at the top -->
+      <div id="toast-notification-container"></div>
+      <div id="reconnect-banner-container"></div>
+
+      <!-- 1. Top Header -->
+      <div id="header-container" class="flex flex-col shrink-0"></div>
+
+      <!-- 2. Main Workspace Body (Horizontal Flex: Sidebar + Viewport) -->
+      <div class="flex-1 flex overflow-hidden relative">
+        <!-- Sidebar rendered on the left -->
+        <div id="sidebar-container" class="flex shrink-0"></div>
+
+        <!-- Main Viewport Container on the right -->
+        <main
+          id="main-scroll-container"
+          class="flex-1 bg-[var(--bg-primary)] overflow-y-auto p-0 flex flex-col relative scroll-smooth transition-all duration-300">
+          <div id="song-display-area" class="w-full max-w-none min-h-full flex flex-col relative">
+            <!-- Empty State -->
+            <div
+              id="empty-state"
+              class="my-auto flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-[var(--border-color)] bg-[var(--bg-primary-variant)]/30 rounded-2xl">
+              <div class="p-4 bg-[var(--bg-surface-variant)] text-[var(--text-hint)] rounded-full mb-4">
+                <i data-lucide="music-4" class="w-12 h-12"></i>
+              </div>
+              <h3 class="text-lg font-bold text-[var(--text-color)] mb-1">No Item Selected</h3>
+              <p class="text-sm text-[var(--text-hint)] max-w-sm mb-4">
+                Select a song or set from the sidebar, or click the folder icon above to load your OpenSong root folder.
+              </p>
+            </div>
+
+            <!-- View & Popup Containers -->
+            <div id="sticky-note-container"></div>
+            <div id="abc-popup-container"></div>
+            <div id="set-view-container"></div>
+            <div id="song-sheet-container" class="flex-1 flex overflow-hidden"></div>
+            <div id="page-button-container"></div>
+            <div id="root-folder-container"></div>
+            <div id="transpose-container"></div>
+            <div id="song-editor-container"></div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>
