@@ -6,10 +6,11 @@ export default defineConfig({
   base: '/OpenSongAppWeb/',
   plugins: [singlefile()],
   build: {
-    outDir: 'dist',          // Cleanly outputs to the dist/ folder
-    emptyOutDir: true,       // Clears old builds automatically
+    outDir: 'dist',
+    emptyOutDir: true,
     rollupOptions: {
-      input: resolve(__dirname, 'src/index.html'), // Pulls from your source folder
+      // Vite starts tracking dependencies right here:
+      input: resolve(__dirname, 'src/index.html'),
     },
   },
 })
