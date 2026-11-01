@@ -5,6 +5,7 @@ on:
     branches:
       - main # Or 'master' depending on your default branch
 
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
