@@ -500,9 +500,10 @@ export async function renderSongSheet(song, fromSetContext = null, songIndexInSe
     // Hide or adapt badges if it's a note
     const keyBadge = document.getElementById("sheet-key-badge");
     const capoBadge = document.getElementById("sheet-capo-badge");
-    const capoModeBadge = document.getElementById("sheet-capo-mode-badge");
+    let capoModeBadge = document.getElementById("sheet-capo-mode-badge");
 
     if (song.isNote) {
+        console.log("isNote!!!");
         if (keyBadge) keyBadge.classList.add("hidden");
         if (capoBadge) capoBadge.classList.add("hidden");
         if (capoModeBadge) capoModeBadge.classList.add("hidden");
@@ -517,7 +518,7 @@ export async function renderSongSheet(song, fromSetContext = null, songIndexInSe
 
     // 2. Capo Value Badge (Subtle, fixed border)
     const hasCapo = Boolean(song.capo && song.capo !== "0" && song.capo !== "");
-    if (capoBadge) {
+    if (capoBadge && !song.isNote) {
         capoBadge.textContent = `Capo: ${hasCapo ? song.capo : "0"}`;
         capoBadge.className = `song-badge song-badge-interactive ${!hasCapo ? "song-badge-muted" : ""}`;
         capoBadge.title = "Click to set capo value";

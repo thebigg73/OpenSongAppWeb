@@ -651,11 +651,11 @@ export function renderSidebarList(query = "") {
                             `;
                         } else if (songObj.name === "# Note #") {
                             itemDiv.className =
-                                "p-3 my-1 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start justify-between cursor-grab hover:border-amber-500/60 transition select-none";
+                                "p-3 my-1 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-color)] flex items-start justify-between cursor-grab hover:border-amber-500/60 transition select-none";
                             itemDiv.innerHTML = `
                                 <div class="flex items-start gap-2.5 flex-1 pr-2">
                                     <i data-lucide="grip-vertical" class="w-4 h-4 text-[var(--text-hint)] flex-shrink-0 mt-0.5"></i>
-                                    <i data-lucide="file-text" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+                                    <i data-lucide="file-text" class="w-4 h-4 text-[var(--text-hint)] shrink-0 mt-0.5"></i>
                                     <div>
                                         <div class="text-xs font-bold text-[var(--text-color)]">Note</div>
                                         <div class="text-[11px] text-[var(--text-hint)] mt-0.5 whitespace-pre-wrap">${songObj.notes || ""}</div>
