@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import singlefile from 'vite-plugin-singlefile'
-import { resolve } from 'path'
 
 export default defineConfig({
   base: '/OpenSongAppWeb/',
@@ -9,8 +8,7 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
-      // Vite starts tracking dependencies right here:
-      input: resolve(__dirname, 'src/index.html'),
+      input: 'src/index.html', // Explicitly points Vite to your source index file
     },
   },
 })
