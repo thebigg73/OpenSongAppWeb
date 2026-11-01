@@ -1,5 +1,6 @@
 import { createIcons, icons } from "lucide";
 import { showToast } from "../js/toast.js";
+import { initCastButton } from "../js/secondaryScreen.js";
 
 // 1. Export the HTML template function (Getter pattern)
 export function getHeaderHTML() {
@@ -65,7 +66,7 @@ export function initHeader() {
     if (castBtn) {
         castBtn.addEventListener("click", () => {
             // Trigger your secondary display / cast logic here
-            showToast("Secondary display window toggled");
+            initCastButton();
         });
     }
 

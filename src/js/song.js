@@ -94,7 +94,7 @@ export function parseOpenSongXML(xmlString, filename, folderPath) {
     }
 }
 
-function formatSectionHeading(tag) {
+export function formatSectionHeading(tag) {
     if (!tag) return "";
     const clean = tag
         .replace(/[\[\]]/g, "")
@@ -106,7 +106,7 @@ function formatSectionHeading(tag) {
     return tag.replace(/[\[\]]/g, "").trim();
 }
 
-function renderSongLyrics(rawLyrics, capoFret, transposeOffset = 0, isNote = false) {
+export function renderSongLyrics(rawLyrics, capoFret, transposeOffset = 0, isNote = false) {
     const sheetContent = document.getElementById("sheet-content");
     sheetContent.innerHTML = "";
     if (!rawLyrics) return;
