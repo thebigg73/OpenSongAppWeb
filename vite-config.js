@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import singlefile from 'vite-plugin-singlefile'
 
 export default defineConfig({
-  base: './', // Crucial for GitHub Pages subpaths so paths resolve correctly
+  base: './', // Ensures relative path resolution for GitHub Pages
   plugins: [singlefile()],
   build: {
     outDir: 'dist',
