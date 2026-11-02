@@ -13,83 +13,77 @@ import { loadSongFromActiveSet, updateSetSidebarHighlighting } from "./set.js";
 import { renderSidebarList } from "./sidebar.js";
 import { generateUUID } from "./utils.js";
 import { showToast } from "./toast.js";
+import { getRootDirectoryHandle } from "./storage.js";
 import { state } from "./state.js";
 
+// Comprehensive OpenSong XML Parser capturing all fields and preserving raw desktop tags
 export function parseOpenSongXML(xmlString, filename, folderPath) {
     try {
-        if (!xmlString) return null;
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xmlString, "text/xml");
+        const songEl = doc.querySelector("song") || doc.documentElement;
+        if (!songEl) return null;
 
-        const cleanFilename = filename.endsWith(".ost") ? filename.slice(0, -4) : filename;
-
-        // Robust regex extractor for OpenSong XML tags
-        const extractTag = (tagName) => {
-            const regex = new RegExp(`<${tagName}\\b[^>]*>([\\s\\S]*?)<\/${tagName}>`, "i");
-            const match = xmlString.match(regex);
-            if (match && match[1] !== undefined) {
-                return match[1]
-                    .replace(/&lt;/g, "<")
-                    .replace(/&gt;/g, ">")
-                    .replace(/&amp;/g, "&")
-                    .replace(/&apos;/g, "'")
-                    .replace(/&quot;/g, '"')
-                    .trim();
-            }
-            return "";
+        const getTagText = (tag) => {
+            const el = songEl.querySelector(tag);
+            return el ? el.textContent : "";
         };
 
-        const title = extractTag("title") || cleanFilename;
-        const lyrics = extractTag("lyrics");
-
-        // Ensure it's a valid OpenSong file
-        if (!lyrics && !xmlString.includes("<song>")) {
-            return null;
+        // Capture all raw child elements so untouched desktop/custom tags remain preserved
+        const rawTags = {};
+        for (const child of songEl.children) {
+            rawTags[child.nodeName.toLowerCase()] = child.outerHTML;
         }
 
-        return {
-            id: "song_" + Math.random().toString(36).substring(2, 8),
-            filename: cleanFilename,
+        const song = {
+            filename: filename,
             folderPath: folderPath || "MAIN",
-            title: title,
-            author: extractTag("author"),
-            copyright: extractTag("copyright"),
-            presentation: extractTag("presentation"),
-            key: extractTag("key") || "",
-            keyoriginal: extractTag("keyoriginal"),
-            capo: extractTag("capo"),
-            tempo: parseInt(extractTag("tempo"), 10) || 120,
-            time_sig: extractTag("time_sig") || "4/4",
-            hymn_number: extractTag("hymn_number"),
-            duration: extractTag("duration"),
-            predelay: extractTag("predelay"),
-            ccli: extractTag("ccli"),
-            theme: extractTag("theme"),
-            altheme: extractTag("altheme"),
-            user1: extractTag("user1"),
-            user2: extractTag("user2"),
-            user3: extractTag("user3"),
-            beatbuddysong: extractTag("beatbuddysong"),
-            beatbuddykit: extractTag("beatbuddykit"),
-            drummer: extractTag("drummer"),
-            drummerkit: extractTag("drummerkit"),
-            preferedinstrument: extractTag("preferedinstrument"),
-            previewoverride: extractTag("previewoverride"),
-            aka: extractTag("aka"),
-            midi: extractTag("midi"),
-            midi_index: extractTag("midi_index"),
-            notes: extractTag("notes"),
-            pad_file: extractTag("pad_file"),
-            custom_chords: extractTag("custom_chords"),
-            link_web: extractTag("link_web"),
-            link_audio: extractTag("link_audio"),
-            loop_audio: extractTag("loop_audio") === "true",
-            abc_notation: extractTag("abc_notation"),
-            abc_transpose: extractTag("abc_transpose"),
-            uuid: extractTag("uuid") || generateUUID(),
-            modified: extractTag("modified") || new Date().toISOString(),
-            lyrics: lyrics
+            title: getTagText("title") || filename.replace(/\.[^/.]+$/, ""),
+            author: getTagText("author"),
+            copyright: getTagText("copyright"),
+            presentation: getTagText("presentation"),
+            hymn_number: getTagText("hymn_number"),
+            capo: getTagText("capo"),
+            tempo: parseInt(getTagText("tempo")) || 120,
+            time_sig: getTagText("time_sig") || "4/4",
+            duration: getTagText("duration"),
+            predelay: getTagText("predelay"),
+            ccli: getTagText("ccli"),
+            theme: getTagText("theme"),
+            altheme: getTagText("altheme"),
+            user1: getTagText("user1"),
+            user2: getTagText("user2"),
+            user3: getTagText("user3"),
+            beatbuddysong: getTagText("beatbuddysong"),
+            beatbuddykit: getTagText("beatbuddykit"),
+            drummer: getTagText("drummer"),
+            drummerkit: getTagText("drummerkit"),
+            key: getTagText("key"),
+            keyoriginal: getTagText("keyoriginal"),
+            preferedinstrument: getTagText("preferedinstrument"),
+            previewoverride: getTagText("previewoverride"),
+            aka: getTagText("aka"),
+            midi: getTagText("midi"),
+            midi_index: getTagText("midi_index"),
+            notes: getTagText("notes"),
+            lyrics: getTagText("lyrics"),
+            pad_file: getTagText("pad_file") || getTagText("pad"),
+            pad: getTagText("pad_file") || getTagText("pad"),
+            custom_chords: getTagText("custom_chords"),
+            link_web: getTagText("link_web"),
+            link_audio: getTagText("link_audio"),
+            loop_audio: getTagText("loop_audio") === "true" || getTagText("loop_audio") === "1",
+            abc_notation: getTagText("abc_notation"),
+            abc_transpose: getTagText("abc_transpose"),
+            uuid: getTagText("uuid") || generateUUID(),
+            last_modified: getTagText("last_modified") || new Date().toISOString(),
+            rawTags: rawTags, // Preserves every untouched XML tag
+            isLoaded: true
         };
+
+        return song;
     } catch (e) {
-        console.warn("Failed to parse OpenSong XML for:", filename, e);
+        console.error("Error parsing OpenSong XML:", e);
         return null;
     }
 }
@@ -100,10 +94,25 @@ export function formatSectionHeading(tag) {
         .replace(/[\[\]]/g, "")
         .trim()
         .toUpperCase();
-    if (clean.startsWith("V")) return clean.slice(1) ? `Verse ${clean.slice(1)}` : "Verse";
-    if (clean.startsWith("C")) return clean.slice(1) ? `Chorus ${clean.slice(1)}` : "Chorus";
-    if (clean.startsWith("B")) return clean.slice(1) ? `Bridge ${clean.slice(1)}` : "Bridge";
-    return tag.replace(/[\[\]]/g, "").trim();
+
+    // Match the alphabetic root and optional numeric suffix regardless of case or length
+    const match = clean.match(/^([A-Z]+)(\d*)$/);
+    if (!match) return tag.replace(/[\[\]]/g, "").trim();
+
+    const type = match[1];
+    const num = match[2];
+
+    if (type.startsWith("V")) return num ? `Verse ${num}` : "Verse";
+    if (type.startsWith("C")) return num ? `Chorus ${num}` : "Chorus";
+    if (type.startsWith("B")) return num ? `Bridge ${num}` : "Bridge";
+    if (type.startsWith("INT")) return num ? `Intro ${num}` : "Intro";
+    if (type.startsWith("OUT")) return num ? `Outro ${num}` : "Outro";
+    if (type.startsWith("PRE")) return num ? `Pre-Chorus ${num}` : "Pre-Chorus";
+    if (type.startsWith("TAG")) return num ? `Tag ${num}` : "Tag";
+    if (type.startsWith("INST") || type.startsWith("MUS")) return num ? `Instrumental ${num}` : "Instrumental";
+
+    // Fallback: neatly capitalize custom headers (e.g. "SOLO" -> "Solo")
+    return clean.charAt(0) + clean.slice(1).toLowerCase();
 }
 
 export function renderSongLyrics(rawLyrics, capoFret, transposeOffset = 0, isNote = false) {
@@ -158,18 +167,41 @@ export function renderSongLyrics(rawLyrics, capoFret, transposeOffset = 0, isNot
             continue;
         }
 
+        // 💡 If there is no section container yet (e.g. comment or intro text at the very top of the song),
+        // create a clean default wrapper container for it so it doesn't float into an unstyled void.
         if (!sectionContainer) {
             sectionCounter++;
             const thisSectionIdx = sectionCounter;
             sectionContainer = document.createElement("div");
             sectionContainer.className =
-                "w-full p-4 md:p-6 rounded-2xl bg-[var(--bg-primary-variant)]/40 border border-[var(--border-color)]bg-[var(--bg-primary-variant)] space-y-3";
+                "w-full p-4 md:p-6 rounded-2xl bg-[var(--bg-primary-variant)]/40 border border-[var(--border-color)] space-y-3";
             document.getElementById("sheet-content").appendChild(sectionContainer);
         }
 
         const div = document.createElement("div");
 
-        if (line.startsWith(".")) {
+        // Combined handler for all comment lines starting with ';'
+        if (trimmed.startsWith(";")) {
+            const commentContent = trimmed.slice(1);
+
+            if (commentContent.startsWith("#:")) {
+                const abcData = commentContent.slice(2).replace(/\\n/g, "\n");
+                div.className =
+                    "song-inline-abc my-3 p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-color)]";
+                div.innerHTML = `<div class="text-xs font-bold text-[var(--hint-color)] mb-1 uppercase tracking-wider">Inline ABC Notation</div><pre class="font-mono text-xs text-[var(--text-color)] whitespace-pre-wrap overflow-x-auto">${abcData}</pre>`;
+            } else if (commentContent.startsWith("MIDI")) {
+                const midiCmd = commentContent.trim();
+                div.className = "song-midi-command my-2";
+                div.innerHTML = `<div class="text-xs font-mono font-semibold px-3 py-1.5 rounded-lg bg-purple-950/60 text-purple-300 border border-purple-800/60 inline-flex items-center space-x-2"><span class="px-1.5 py-0.5 rounded bg-purple-900 text-purple-200 text-[10px] uppercase font-bold">MIDI</span><span>${midiCmd}</span></div>`;
+            } else if (commentContent.includes("|")) {
+                div.className = "song-tab-comment-line my-0.5";
+                div.innerHTML = `<div class="font-mono text-xs md:text-sm tracking-wider text-[var(--hint-color)] whitespace-pre overflow-x-auto">${commentContent}</div>`;
+            } else {
+                const commentText = commentContent.trim();
+                div.className = "song-comment-line my-2";
+                div.innerHTML = `<div class="text-sm italic font-medium px-3 py-1.5 rounded-lg bg-[var(--bg-primary)]/80 text-[var(--hint-color)] border border-[var(--border-color)] inline-block">${commentText}</div>`;
+            }
+        } else if (line.startsWith(".")) {
             const chordLine = line.slice(1);
             const nextLine =
                 i + 1 < lines.length && !lines[i + 1].startsWith(".") && !lines[i + 1].trim().startsWith("[")
@@ -604,6 +636,222 @@ export function addOrUpdateSong(songObj) {
     else state.loadedSongs.push(songObj);
 }
 
-export function writeSongToDisk(songObk) {
-    // TODO code was removed by AI?
+export async function writeSongToDisk(song) {
+    if (!song) {
+        console.error("[WriteSong] Error: song object is null or undefined.");
+        return;
+    }
+
+    if (!song.uuid) song.uuid = generateUUID();
+    song.last_modified = new Date().toISOString();
+    if (!song.filename) song.filename = (song.title || "Untitled").replace(/[^a-zA-Z0-9_-]/g, "_") + ".xml";
+
+    console.log(
+        `[WriteSong] Attempting to save "${song.title}" (filename: ${song.filename}, folder: ${song.folderPath || "MAIN"})`
+    );
+
+    const rawTags = song.rawTags || {};
+
+    const setTagXML = (tagName, val) => {
+        const safeVal = (val !== undefined && val !== null) ? String(val) : "";
+        return `  <${tagName}>${escapeXml(safeVal)}</${tagName}>\n`;
+    };
+
+    let xml = `<song>\n`;
+
+    // Complete list of all OpenSong and OpenSongApp fields to be explicitly outputted
+    const fields = [
+        "title",
+        "author",
+        "copyright",
+        "presentation",
+        "hymn_number",
+        "capo",
+        "tempo",
+        "time_sig",
+        "duration",
+        "predelay",
+        "ccli",
+        "theme",
+        "altheme",
+        "user1",
+        "user2",
+        "user3",
+        "beatbuddysong",
+        "beatbuddykit",
+        "drummer",
+        "drummerkit",
+        "key",
+        "keyoriginal",
+        "preferedinstrument",
+        "previewoverride",
+        "aka",
+        "midi",
+        "midi_index",
+        "notes",
+        "lyrics",
+        "pad",
+        "custom_chords",
+        "link_web",
+        "link_audio",
+        "loop_audio",
+        "abc_notation",
+        "abc_transpose",
+        "uuid",
+        "last_modified"
+    ];
+
+    const handledTags = new Set(fields);
+
+    fields.forEach((field) => {
+        let val = song[field];
+        xml += setTagXML(field, val !== undefined && val !== null ? val : "");
+    });
+
+    for (const [tag, outerHtml] of Object.entries(rawTags)) {
+        if (!handledTags.has(tag) && tag !== "song") {
+            xml += `  ${outerHtml}\n`;
+        }
+    }
+
+    xml += `</song>`;
+
+    let writeSuccess = false;
+    let targetFileHandle = song.fileHandle;
+    let activeRootHandle = window.rootDirectoryHandle || getRootDirectoryHandle();
+
+    console.log(`[WriteSong] Initial song.fileHandle status:`, targetFileHandle ? "Present" : "Missing/Null");
+    console.log(`[WriteSong] activeRootHandle status:`, activeRootHandle ? "Connected" : "Not Connected");
+
+    if ((!targetFileHandle || typeof targetFileHandle.createWritable !== "function") && activeRootHandle) {
+        try {
+            let currentDir = activeRootHandle;
+
+            for await (const [name, handle] of activeRootHandle.entries()) {
+                if (name.toLowerCase() === "songs" && handle.kind === "directory") {
+                    currentDir = handle;
+                    break;
+                }
+            }
+
+            const folderPath = song.folderPath || "MAIN";
+            if (folderPath && folderPath !== "MAIN") {
+                const parts = folderPath.split("/");
+                for (const part of parts) {
+                    if (part) {
+                        currentDir = await currentDir.getDirectoryHandle(part, { create: true });
+                    }
+                }
+            }
+
+            targetFileHandle = await currentDir.getFileHandle(song.filename, { create: true });
+            song.fileHandle = targetFileHandle;
+            console.log(`[WriteSong] Successfully re-resolved targetFileHandle for ${song.filename}`);
+        } catch (err) {
+            console.error("[WriteSong] Failed to re-resolve file handle from root directory:", err);
+        }
+    }
+
+    // --- CRITICAL FIX: Actually write the file stream to disk here! ---
+    try {
+        if (targetFileHandle && typeof targetFileHandle.createWritable === "function") {
+            const writable = await targetFileHandle.createWritable();
+            await writable.write(xml);
+            await writable.close();
+            writeSuccess = true;
+            console.log(`[WriteSong] Successfully wrote XML data to disk via createWritable().`);
+        } else {
+            console.warn("[WriteSong] Target file handle is missing or createWritable is unavailable.");
+        }
+    } catch (err) {
+        console.error("[WriteSong] Exception caught during fileHandle.createWritable():", err);
+    }
+
+    if (window.sqliteDb) {
+        try {
+            const stmt = window.sqliteDb.prepare(
+                `INSERT OR REPLACE INTO songs (
+                    filename, folderPath, title, author, copyright, presentation,
+                    hymn_number, capo, tempo, time_sig, duration, predelay, ccli,
+                    theme, altheme, user1, user2, user3, beatbuddysong, beatbuddykit,
+                    drummer, drummerkit, key, keyoriginal, preferedinstrument,
+                    previewoverride, aka, midi, midi_index, notes, lyrics, pad,
+                    custom_chords, link_web, link_audio, loop_audio, abc_notation,
+                    abc_transpose, uuid, modified
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            );
+            stmt.run([
+                song.filename,
+                song.folderPath || "MAIN",
+                song.title || "",
+                song.author || "",
+                song.copyright || "",
+                song.presentation || "",
+                song.hymn_number || "",
+                song.capo || "",
+                parseInt(song.tempo) || 120,
+                song.time_sig || "4/4",
+                song.duration || "",
+                song.predelay || "",
+                song.ccli || "",
+                song.theme || "",
+                song.altheme || "",
+                song.user1 || "",
+                song.user2 || "",
+                song.user3 || "",
+                song.beatbuddysong || "",
+                song.beatbuddykit || "",
+                song.drummer || "",
+                song.drummerkit || "",
+                song.key || "",
+                song.keyoriginal || "",
+                song.preferedinstrument || "",
+                song.previewoverride || "",
+                song.aka || "",
+                song.midi || "",
+                song.midi_index || "",
+                song.notes || "",
+                song.lyrics || "",
+                song.pad || "",
+                song.custom_chords || "",
+                song.link_web || "",
+                song.link_audio || "",
+                song.loop_audio ? 1 : 0,
+                song.abc_notation || "",
+                song.abc_transpose || "",
+                song.uuid,
+                song.last_modified
+            ]);
+            stmt.free();
+            if (typeof window.saveSqlDbBuffer === "function") {
+                await window.saveSqlDbBuffer();
+            }
+            console.log(`[WriteSong] Successfully updated SQLite cache with all fields.`);
+        } catch (e) {
+            console.error("[WriteSong] Failed to update SQLite cache on save:", e);
+        }
+    }
+
+    if (writeSuccess) {
+        showToast(`Saved "${song.title}" to disk successfully!`);
+    } else {
+        showToast(`Error: Could not write to disk. Check console logs.`);
+    }
+}
+
+function escapeXml(unsafe) {
+    return String(unsafe).replace(/[<>&'"]/g, (c) => {
+        switch (c) {
+            case "<":
+                return "&lt;";
+            case ">":
+                return "&gt;";
+            case "&":
+                return "&amp;";
+            case "'":
+                return "&apos;";
+            case '"':
+                return "&quot;";
+        }
+    });
 }

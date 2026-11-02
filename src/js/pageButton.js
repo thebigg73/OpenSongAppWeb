@@ -1,5 +1,6 @@
 import { createIcons, icons } from "lucide";
 import { openTransposeModal } from "./chords.js";
+import { openPadModal } from "./padManager.js";
 import { showToast } from "./toast.js";
 
 // Fixed quick actions list
@@ -94,7 +95,7 @@ function handleQuickAction(actionId) {
             document.getElementById("autoscroll-toggle-btn")?.click();
             break;
         case "pad":
-            document.getElementById("pad-toggle-btn")?.click();
+            openPadModal();
             break;
         case "transpose":
             openTransposeModal();

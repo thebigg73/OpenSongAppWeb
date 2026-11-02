@@ -181,7 +181,6 @@ async function initSqlDatabase() {
         const SQL = await initSqlJs({
             locateFile: (file) => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
         });
-        const cachedBuf = await getStoredSqlDbBuffer();
         if (cachedBuf) {
             sqliteDb = new SQL.Database(cachedBuf);
         } else {
@@ -191,12 +190,42 @@ async function initSqlDatabase() {
                         folderPath TEXT,
                         title TEXT,
                         author TEXT,
-                        key TEXT,
+                        copyright TEXT,
+                        presentation TEXT,
+                        hymn_number TEXT,
                         capo TEXT,
                         tempo INTEGER,
+                        time_sig TEXT,
+                        duration TEXT,
+                        predelay TEXT,
+                        ccli TEXT,
+                        theme TEXT,
+                        altheme TEXT,
+                        user1 TEXT,
+                        user2 TEXT,
+                        user3 TEXT,
+                        beatbuddysong TEXT,
+                        beatbuddykit TEXT,
+                        drummer TEXT,
+                        drummerkit TEXT,
+                        key TEXT,
+                        keyoriginal TEXT,
+                        preferedinstrument TEXT,
+                        previewoverride TEXT,
+                        aka TEXT,
+                        midi TEXT,
+                        midi_index TEXT,
+                        notes TEXT,
                         lyrics TEXT,
-                        modified TEXT,
+                        pad TEXT,
+                        custom_chords TEXT,
+                        link_web TEXT,
+                        link_audio TEXT,
+                        loop_audio INTEGER,
+                        abc_notation TEXT,
+                        abc_transpose TEXT,
                         uuid TEXT,
+                        modified TEXT,
                         PRIMARY KEY (filename, folderPath)
                     );`);
         }

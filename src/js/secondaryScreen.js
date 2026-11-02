@@ -1,22 +1,10 @@
 // The Javascript used to deal with dual screen output
 import { state } from "./state.js";
-import { ensureSongContentLoaded } from "./song.js";
+import { ensureSongContentLoaded, formatSectionHeading } from "./song.js";
 import { showToast } from "./toast.js";
 
 let castWindow = null;
 let castSettings = { showChords: true, fontScale: 1.4 };
-
-export function formatSectionHeading(rawHeading) {
-    if (!rawHeading) return "";
-    let clean = rawHeading
-        .replace(/[\[\]]/g, "")
-        .trim()
-        .toUpperCase();
-    if (clean.startsWith("V")) return clean.slice(1) ? `Verse ${clean.slice(1)}` : "Verse";
-    if (clean.startsWith("C")) return clean.slice(1) ? `Chorus ${clean.slice(1)}` : "Chorus";
-    if (clean.startsWith("B")) return clean.slice(1) ? `Bridge ${clean.slice(1)}` : "Bridge";
-    return rawHeading.replace(/[\[\]]/g, "").trim();
-}
 
 export function extractSectionContent(lyrics, targetSectionIndex) {
     if (!lyrics) return { heading: "SECTION", htmlContent: "<p class='text-slate-400'>No lyrics available</p>" };
@@ -46,7 +34,24 @@ export function extractSectionContent(lyrics, targetSectionIndex) {
     let htmlOutput = "";
     for (let i = 0; i < sectionLines.length; i++) {
         const line = sectionLines[i];
-        if (line.startsWith(".")) {
+        const trimmed = line.trim();
+
+        if (trimmed.startsWith(";")) {
+            const commentContent = trimmed.slice(1);
+
+            if (commentContent.startsWith("#:")) {
+                const abcData = commentContent.slice(2).replace(/\\n/g, "\n");
+                htmlOutput += `<div class="my-3 p-3 rounded-xl bg-slate-900 border border-slate-800"><div class="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Inline ABC Notation</div><pre class="font-mono text-xs text-slate-200 whitespace-pre-wrap overflow-x-auto">${abcData}</pre></div>`;
+            } else if (commentContent.startsWith("MIDI")) {
+                const midiCmd = commentContent.trim();
+                htmlOutput += `<div class="my-3"><span class="text-xs font-mono font-semibold px-3 py-1.5 rounded-lg bg-purple-950/60 text-purple-300 border border-purple-800/60 inline-flex items-center space-x-2"><span class="px-1.5 py-0.5 rounded bg-purple-900 text-purple-200 text-[10px] uppercase font-bold">MIDI</span><span>${midiCmd}</span></span></div>`;
+            } else if (commentContent.includes("|")) {
+                htmlOutput += `<div class="my-1"><span class="font-mono text-xs md:text-sm tracking-wider text-slate-400 whitespace-pre overflow-x-auto">${commentContent}</span></div>`;
+            } else {
+                const commentText = commentContent.trim();
+                htmlOutput += `<div class="my-3"><span class="text-sm italic font-medium px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 border border-slate-800 inline-block">${commentText}</span></div>`;
+            }
+        } else if (line.startsWith(".")) {
             const chordLine = line.slice(1);
             let nextLine =
                 i + 1 < sectionLines.length && !sectionLines[i + 1].startsWith(".") ? sectionLines[i + 1] : "";

@@ -6,7 +6,7 @@ import { renderSidebarList } from "./sidebar.js";
 
 export function getSongEditorHTML() {
     return `
-        <!-- Comprehensive Tabbed Song Editor Modal (Virtually Full Screen) -->
+        <!-- Comprehensive Tabbed Song Editor Modal -->
         <div
             id="song-editor-modal"
             class="hidden fixed inset-0 z-50 bg-[var(--bg-primary)]/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6">
@@ -121,6 +121,7 @@ export function getSongEditorHTML() {
                                 <select
                                     id="edit-song-key-input"
                                     class="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-2.5 text-[var(--text-color)] font-mono text-xs sm:text-sm">
+                                    <option value="">None</option>
                                     <option value="C">C</option>
                                     <option value="C#">C#</option>
                                     <option value="Db">Db</option>
@@ -164,6 +165,45 @@ export function getSongEditorHTML() {
                                     value="120" />
                             </div>
                         </div>
+
+                        <!-- Pad Settings Section -->
+                        <div class="p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] space-y-3">
+                            <h4 class="font-bold text-[var(--text-color)] text-xs uppercase tracking-wider">Pad Configuration</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="font-bold text-[var(--text-hint)] block mb-1 text-xs">Pad Mode</label>
+                                    <select
+                                        id="edit-song-pad-input"
+                                        class="w-full bg-[var(--bg-primary-variant)] border border-[var(--border-color)] rounded-lg p-2.5 text-[var(--text-color)] text-xs sm:text-sm">
+                                        <option value="">Blank (Auto if key set)</option>
+                                        <option value="auto">Auto (Key-matched)</option>
+                                        <option value="link">Link (External Audio)</option>
+                                    </select>
+                                </div>
+                                <div id="edit-song-link-container" class="hidden">
+                                    <label class="font-bold text-[var(--text-hint)] block mb-1 text-xs">Linked Audio File</label>
+                                    <div class="flex gap-2">
+                                        <input
+                                            type="text"
+                                            id="edit-song-linkaudio-input"
+                                            placeholder="../OpenSong/Media/track.mp3"
+                                            class="flex-1 bg-[var(--bg-primary-variant)] border border-[var(--border-color)] rounded-lg p-2 text-[var(--text-color)] font-mono text-xs" />
+                                        <input
+                                            type="file"
+                                            id="edit-song-audio-file-picker"
+                                            accept="audio/*,.mid"
+                                            class="hidden" />
+                                        <button
+                                            type="button"
+                                            id="edit-song-browse-audio-btn"
+                                            class="px-3 py-2 bg-[var(--color-secondary)] text-[var(--text-color)] font-bold rounded-lg text-xs hover:opacity-90 transition">
+                                            Browse...
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div>
                             <label class="font-bold text-[var(--text-color)] block mb-1">Time Signature</label
                             ><input
@@ -223,6 +263,9 @@ export function openNewSongEditor() {
     const keyInput = document.getElementById("edit-song-key-input");
     const capoInput = document.getElementById("edit-song-capo-input");
     const tempoInput = document.getElementById("edit-song-tempo-input");
+    const padInput = document.getElementById("edit-song-pad-input");
+    const linkAudioInput = document.getElementById("edit-song-linkaudio-input");
+    const linkContainer = document.getElementById("edit-song-link-container");
     const timesigInput = document.getElementById("edit-song-timesig-input");
     const notesInput = document.getElementById("edit-song-notes-input");
     const themesInput = document.getElementById("edit-song-themes-input");
@@ -236,9 +279,12 @@ export function openNewSongEditor() {
     if (copyrightInput) copyrightInput.value = "";
     if (filenameInput) filenameInput.value = "";
     if (presentationInput) presentationInput.value = "";
-    if (keyInput) keyInput.value = "C";
+    if (keyInput) keyInput.value = "";
     if (capoInput) capoInput.value = "";
     if (tempoInput) tempoInput.value = "120";
+    if (padInput) padInput.value = "";
+    if (linkAudioInput) linkAudioInput.value = "";
+    if (linkContainer) linkContainer.classList.add("hidden");
     if (timesigInput) timesigInput.value = "4/4";
     if (notesInput) notesInput.value = "";
     if (themesInput) themesInput.value = "";
@@ -268,6 +314,9 @@ export async function openEditSongEditor(song) {
     const keyInput = document.getElementById("edit-song-key-input");
     const capoInput = document.getElementById("edit-song-capo-input");
     const tempoInput = document.getElementById("edit-song-tempo-input");
+    const padInput = document.getElementById("edit-song-pad-input");
+    const linkAudioInput = document.getElementById("edit-song-linkaudio-input");
+    const linkContainer = document.getElementById("edit-song-link-container");
     const timesigInput = document.getElementById("edit-song-timesig-input");
     const notesInput = document.getElementById("edit-song-notes-input");
     const themesInput = document.getElementById("edit-song-themes-input");
@@ -282,9 +331,20 @@ export async function openEditSongEditor(song) {
     if (copyrightInput) copyrightInput.value = song.copyright || "";
     if (filenameInput) filenameInput.value = song.filename || song.title || "";
     if (presentationInput) presentationInput.value = song.presentation || "";
-    if (keyInput) keyInput.value = song.key || "C";
+    if (keyInput) keyInput.value = song.key || "";
     if (capoInput) capoInput.value = song.capo || "";
     if (tempoInput) tempoInput.value = song.tempo || 120;
+    if (padInput) padInput.value = song.pad || "";
+    if (linkAudioInput) linkAudioInput.value = song.linkAudio || song.link_audio || "";
+
+    if (linkContainer) {
+        if ((song.pad || "").toLowerCase() === "link") {
+            linkContainer.classList.remove("hidden");
+        } else {
+            linkContainer.classList.add("hidden");
+        }
+    }
+
     if (timesigInput) timesigInput.value = song.time_sig || "4/4";
     if (notesInput) notesInput.value = song.notes || "";
     if (themesInput) themesInput.value = song.theme || "";
@@ -330,6 +390,11 @@ export function initSongEditor() {
     const saveBtn = document.getElementById("save-song-btn");
     const folderSelect = document.getElementById("edit-song-folder-select");
     const newFolderInput = document.getElementById("edit-song-new-folder-input");
+    const padInput = document.getElementById("edit-song-pad-input");
+    const linkContainer = document.getElementById("edit-song-link-container");
+    const browseAudioBtn = document.getElementById("edit-song-browse-audio-btn");
+    const audioFilePicker = document.getElementById("edit-song-audio-file-picker");
+    const linkAudioInput = document.getElementById("edit-song-linkaudio-input");
     const tabBtns = document.querySelectorAll(".editor-tab-btn");
     const panes = document.querySelectorAll(".editor-pane");
 
@@ -363,6 +428,40 @@ export function initSongEditor() {
         });
     }
 
+    if (padInput && linkContainer) {
+        padInput.addEventListener("change", (e) => {
+            if (e.target.value === "link") {
+                linkContainer.classList.remove("hidden");
+            } else {
+                linkContainer.classList.add("hidden");
+            }
+        });
+    }
+
+    if (browseAudioBtn && audioFilePicker && linkAudioInput) {
+        browseAudioBtn.addEventListener("click", () => {
+            audioFilePicker.click();
+        });
+
+        audioFilePicker.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                // Create a local blob URL so the browser grants direct read permission
+                const blobUrl = URL.createObjectURL(file);
+
+                // Store the blob URL in a global registry or dataset so playback can access it instantly
+                window._localAudioBlobCache = window._localAudioBlobCache || {};
+                window._localAudioBlobCache[file.name] = blobUrl;
+                window._localAudioBlobCache[`../OpenSong/Media/${file.name}`] = blobUrl;
+
+                // Preferred OpenSong path formatting for XML storage
+                const relativePath = `../OpenSong/Media/${file.name}`;
+                linkAudioInput.value = relativePath;
+                showToast(`Linked audio: ${file.name}`);
+            }
+        });
+    }
+
     if (closeBtn && modal) {
         closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
     }
@@ -386,9 +485,11 @@ export function initSongEditor() {
                 author: document.getElementById("edit-song-author-input")?.value || "",
                 copyright: document.getElementById("edit-song-copyright-input")?.value || "",
                 presentation: document.getElementById("edit-song-presentation-input")?.value || "",
-                key: document.getElementById("edit-song-key-input")?.value || "C",
+                key: document.getElementById("edit-song-key-input")?.value || "",
                 capo: document.getElementById("edit-song-capo-input")?.value || "",
                 tempo: document.getElementById("edit-song-tempo-input")?.value || 120,
+                pad: document.getElementById("edit-song-pad-input")?.value || "",
+                linkAudio: document.getElementById("edit-song-linkaudio-input")?.value || "",
                 time_sig: document.getElementById("edit-song-timesig-input")?.value || "4/4",
                 notes: document.getElementById("edit-song-notes-input")?.value || "",
                 theme: document.getElementById("edit-song-themes-input")?.value || "",

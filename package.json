@@ -13,6 +13,8 @@
     "vite-plugin-singlefile": "^2.3.4"
   },
   "dependencies": {
-    "lucide": "^1.60.0"
+    "lucide": "^1.60.0",
+    "midi-player-js": "^2.0.17",
+    "soundfont-player": "^0.12.0"
   }
 }
